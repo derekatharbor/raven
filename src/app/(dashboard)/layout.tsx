@@ -35,15 +35,15 @@ export default function DashboardLayout({
       <Sidebar />
       {/* Content area - floats on top with shadow */}
       <main 
-        className={`min-h-screen transition-all duration-200 p-3 pl-0 ${
-          sidebarCollapsed ? 'lg:ml-[56px]' : 'lg:ml-[200px]'
+        className={`min-h-screen transition-all duration-200 pt-3 pr-3 pb-3 ${
+          sidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-[212px]'
         }`}
       >
         <div 
           className="min-h-[calc(100vh-24px)] bg-white"
           style={{ 
             borderRadius: '12px',
-            boxShadow: '-8px -4px 20px rgba(0, 0, 0, 0.08), -4px -2px 10px rgba(0, 0, 0, 0.05)',
+            boxShadow: '0 0 20px rgba(0, 0, 0, 0.06)',
           }}
         >
           {children}
