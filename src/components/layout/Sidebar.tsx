@@ -32,7 +32,6 @@ const BOTTOM_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
   
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -44,6 +43,7 @@ export default function Sidebar() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   const handleSignOut = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
   }
