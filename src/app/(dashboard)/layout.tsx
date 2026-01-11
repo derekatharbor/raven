@@ -1,5 +1,8 @@
 // Route: src/app/(dashboard)/layout.tsx
 
+'use client'
+
+import { useState, useEffect } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 
 export default function DashboardLayout({
@@ -7,6 +10,23 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    // Check initial state
+    const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
+    setSidebarCollapsed(collapsed)
+
+    // Listen for sidebar toggle events
+    const handleToggle = () => {
+      const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
+      setSidebarCollapsed(collapsed)
+    }
+
+    window.addEventListener('sidebar-toggle', handleToggle)
+    return () => window.removeEventListener('sidebar-toggle', handleToggle)
+  }, [])
+
   return (
     <div 
       className="min-h-screen"
@@ -15,13 +35,14 @@ export default function DashboardLayout({
       <Sidebar />
       {/* Content area - floats on top with shadow */}
       <main 
-        className="lg:ml-[200px] min-h-screen transition-all duration-200"
+        className={`min-h-screen transition-all duration-200 p-3 pl-0 ${
+          sidebarCollapsed ? 'lg:ml-[56px]' : 'lg:ml-[200px]'
+        }`}
       >
         <div 
-          className="min-h-screen bg-white shadow-sm"
+          className="min-h-[calc(100vh-24px)] bg-white shadow-sm"
           style={{ 
-            borderTopLeftRadius: '12px',
-            borderBottomLeftRadius: '12px',
+            borderRadius: '12px',
           }}
         >
           {children}
