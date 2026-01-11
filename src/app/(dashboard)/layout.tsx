@@ -8,10 +8,24 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div 
+      className="min-h-screen"
+      style={{ backgroundColor: '#FBF9F7' }}
+    >
       <Sidebar />
-      <main className="lg:pl-60 transition-all duration-300">
-        {children}
+      {/* Content area - floats on top with shadow */}
+      <main 
+        className="lg:ml-[200px] min-h-screen transition-all duration-200"
+      >
+        <div 
+          className="min-h-screen bg-white shadow-sm"
+          style={{ 
+            borderTopLeftRadius: '12px',
+            borderBottomLeftRadius: '12px',
+          }}
+        >
+          {children}
+        </div>
       </main>
     </div>
   )

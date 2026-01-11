@@ -72,11 +72,11 @@ export default function Sidebar() {
   const isDark = theme === 'dark'
 
   const colors = {
-    bg: isDark ? '#171717' : '#FFFFFF',
-    text: isDark ? '#F4F6F8' : '#111827',
-    muted: isDark ? 'rgba(244,246,248,0.5)' : '#6B7280',
-    border: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB',
-    hover: isDark ? 'rgba(255,255,255,0.06)' : '#F3F4F6',
+    bg: isDark ? '#171717' : '#FBF9F7',
+    text: isDark ? '#F4F6F8' : '#1a1a1a',
+    muted: isDark ? 'rgba(244,246,248,0.5)' : '#71717a',
+    border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    hover: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
     accent: '#5BDFFA',
   }
 
@@ -91,71 +91,63 @@ export default function Sidebar() {
     <aside 
       className={`
         hidden lg:flex fixed left-0 top-0 h-screen 
-        border-r flex-col transition-all duration-300 z-[100] 
-        ${isCollapsed ? 'w-20' : 'w-60'}
+        flex-col transition-all duration-200 z-[100]
+        ${isCollapsed ? 'w-[56px]' : 'w-[200px]'}
       `}
       style={{
         backgroundColor: colors.bg,
-        borderColor: colors.border,
       }}
     >
       {/* Header */}
-      <div 
-        className="px-6 py-4 border-b flex items-center justify-between"
-        style={{ borderColor: colors.border }}
-      >
+      <div className="px-3 py-3 flex items-center justify-between">
         {!isCollapsed && (
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <img 
-                src={isDark ? '/images/Harbor_White_Logo.png' : '/images/harbor-dark-solo.svg'}
-                alt="Harbor Logo" 
-                className="w-10 h-10 object-contain"
-              />
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 flex items-center justify-center">
+              {/* Replace with your logo */}
+              <div 
+                className="w-6 h-6 rounded bg-black flex items-center justify-center text-white text-xs font-bold"
+              >
+                H
+              </div>
             </div>
-            <h1 
-              className="text-lg font-bold"
+            <span 
+              className="text-sm font-semibold tracking-tight"
               style={{ color: colors.text }}
             >
               Harbor
-            </h1>
+            </span>
           </div>
         )}
         {isCollapsed && (
           <button
             onClick={toggleCollapse}
-            className="w-10 h-10 flex items-center justify-center mx-auto group relative cursor-pointer transition-all"
+            className="w-8 h-8 flex items-center justify-center mx-auto group cursor-pointer"
             title="Expand sidebar"
           >
-            <img 
-              src={isDark ? '/images/Harbor_White_Logo.png' : '/images/harbor-dark-solo.svg'}
-              alt="Harbor Logo" 
-              className="w-10 h-10 object-contain group-hover:opacity-0 transition-opacity"
-            />
-            <ChevronRight 
-              className="w-5 h-5 absolute opacity-0 group-hover:opacity-100 transition-opacity" 
-              style={{ color: colors.text }}
-              strokeWidth={2} 
-            />
+            <div 
+              className="w-6 h-6 rounded bg-black flex items-center justify-center text-white text-xs font-bold group-hover:opacity-70 transition-opacity"
+            >
+              H
+            </div>
           </button>
         )}
         {!isCollapsed && (
           <button
             onClick={toggleCollapse}
-            className="p-1.5 rounded-lg transition-colors cursor-pointer"
+            className="p-1 rounded transition-colors cursor-pointer"
             style={{ color: colors.muted }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             title="Collapse sidebar"
           >
-            <ChevronLeft className="w-5 h-5" strokeWidth={1.5} />
+            <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
           </button>
         )}
       </div>
 
       {/* Main Navigation */}
-      <nav className={`flex-1 ${isCollapsed ? '' : 'overflow-y-auto overflow-x-hidden'}`}>
-        <div className="px-4 pt-6 pb-3">
+      <nav className="flex-1 px-2 py-2">
+        <div className="space-y-0.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
@@ -165,15 +157,12 @@ export default function Sidebar() {
                 key={item.name}
                 href={item.href}
                 className={`
-                  flex items-center rounded-lg mb-1
-                  transition-colors cursor-pointer relative group
-                  ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-                  ${active && !isCollapsed ? 'pl-[10px]' : ''}
+                  flex items-center rounded-md transition-colors cursor-pointer relative group
+                  ${isCollapsed ? 'p-2 justify-center' : 'gap-2.5 py-1.5 px-2'}
                 `}
                 style={{
                   color: active ? colors.text : colors.muted,
                   backgroundColor: active ? colors.hover : 'transparent',
-                  borderLeft: active && !isCollapsed ? `2px solid ${colors.accent}` : 'none',
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
@@ -188,14 +177,14 @@ export default function Sidebar() {
                   }
                 }}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-                {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+                <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.5} />
+                {!isCollapsed && <span className="text-[13px]">{item.name}</span>}
                 
                 {isCollapsed && (
                   <div 
-                    className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
+                    className="absolute left-full ml-2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-sm"
                     style={{
-                      backgroundColor: colors.bg,
+                      backgroundColor: isDark ? '#262626' : '#fff',
                       color: colors.text,
                       border: `1px solid ${colors.border}`,
                     }}
@@ -208,11 +197,14 @@ export default function Sidebar() {
           })}
         </div>
 
-        {/* Settings */}
+        {/* Divider */}
         <div 
-          className="px-4 py-3 border-t"
-          style={{ borderColor: colors.border }}
-        >
+          className="my-3 mx-2 h-px"
+          style={{ backgroundColor: colors.border }}
+        />
+
+        {/* Bottom Items */}
+        <div className="space-y-0.5">
           {BOTTOM_ITEMS.map((item) => {
             const Icon = item.icon
             const active = pathname === item.href
@@ -222,14 +214,12 @@ export default function Sidebar() {
                 key={item.name}
                 href={item.href}
                 className={`
-                  flex items-center rounded-lg mb-1
-                  transition-colors cursor-pointer relative group
-                  ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-                  ${active && !isCollapsed ? 'pl-[10px]' : ''}
+                  flex items-center rounded-md transition-colors cursor-pointer relative group
+                  ${isCollapsed ? 'p-2 justify-center' : 'gap-2.5 py-1.5 px-2'}
                 `}
                 style={{
                   color: active ? colors.text : colors.muted,
-                  borderLeft: active && !isCollapsed ? `2px solid ${colors.accent}` : 'none',
+                  backgroundColor: active ? colors.hover : 'transparent',
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
@@ -244,14 +234,14 @@ export default function Sidebar() {
                   }
                 }}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-                {!isCollapsed && <span className="text-sm truncate">{item.name}</span>}
+                <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.5} />
+                {!isCollapsed && <span className="text-[13px]">{item.name}</span>}
                 
                 {isCollapsed && (
                   <div 
-                    className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
+                    className="absolute left-full ml-2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-sm"
                     style={{
-                      backgroundColor: colors.bg,
+                      backgroundColor: isDark ? '#262626' : '#fff',
                       color: colors.text,
                       border: `1px solid ${colors.border}`,
                     }}
@@ -263,151 +253,86 @@ export default function Sidebar() {
             )
           })}
         </div>
+      </nav>
 
-        {/* Upgrade */}
-        <div 
-          className="px-4 py-3 border-t"
-          style={{ borderColor: colors.border }}
-        >
-          <Link
-            href="/pricing"
-            className={`
-              flex items-center rounded-lg
-              transition-all cursor-pointer relative group
-              ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            `}
-            style={{ 
-              color: colors.muted,
-              background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'
-              e.currentTarget.style.color = colors.text
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'
-              e.currentTarget.style.color = colors.muted
-            }}
-          >
-            <Sparkles className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm">Upgrade</span>
-                <span className="text-xs opacity-60">Unlock more features</span>
-              </div>
-            )}
-            
-            {isCollapsed && (
-              <div 
-                className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-                style={{
-                  backgroundColor: colors.bg,
-                  color: colors.text,
-                  border: `1px solid ${colors.border}`,
-                }}
-              >
-                Upgrade Plan
-              </div>
-            )}
-          </Link>
-        </div>
-
+      {/* Footer */}
+      <div className="px-2 py-2 space-y-0.5">
         {/* Theme Toggle */}
-        <div 
-          className="px-4 py-3 border-t"
-          style={{ borderColor: colors.border }}
+        <button
+          onClick={toggleTheme}
+          className={`
+            w-full flex items-center rounded-md transition-colors cursor-pointer relative group
+            ${isCollapsed ? 'p-2 justify-center' : 'gap-2.5 py-1.5 px-2'}
+          `}
+          style={{ color: colors.muted }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.hover
+            e.currentTarget.style.color = colors.text
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = colors.muted
+          }}
         >
-          <div
-            onClick={toggleTheme}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                toggleTheme()
-              }
-            }}
-            className={`
-              flex items-center rounded-lg
-              transition-colors cursor-pointer relative group
-              ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            `}
-            style={{ color: colors.muted }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = colors.hover
-              e.currentTarget.style.color = colors.text
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = colors.muted
-            }}
-          >
-            {theme === 'light' ? (
-              <Moon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-            ) : (
-              <Sun className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-            )}
-            {!isCollapsed && (
-              <span className="text-sm">
-                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-              </span>
-            )}
-            
-            {isCollapsed && (
-              <div 
-                className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-                style={{
-                  backgroundColor: colors.bg,
-                  color: colors.text,
-                  border: `1px solid ${colors.border}`,
-                }}
-              >
-                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-              </div>
-            )}
-          </div>
-        </div>
+          {theme === 'light' ? (
+            <Moon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.5} />
+          ) : (
+            <Sun className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.5} />
+          )}
+          {!isCollapsed && (
+            <span className="text-[13px]">
+              {theme === 'light' ? 'Dark' : 'Light'}
+            </span>
+          )}
+          
+          {isCollapsed && (
+            <div 
+              className="absolute left-full ml-2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-sm"
+              style={{
+                backgroundColor: isDark ? '#262626' : '#fff',
+                color: colors.text,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+            </div>
+          )}
+        </button>
 
         {/* Sign Out */}
-        <div 
-          className="px-4 py-3 border-t"
-          style={{ borderColor: colors.border }}
+        <button
+          onClick={handleSignOut}
+          className={`
+            w-full flex items-center rounded-md transition-colors cursor-pointer relative group
+            ${isCollapsed ? 'p-2 justify-center' : 'gap-2.5 py-1.5 px-2'}
+          `}
+          style={{ color: colors.muted }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'
+            e.currentTarget.style.color = '#ef4444'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = colors.muted
+          }}
         >
-          <button
-            onClick={handleSignOut}
-            className={`
-              w-full flex items-center rounded-lg
-              transition-colors cursor-pointer relative group
-              ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            `}
-            style={{ color: colors.muted }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'
-              e.currentTarget.style.color = '#F87171'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = colors.muted
-            }}
-          >
-            <LogOut className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-            {!isCollapsed && <span className="text-sm">Sign Out</span>}
-            
-            {isCollapsed && (
-              <div 
-                className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-                style={{
-                  backgroundColor: colors.bg,
-                  color: colors.text,
-                  border: `1px solid ${colors.border}`,
-                }}
-              >
-                Sign Out
-              </div>
-            )}
-          </button>
-        </div>
-      </nav>
+          <LogOut className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.5} />
+          {!isCollapsed && <span className="text-[13px]">Sign Out</span>}
+          
+          {isCollapsed && (
+            <div 
+              className="absolute left-full ml-2 px-2 py-1 text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-sm"
+              style={{
+                backgroundColor: isDark ? '#262626' : '#fff',
+                color: colors.text,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              Sign Out
+            </div>
+          )}
+        </button>
+      </div>
     </aside>
   )
 }
