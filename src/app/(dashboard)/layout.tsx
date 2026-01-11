@@ -43,7 +43,7 @@ export default function DashboardLayout({
           className="min-h-[calc(100vh-24px)] bg-white"
           style={{ 
             borderRadius: '12px',
-            boxShadow: '-4px -2px 12px rgba(0, 0, 0, 0.04), -2px 0px 8px rgba(0, 0, 0, 0.02)',
+            boxShadow: '-8px -4px 20px rgba(0, 0, 0, 0.08), -4px -2px 10px rgba(0, 0, 0, 0.05)',
           }}
         >
           {children}
