@@ -125,12 +125,11 @@ const EditorCanvas = forwardRef<HTMLDivElement, EditorCanvasProps>(({
                     data-claim-id={claim.id}
                     className={`
                       inline cursor-pointer transition-all duration-150
-                      ${isActive ? 'ring-2 ring-offset-1' : ''}
+                      ${isActive ? 'ring-2 ring-offset-1 ring-gray-400' : ''}
                     `}
                     style={{
                       backgroundColor: colors.bg,
                       borderBottom: `2px solid ${colors.border}`,
-                      ringColor: isActive ? colors.border : undefined,
                       padding: '1px 2px',
                       borderRadius: '2px',
                     }}
