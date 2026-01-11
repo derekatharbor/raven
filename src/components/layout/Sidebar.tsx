@@ -20,7 +20,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 
 const NAV_ITEMS = [
-  { name: 'Overview', href: '/overview', icon: LayoutDashboard },
+  { name: 'Workspace', href: '/workspace', icon: LayoutDashboard },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Monitoring', href: '/monitoring', icon: Radio },
 ]
