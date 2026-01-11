@@ -103,12 +103,11 @@ export default function Sidebar() {
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 flex items-center justify-center">
-              {/* Replace with your logo */}
-              <div 
-                className="w-6 h-6 rounded bg-black flex items-center justify-center text-white text-xs font-bold"
-              >
-                H
-              </div>
+              <img 
+                src="/images/harbor-dark-logo.png" 
+                alt="Harbor" 
+                className="w-6 h-6 object-contain"
+              />
             </div>
             <span 
               className="text-sm font-semibold tracking-tight"
@@ -121,14 +120,19 @@ export default function Sidebar() {
         {isCollapsed && (
           <button
             onClick={toggleCollapse}
-            className="w-8 h-8 flex items-center justify-center mx-auto group cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center mx-auto group cursor-pointer relative"
             title="Expand sidebar"
           >
-            <div 
-              className="w-6 h-6 rounded bg-black flex items-center justify-center text-white text-xs font-bold group-hover:opacity-70 transition-opacity"
-            >
-              H
-            </div>
+            <img 
+              src="/images/harbor-dark-logo.png" 
+              alt="Harbor" 
+              className="w-6 h-6 object-contain group-hover:opacity-0 transition-opacity"
+            />
+            <ChevronRight 
+              className="w-4 h-4 absolute opacity-0 group-hover:opacity-100 transition-opacity" 
+              style={{ color: colors.text }}
+              strokeWidth={1.5}
+            />
           </button>
         )}
         {!isCollapsed && (
