@@ -40,9 +40,10 @@ export default function DashboardLayout({
         }`}
       >
         <div 
-          className="min-h-[calc(100vh-24px)] bg-white shadow-sm"
+          className="min-h-[calc(100vh-24px)] bg-white"
           style={{ 
             borderRadius: '12px',
+            boxShadow: '-4px -2px 12px rgba(0, 0, 0, 0.04), -2px 0px 8px rgba(0, 0, 0, 0.02)',
           }}
         >
           {children}
