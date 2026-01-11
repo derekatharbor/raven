@@ -1,5 +1,8 @@
+// Route: src/app/api/claims/[id]/check/route.ts
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { CheckStatus } from '@/types/database'
 
 export async function POST(
   request: NextRequest,
@@ -30,11 +33,13 @@ export async function POST(
   // TODO: Implement actual source querying and LLM evaluation
   // For now, return a placeholder check
   
+  const checkStatus: CheckStatus = 'ok'
+  
   const { data: check, error: checkError } = await supabase
     .from('checks')
     .insert({
       claim_id: id,
-      status: 'ok',
+      status: checkStatus,
       confidence: 0.85,
       findings: {
         summary: 'No contradictions found',
@@ -42,7 +47,7 @@ export async function POST(
         sources_used: ['web_search'],
       },
       sources_queried: ['brave_search'],
-      triggered_by: 'manual',
+      triggered_by: 'manual' as const,
       started_at: new Date(startTime).toISOString(),
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startTime,
