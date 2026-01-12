@@ -6,6 +6,7 @@ import { useState, useCallback, useRef } from 'react'
 import SourcesPanel from '@/components/workspace/SourcesPanel'
 import Editor, { EditorRef } from '@/components/workspace/Editor'
 import ClaimsPanel from '@/components/workspace/ClaimsPanel'
+import SignalModal from '@/components/workspace/SignalModal'
 import { ChevronRight, Database } from 'lucide-react'
 
 // Collapsed sources pane - shows icon, expands on hover/click
@@ -148,20 +149,27 @@ export default function WorkspacePage() {
   // Panel visibility - only left panel is collapsible
   const [leftPanelOpen, setLeftPanelOpen] = useState(true)
   
-  // Track modal state
+  // Track modal state (for verification)
   const [trackModalOpen, setTrackModalOpen] = useState(false)
   const [pendingTrackText, setPendingTrackText] = useState('')
   const [pendingTrackRange, setPendingTrackRange] = useState<{ from: number; to: number } | null>(null)
 
-  // Tracked claims state
+  // Signal modal state
+  const [signalModalOpen, setSignalModalOpen] = useState(false)
+  const [pendingSignalText, setPendingSignalText] = useState('')
+  const [pendingSignalRange, setPendingSignalRange] = useState<{ from: number; to: number } | null>(null)
+
+  // Tracked claims state (supports both verify and signal types)
   const [trackedClaims, setTrackedClaims] = useState<Array<{
     id: string
     text: string
     status: 'pending' | 'verified' | 'stale' | 'attention'
+    type: 'verify' | 'signal' | 'both'
     source: string
     cadence: string
     category: string
     lastChecked: string
+    signal?: { name: string; categoryId: string }
   }>>([])
 
   // Editor ref for applying marks
@@ -174,7 +182,7 @@ export default function WorkspacePage() {
     setTrackModalOpen(true)
   }, [])
 
-  // Handle track confirmation
+  // Handle track confirmation (verification)
   const handleTrackConfirm = useCallback((config: { source: string; cadence: string; category: string }) => {
     if (!pendingTrackRange) return
     
@@ -194,6 +202,7 @@ export default function WorkspacePage() {
       id: claimId,
       text: pendingTrackText,
       status: 'pending' as const,
+      type: 'verify' as const,
       source: config.source,
       cadence: config.cadence,
       category: config.category,
@@ -210,6 +219,52 @@ export default function WorkspacePage() {
     // Select the new claim in the panel
     setSelectedClaimId(claimId)
   }, [pendingTrackText, pendingTrackRange])
+
+  // Handle signal selection from editor
+  const handleSignalSelection = useCallback((text: string, from: number, to: number, context: string) => {
+    setPendingSignalText(text)
+    setPendingSignalRange({ from, to })
+    setSignalModalOpen(true)
+  }, [])
+
+  // Handle signal confirmation
+  const handleSignalConfirm = useCallback((signal: { categoryId: string; signalId: string; signalName: string }) => {
+    if (!pendingSignalRange) return
+    
+    // Generate a new claim ID
+    const claimId = generateClaimId()
+    
+    // Apply the tracked mark to the editor
+    editorRef.current?.applyTrackedMark(
+      pendingSignalRange.from, 
+      pendingSignalRange.to, 
+      claimId,
+      { category: signal.categoryId }
+    )
+    
+    // Add to tracked claims list as a signal type
+    const newClaim = {
+      id: claimId,
+      text: pendingSignalText,
+      status: 'pending' as const,
+      type: 'signal' as const,
+      source: 'web',
+      cadence: 'daily',
+      category: signal.categoryId,
+      lastChecked: 'Just now',
+      signal: { name: signal.signalName, categoryId: signal.categoryId },
+    }
+    setTrackedClaims(prev => [newClaim, ...prev])
+    
+    console.log('Created signal:', newClaim)
+    
+    setSignalModalOpen(false)
+    setPendingSignalText('')
+    setPendingSignalRange(null)
+    
+    // Select the new claim in the panel
+    setSelectedClaimId(claimId)
+  }, [pendingSignalText, pendingSignalRange])
 
   // Handle claim click from editor
   const handleClaimClick = useCallback((claimId: string) => {
@@ -244,6 +299,7 @@ export default function WorkspacePage() {
         <Editor 
           ref={editorRef}
           onTrackSelection={handleTrackSelection}
+          onSignalSelection={handleSignalSelection}
           onClaimClick={handleClaimClick}
           onClaimHover={handleClaimHover}
         />
@@ -268,6 +324,19 @@ export default function WorkspacePage() {
             setTrackModalOpen(false)
             setPendingTrackText('')
             setPendingTrackRange(null)
+          }}
+        />
+      )}
+
+      {/* Signal Modal */}
+      {signalModalOpen && (
+        <SignalModal
+          text={pendingSignalText}
+          onConfirm={handleSignalConfirm}
+          onCancel={() => {
+            setSignalModalOpen(false)
+            setPendingSignalText('')
+            setPendingSignalRange(null)
           }}
         />
       )}

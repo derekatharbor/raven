@@ -18,6 +18,8 @@ import {
   Code,
   X,
   Crosshair,
+  Shield,
+  Radar,
   Clock,
 } from 'lucide-react'
 import { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
@@ -81,6 +83,7 @@ const TrackedClaim = Mark.create({
 interface EditorProps {
   content?: string | object
   onTrackSelection?: (text: string, from: number, to: number, context: string) => void
+  onSignalSelection?: (text: string, from: number, to: number, context: string) => void
   onClaimClick?: (claimId: string) => void
   onClaimHover?: (claimId: string | null) => void
   onContentChange?: (content: any) => void
@@ -91,7 +94,7 @@ export interface EditorRef {
   getContent: () => any
 }
 
-const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick, onClaimHover, onContentChange }, ref) => {
+const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onSignalSelection, onClaimClick, onClaimHover, onContentChange }, ref) => {
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null)
@@ -259,6 +262,23 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
       onTrackSelection?.(text, from, to, context)
     }
   }, [editor, onTrackSelection])
+
+  const handleSignal = useCallback(() => {
+    if (!editor) return
+    
+    const { from, to } = editor.state.selection
+    const text = editor.state.doc.textBetween(from, to, ' ')
+    
+    if (text.trim()) {
+      // Capture surrounding context (±100 chars)
+      const docSize = editor.state.doc.content.size
+      const contextStart = Math.max(0, from - 100)
+      const contextEnd = Math.min(docSize, to + 100)
+      const context = editor.state.doc.textBetween(contextStart, contextEnd, ' ')
+      
+      onSignalSelection?.(text, from, to, context)
+    }
+  }, [editor, onSignalSelection])
 
   const handleSetLink = useCallback(() => {
     if (!editor || !linkUrl) return
@@ -473,13 +493,22 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
               
               <div className="w-px h-5 bg-gray-300 mx-1" />
               
-              {/* Track - the key feature! */}
+              {/* Verify - integrity tracking */}
               <button
                 onClick={handleTrack}
-                className="p-1.5 rounded cursor-pointer transition-colors text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
-                title="Track this selection"
+                className="p-1.5 rounded cursor-pointer transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                title="Verify this claim"
               >
-                <Crosshair className="w-4 h-4" strokeWidth={2} />
+                <Shield className="w-4 h-4" strokeWidth={2} />
+              </button>
+              
+              {/* Signal - intelligence tracking */}
+              <button
+                onClick={handleSignal}
+                className="p-1.5 rounded cursor-pointer transition-colors text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                title="Add signal for this text"
+              >
+                <Radar className="w-4 h-4" strokeWidth={2} />
               </button>
             </>
           )}
