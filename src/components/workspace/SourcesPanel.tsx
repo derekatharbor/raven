@@ -3,7 +3,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Filter, Database, Plus, FileText, Mic, BarChart3, FileCheck, Radio } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronLeft, Filter, Database, Plus, FileText, Mic, BarChart3, FileCheck, Radio } from 'lucide-react'
 
 // Document type config
 const DOC_TYPES = {
@@ -62,12 +62,14 @@ const MOCK_SOURCES = [
 interface SourcesPanelProps {
   activeSourceId?: string | null
   onSourceSelect?: (sourceId: string) => void
+  onCollapse?: () => void
   width?: number
 }
 
 export default function SourcesPanel({
   activeSourceId,
   onSourceSelect,
+  onCollapse,
   width = 280,
 }: SourcesPanelProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['connected', 'uploaded']))
@@ -93,9 +95,19 @@ export default function SourcesPanel({
             <Database className="w-4 h-4 text-gray-700" strokeWidth={1.5} />
             <span className="text-sm font-semibold text-gray-900">Sources</span>
           </div>
-          <button className="p-1 rounded hover:bg-gray-100 cursor-pointer transition-colors">
-            <Plus className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button className="p-1 rounded hover:bg-gray-100 cursor-pointer transition-colors">
+              <Plus className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
+            </button>
+            {onCollapse && (
+              <button 
+                onClick={onCollapse}
+                className="p-1 rounded hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

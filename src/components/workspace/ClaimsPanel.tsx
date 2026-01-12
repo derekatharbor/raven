@@ -98,6 +98,7 @@ interface ClaimData {
 interface ClaimsPanelProps {
   claims?: ClaimData[]
   selectedClaimId?: string | null
+  hoveredClaimId?: string | null
   onClaimSelect?: (claimId: string | null) => void
   onClose?: () => void
 }
@@ -105,6 +106,7 @@ interface ClaimsPanelProps {
 export default function ClaimsPanel({
   claims = [],
   selectedClaimId,
+  hoveredClaimId,
   onClaimSelect,
   onClose,
 }: ClaimsPanelProps) {
@@ -146,6 +148,7 @@ export default function ClaimsPanel({
               <ClaimCard 
                 key={claim.id} 
                 claim={claim} 
+                isHovered={claim.id === hoveredClaimId}
                 onClick={() => onClaimSelect?.(claim.id)}
               />
             ))}
@@ -163,13 +166,14 @@ export default function ClaimsPanel({
 }
 
 // Claim card in the list view
-function ClaimCard({ claim, onClick }: { claim: typeof MOCK_CLAIMS[0]; onClick: () => void }) {
+function ClaimCard({ claim, isHovered, onClick }: { claim: typeof MOCK_CLAIMS[0]; isHovered?: boolean; onClick: () => void }) {
   const category = CATEGORY_OPTIONS.find(c => c.value === claim.category)
   
   const statusConfig = {
     verified: { icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50', label: 'Verified' },
     stale: { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50', label: 'Stale' },
     attention: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50', label: 'Needs Attention' },
+    pending: { icon: Circle, color: 'text-gray-400', bg: 'bg-gray-50', label: 'Pending' },
   }[claim.status] || { icon: Circle, color: 'text-gray-400', bg: 'bg-gray-50', label: 'Unknown' }
   
   const StatusIcon = statusConfig.icon
@@ -177,7 +181,13 @@ function ClaimCard({ claim, onClick }: { claim: typeof MOCK_CLAIMS[0]; onClick: 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+      className={`
+        w-full text-left p-3 bg-white border rounded-lg transition-all cursor-pointer group
+        ${isHovered 
+          ? 'border-cyan-300 bg-cyan-50/50 shadow-sm' 
+          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+        }
+      `}
     >
       {/* Top row: ID + Status */}
       <div className="flex items-center justify-between mb-2">

@@ -119,10 +119,10 @@ function TrackClaimModal({
 export default function WorkspacePage() {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null)
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null)
+  const [hoveredClaimId, setHoveredClaimId] = useState<string | null>(null)
   
-  // Panel visibility
+  // Panel visibility - only left panel is collapsible
   const [leftPanelOpen, setLeftPanelOpen] = useState(true)
-  const [rightPanelOpen, setRightPanelOpen] = useState(true)
   
   // Track modal state
   const [trackModalOpen, setTrackModalOpen] = useState(false)
@@ -183,76 +183,59 @@ export default function WorkspacePage() {
     setPendingTrackText('')
     setPendingTrackRange(null)
     
-    // Open right panel and select the new claim
-    setRightPanelOpen(true)
+    // Select the new claim in the panel
     setSelectedClaimId(claimId)
   }, [pendingTrackText, pendingTrackRange])
 
   // Handle claim click from editor
   const handleClaimClick = useCallback((claimId: string) => {
     setSelectedClaimId(claimId)
-    setRightPanelOpen(true)
+  }, [])
+
+  // Handle claim hover from editor
+  const handleClaimHover = useCallback((claimId: string | null) => {
+    setHoveredClaimId(claimId)
   }, [])
 
   return (
     <div className="h-full flex">
-      {/* Left Panel - Sources */}
+      {/* Left Panel - Sources (collapsible) */}
       {leftPanelOpen ? (
-        <div className="w-[280px] flex-shrink-0 relative">
+        <div className="w-[280px] flex-shrink-0">
           <SourcesPanel 
             activeSourceId={activeSourceId}
             onSourceSelect={setActiveSourceId}
+            onCollapse={() => setLeftPanelOpen(false)}
           />
-          {/* Collapse button */}
-          <button 
-            onClick={() => setLeftPanelOpen(false)}
-            className="absolute top-3 -right-3 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 cursor-pointer z-10"
-          >
-            <ChevronLeft className="w-3 h-3 text-gray-500" strokeWidth={2} />
-          </button>
         </div>
       ) : (
         <button 
           onClick={() => setLeftPanelOpen(true)}
-          className="w-8 flex-shrink-0 flex items-center justify-center border-r border-gray-200 hover:bg-gray-50 cursor-pointer"
+          className="w-10 flex-shrink-0 flex items-center justify-center border-r border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
         >
           <ChevronRight className="w-4 h-4 text-gray-400" strokeWidth={2} />
         </button>
       )}
 
       {/* Center - Editor */}
-      <div className="flex-1 min-w-0 border-x border-gray-200">
+      <div className="flex-1 min-w-0 border-r border-gray-200">
         <Editor 
           ref={editorRef}
           onTrackSelection={handleTrackSelection}
           onClaimClick={handleClaimClick}
+          onClaimHover={handleClaimHover}
         />
       </div>
 
-      {/* Right Panel - Claims */}
-      {rightPanelOpen ? (
-        <div className="w-[300px] flex-shrink-0 relative">
-          {/* Collapse button */}
-          <button 
-            onClick={() => setRightPanelOpen(false)}
-            className="absolute top-3 -left-3 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 cursor-pointer z-10"
-          >
-            <ChevronRight className="w-3 h-3 text-gray-500" strokeWidth={2} />
-          </button>
-          <ClaimsPanel 
-            claims={trackedClaims}
-            selectedClaimId={selectedClaimId}
-            onClaimSelect={setSelectedClaimId}
-          />
-        </div>
-      ) : (
-        <button 
-          onClick={() => setRightPanelOpen(true)}
-          className="w-8 flex-shrink-0 flex items-center justify-center border-l border-gray-200 hover:bg-gray-50 cursor-pointer"
-        >
-          <ChevronLeft className="w-4 h-4 text-gray-400" strokeWidth={2} />
-        </button>
-      )}
+      {/* Right Panel - Claims (always visible) */}
+      <div className="w-[300px] flex-shrink-0">
+        <ClaimsPanel 
+          claims={trackedClaims}
+          selectedClaimId={selectedClaimId}
+          hoveredClaimId={hoveredClaimId}
+          onClaimSelect={setSelectedClaimId}
+        />
+      </div>
 
       {/* Track Modal */}
       {trackModalOpen && (

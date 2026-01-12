@@ -82,13 +82,14 @@ interface EditorProps {
   content?: string
   onTrackSelection?: (text: string, from: number, to: number) => void
   onClaimClick?: (claimId: string) => void
+  onClaimHover?: (claimId: string | null) => void
 }
 
 export interface EditorRef {
   applyTrackedMark: (from: number, to: number, claimId: string, config?: { source?: string; cadence?: string; category?: string }) => void
 }
 
-const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick }, ref) => {
+const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick, onClaimHover }, ref) => {
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null)
@@ -171,6 +172,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
               source,
               cadence,
             })
+            
+            // Notify parent to highlight corresponding card
+            onClaimHover?.(claimId)
           }
           return false
         },
@@ -178,6 +182,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
           const target = event.target as HTMLElement
           if (target.classList.contains('tracked-claim-wrapper')) {
             setTooltip(null)
+            onClaimHover?.(null)
           }
           return false
         },
