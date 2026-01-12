@@ -12,11 +12,12 @@ export default function DashboardLayout({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
-  // Listen for sidebar toggle events
   useEffect(() => {
     const checkSidebarState = () => {
-      const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
-      setSidebarCollapsed(collapsed)
+      if (typeof window !== 'undefined') {
+        const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
+        setSidebarCollapsed(collapsed)
+      }
     }
 
     checkSidebarState()
@@ -30,21 +31,16 @@ export default function DashboardLayout({
       className="flex min-h-screen"
       style={{ backgroundColor: '#FBF9F7' }}
     >
-      <Sidebar />
+      {/* Sidebar - part of flex, not fixed */}
+      <Sidebar collapsed={sidebarCollapsed} />
       
-      <main 
-        className={`
-          flex-1 relative p-3 pl-0
-          transition-[margin] duration-300 
-          ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}
-        `}
-        style={{ backgroundColor: '#FBF9F7' }}
-      >
+      {/* Main content - padding on top and left only, bleeds right and bottom */}
+      <main className="flex-1 pt-3 pl-3 min-w-0">
         <div 
-          className="min-h-[calc(100vh-24px)] bg-white overflow-hidden"
+          className="min-h-[calc(100vh-12px)] bg-white overflow-hidden relative"
           style={{ 
-            borderRadius: '12px',
-            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(0, 0, 0, 0.04)',
+            borderTopLeftRadius: '12px',
+            boxShadow: '-4px -2px 24px rgba(0, 0, 0, 0.08)',
           }}
         >
           {children}

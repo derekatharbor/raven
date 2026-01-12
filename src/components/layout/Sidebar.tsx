@@ -19,12 +19,12 @@ import {
   AlertCircle,
 } from 'lucide-react'
 
-// Mock data - will come from API later
+// Mock data
 const RECENT_REPORTS = [
-  { id: '1', name: 'Taiwan Strait Analysis', projectId: 'p1', updatedAt: 'today' },
-  { id: '2', name: 'Q4 Revenue Model', projectId: 'p2', updatedAt: 'today' },
-  { id: '3', name: 'Competitor Teardown', projectId: 'p1', updatedAt: 'yesterday' },
-  { id: '4', name: 'Market Entry Memo', projectId: 'p3', updatedAt: 'yesterday' },
+  { id: '1', name: 'Taiwan Strait Analysis', updatedAt: 'today' },
+  { id: '2', name: 'Q4 Revenue Model', updatedAt: 'today' },
+  { id: '3', name: 'Competitor Teardown', updatedAt: 'yesterday' },
+  { id: '4', name: 'Market Entry Memo', updatedAt: 'yesterday' },
 ]
 
 const PROJECTS = [
@@ -57,13 +57,16 @@ const colors = {
   bg: '#FBF9F7',
   text: '#1a1a1a',
   textMuted: '#71717a',
-  border: 'rgba(0,0,0,0.08)',
-  hover: 'rgba(0,0,0,0.06)',
-  accent: '#5BDFFA',
+  border: 'rgba(0,0,0,0.06)',
+  hover: 'rgba(0,0,0,0.04)',
   alert: '#EF4444',
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  collapsed?: boolean
+}
+
+export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps) {
   const pathname = usePathname()
   
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -75,6 +78,13 @@ export default function Sidebar() {
   
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['recent', 'projects']))
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
+
+  // Sync with controlled prop if provided
+  useEffect(() => {
+    if (controlledCollapsed !== undefined) {
+      setIsCollapsed(controlledCollapsed)
+    }
+  }, [controlledCollapsed])
 
   const toggleCollapse = () => {
     const newState = !isCollapsed
@@ -103,367 +113,303 @@ export default function Sidebar() {
 
   const isActive = (href: string) => pathname === href
 
-  // Group recent reports by date
   const todayReports = RECENT_REPORTS.filter(r => r.updatedAt === 'today')
   const yesterdayReports = RECENT_REPORTS.filter(r => r.updatedAt === 'yesterday')
 
   return (
     <aside 
       className={`
-        hidden lg:flex fixed left-0 top-0 h-screen 
-        border-r flex-col transition-all duration-300 z-[100]
-        ${isCollapsed ? 'w-20' : 'w-60 overflow-hidden'}
+        h-screen flex flex-col flex-shrink-0
+        transition-all duration-300 ease-in-out
+        ${isCollapsed ? 'w-16' : 'w-56'}
       `}
-      style={{
-        backgroundColor: colors.bg,
-        borderColor: colors.border,
-      }}
+      style={{ backgroundColor: colors.bg }}
     >
       {/* Header */}
-      <div 
-        className="px-4 py-3 border-b flex items-center justify-between"
-        style={{ borderColor: colors.border }}
-      >
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <img 
-              src="/images/harbor-dark-logo.png" 
-              alt="Harbor" 
-              className="w-7 h-7 object-contain"
-            />
-            <span 
-              className="text-[15px] font-semibold tracking-tight"
-              style={{ color: colors.text }}
+      <div className="px-3 py-4 flex items-center justify-between">
+        {!isCollapsed ? (
+          <>
+            <div className="flex items-center gap-2">
+              <img 
+                src="/images/harbor-dark-logo.png" 
+                alt="Harbor" 
+                className="w-6 h-6 object-contain"
+              />
+              <span className="text-sm font-semibold" style={{ color: colors.text }}>
+                Harbor
+              </span>
+            </div>
+            <button
+              onClick={toggleCollapse}
+              className="p-1 rounded-md cursor-pointer transition-colors"
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              Harbor
-            </span>
-          </div>
-        )}
-        
-        {isCollapsed && (
+              <ChevronLeft className="w-4 h-4" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+            </button>
+          </>
+        ) : (
           <button
             onClick={toggleCollapse}
-            className="w-10 h-10 flex items-center justify-center mx-auto group relative cursor-pointer"
-            title="Expand sidebar"
+            className="w-full flex items-center justify-center py-1 group cursor-pointer"
           >
-            <img 
-              src="/images/harbor-dark-logo.png" 
-              alt="Harbor" 
-              className="w-7 h-7 object-contain group-hover:opacity-0 transition-opacity"
-            />
-            <ChevronRight 
-              className="w-5 h-5 absolute opacity-0 group-hover:opacity-100 transition-opacity" 
-              style={{ color: colors.text }}
-              strokeWidth={1.5}
-            />
-          </button>
-        )}
-        
-        {!isCollapsed && (
-          <button
-            onClick={toggleCollapse}
-            className="p-1.5 rounded-lg transition-colors cursor-pointer"
-            style={{ color: colors.textMuted }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            title="Collapse sidebar"
-          >
-            <ChevronLeft className="w-5 h-5" strokeWidth={1.5} />
+            <div className="relative">
+              <img 
+                src="/images/harbor-dark-logo.png" 
+                alt="Harbor" 
+                className="w-6 h-6 object-contain group-hover:opacity-0 transition-opacity"
+              />
+              <ChevronRight 
+                className="w-4 h-4 absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity" 
+                style={{ color: colors.text }}
+                strokeWidth={1.5}
+              />
+            </div>
           </button>
         )}
       </div>
 
       {/* Main nav */}
-      <div className="px-4 py-3 border-b" style={{ borderColor: colors.border }}>
-        <Link
-          href="/overview"
-          className={`
-            flex items-center rounded-lg mb-1 transition-colors cursor-pointer relative group
-            ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            ${isActive('/overview') ? 'bg-white shadow-sm' : ''}
-          `}
-          onMouseEnter={(e) => !isActive('/overview') && (e.currentTarget.style.backgroundColor = colors.hover)}
-          onMouseLeave={(e) => !isActive('/overview') && (e.currentTarget.style.backgroundColor = 'transparent')}
-        >
-          <LayoutDashboard className="w-5 h-5 flex-shrink-0" style={{ color: colors.text }} strokeWidth={1.5} />
-          {!isCollapsed && <span className="text-sm" style={{ color: colors.text }}>Overview</span>}
-          {isCollapsed && (
-            <div 
-              className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-              style={{ backgroundColor: 'white', color: colors.text, border: `1px solid ${colors.border}` }}
-            >
-              Overview
-            </div>
-          )}
-        </Link>
-        <Link
-          href="/search"
-          className={`
-            flex items-center rounded-lg mb-1 transition-colors cursor-pointer relative group
-            ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            ${isActive('/search') ? 'bg-white shadow-sm' : ''}
-          `}
-          onMouseEnter={(e) => !isActive('/search') && (e.currentTarget.style.backgroundColor = colors.hover)}
-          onMouseLeave={(e) => !isActive('/search') && (e.currentTarget.style.backgroundColor = 'transparent')}
-        >
-          <Search className="w-5 h-5 flex-shrink-0" style={{ color: colors.text }} strokeWidth={1.5} />
-          {!isCollapsed && <span className="text-sm" style={{ color: colors.text }}>Search</span>}
-          {isCollapsed && (
-            <div 
-              className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-              style={{ backgroundColor: 'white', color: colors.text, border: `1px solid ${colors.border}` }}
-            >
-              Search
-            </div>
-          )}
-        </Link>
+      <div className="px-2 pb-2">
+        <NavItem 
+          href="/overview" 
+          icon={LayoutDashboard} 
+          label="Overview" 
+          isActive={isActive('/overview')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem 
+          href="/search" 
+          icon={Search} 
+          label="Search" 
+          isActive={isActive('/search')}
+          isCollapsed={isCollapsed}
+        />
       </div>
 
-      {/* Scrollable content - only when expanded */}
-      <nav className={`flex-1 ${isCollapsed ? '' : 'overflow-y-auto overflow-x-hidden'}`}>
-        
-        {/* Recent Section - only when expanded */}
-        {!isCollapsed && (
-          <div className="px-4 pt-4 pb-2">
-            <button
-              onClick={() => toggleSection('recent')}
-              className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium uppercase tracking-wider cursor-pointer hover:opacity-70"
-              style={{ color: colors.textMuted }}
-            >
-              {expandedSections.has('recent') ? (
-                <ChevronDown className="w-3 h-3" strokeWidth={2} />
-              ) : (
-                <ChevronRight className="w-3 h-3" strokeWidth={2} />
-              )}
-              Recent
-            </button>
-            
-            {expandedSections.has('recent') && (
-              <div className="mt-1">
-                {todayReports.length > 0 && (
-                  <>
-                    <div className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                      Today
-                    </div>
-                    {todayReports.map(report => (
-                      <Link
-                        key={report.id}
-                        href={`/report/${report.id}`}
-                        className={`
-                          flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer
-                          ${isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : ''}
-                        `}
-                        onMouseEnter={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = colors.hover)}
-                        onMouseLeave={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = 'transparent')}
-                      >
-                        <FileText className="w-4 h-4 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-                        <span className="text-sm truncate" style={{ color: colors.text }}>{report.name}</span>
-                      </Link>
-                    ))}
-                  </>
-                )}
-                {yesterdayReports.length > 0 && (
-                  <>
-                    <div className="px-3 py-1 mt-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                      Yesterday
-                    </div>
-                    {yesterdayReports.map(report => (
-                      <Link
-                        key={report.id}
-                        href={`/report/${report.id}`}
-                        className={`
-                          flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer
-                          ${isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : ''}
-                        `}
-                        onMouseEnter={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = colors.hover)}
-                        onMouseLeave={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = 'transparent')}
-                      >
-                        <FileText className="w-4 h-4 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-                        <span className="text-sm truncate" style={{ color: colors.text }}>{report.name}</span>
-                      </Link>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Projects Section - only when expanded */}
-        {!isCollapsed && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center justify-between px-3 py-1.5">
+      {/* Scrollable content */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2">
+        {!isCollapsed ? (
+          <>
+            {/* Recent Section */}
+            <div className="py-2">
               <button
-                onClick={() => toggleSection('projects')}
-                className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider cursor-pointer hover:opacity-70"
+                onClick={() => toggleSection('recent')}
+                className="w-full flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider cursor-pointer"
                 style={{ color: colors.textMuted }}
               >
-                {expandedSections.has('projects') ? (
+                {expandedSections.has('recent') ? (
                   <ChevronDown className="w-3 h-3" strokeWidth={2} />
                 ) : (
                   <ChevronRight className="w-3 h-3" strokeWidth={2} />
                 )}
-                Projects
+                Recent
               </button>
-              <button 
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-black/5 cursor-pointer"
-                title="New project"
-              >
-                <Plus className="w-4 h-4" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-              </button>
+              
+              {expandedSections.has('recent') && (
+                <div className="mt-1 space-y-0.5">
+                  {todayReports.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[9px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                        Today
+                      </div>
+                      {todayReports.map(report => (
+                        <ReportLink key={report.id} report={report} isActive={isActive(`/report/${report.id}`)} />
+                      ))}
+                    </>
+                  )}
+                  {yesterdayReports.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 mt-1 text-[9px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                        Yesterday
+                      </div>
+                      {yesterdayReports.map(report => (
+                        <ReportLink key={report.id} report={report} isActive={isActive(`/report/${report.id}`)} />
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-            
-            {expandedSections.has('projects') && (
-              <div className="mt-1">
-                {PROJECTS.map(project => {
-                  const totalAlerts = project.reports.reduce((sum, r) => sum + r.alerts, 0)
-                  const isExpanded = expandedProjects.has(project.id)
-                  
-                  return (
-                    <div key={project.id}>
-                      <button
-                        onClick={() => toggleProject(project.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer"
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="w-3 h-3 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={2} />
-                        ) : (
-                          <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={2} />
-                        )}
-                        <FolderOpen className="w-4 h-4 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-                        <span className="text-sm truncate flex-1 text-left" style={{ color: colors.text }}>
-                          {project.name}
-                        </span>
-                        {totalAlerts > 0 && (
-                          <span 
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: '#FEE2E2', color: colors.alert }}
-                          >
-                            {totalAlerts}
-                          </span>
-                        )}
-                      </button>
-                      
-                      {isExpanded && (
-                        <div className="ml-5 border-l pl-3 mt-1" style={{ borderColor: colors.border }}>
-                          {project.reports.map(report => (
-                            <Link
-                              key={report.id}
-                              href={`/report/${report.id}`}
-                              className={`
-                                flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors cursor-pointer
-                                ${isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : ''}
-                              `}
-                              onMouseEnter={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = colors.hover)}
-                              onMouseLeave={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = 'transparent')}
-                            >
-                              <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-                              <span className="text-xs truncate flex-1" style={{ color: colors.text }}>
-                                {report.name}
-                              </span>
-                              {report.alerts > 0 && (
-                                <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color: colors.alert }} strokeWidth={2} />
-                              )}
-                            </Link>
-                          ))}
-                          <Link
-                            href={`/project/${project.id}`}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                          >
-                            <span className="text-xs" style={{ color: colors.textMuted }}>View project →</span>
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Collapsed state icons */}
-        {isCollapsed && (
-          <div className="px-4 py-4">
-            <button
-              className="w-full flex items-center justify-center py-3 rounded-lg transition-colors cursor-pointer relative group"
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <FileText className="w-5 h-5" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-              <div 
-                className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-                style={{ backgroundColor: 'white', color: colors.text, border: `1px solid ${colors.border}` }}
-              >
-                Recent Reports
+            {/* Projects Section */}
+            <div className="py-2">
+              <div className="flex items-center justify-between px-2 py-1">
+                <button
+                  onClick={() => toggleSection('projects')}
+                  className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider cursor-pointer"
+                  style={{ color: colors.textMuted }}
+                >
+                  {expandedSections.has('projects') ? (
+                    <ChevronDown className="w-3 h-3" strokeWidth={2} />
+                  ) : (
+                    <ChevronRight className="w-3 h-3" strokeWidth={2} />
+                  )}
+                  Projects
+                </button>
+                <button className="p-0.5 rounded cursor-pointer hover:bg-black/5">
+                  <Plus className="w-3.5 h-3.5" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+                </button>
               </div>
-            </button>
-            <button
-              className="w-full flex items-center justify-center py-3 rounded-lg transition-colors cursor-pointer relative group"
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <FolderOpen className="w-5 h-5" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-              <div 
-                className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-                style={{ backgroundColor: 'white', color: colors.text, border: `1px solid ${colors.border}` }}
-              >
-                Projects
-              </div>
-            </button>
+              
+              {expandedSections.has('projects') && (
+                <div className="mt-1 space-y-0.5">
+                  {PROJECTS.map(project => {
+                    const totalAlerts = project.reports.reduce((sum, r) => sum + r.alerts, 0)
+                    const isExpanded = expandedProjects.has(project.id)
+                    
+                    return (
+                      <div key={project.id}>
+                        <button
+                          onClick={() => toggleProject(project.id)}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors"
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="w-3 h-3" style={{ color: colors.textMuted }} strokeWidth={2} />
+                          ) : (
+                            <ChevronRight className="w-3 h-3" style={{ color: colors.textMuted }} strokeWidth={2} />
+                          )}
+                          <FolderOpen className="w-3.5 h-3.5" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+                          <span className="text-xs flex-1 text-left truncate" style={{ color: colors.text }}>
+                            {project.name}
+                          </span>
+                          {totalAlerts > 0 && (
+                            <span 
+                              className="text-[9px] font-medium px-1.5 py-0.5 rounded-full"
+                              style={{ backgroundColor: '#FEE2E2', color: colors.alert }}
+                            >
+                              {totalAlerts}
+                            </span>
+                          )}
+                        </button>
+                        
+                        {isExpanded && (
+                          <div className="ml-4 pl-2 border-l mt-0.5 space-y-0.5" style={{ borderColor: colors.border }}>
+                            {project.reports.map(report => (
+                              <Link
+                                key={report.id}
+                                href={`/report/${report.id}`}
+                                className={`
+                                  flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-colors
+                                  ${isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : ''}
+                                `}
+                                onMouseEnter={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = colors.hover)}
+                                onMouseLeave={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = 'transparent')}
+                              >
+                                <FileText className="w-3 h-3" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+                                <span className="text-[11px] flex-1 truncate" style={{ color: colors.text }}>
+                                  {report.name}
+                                </span>
+                                {report.alerts > 0 && (
+                                  <AlertCircle className="w-3 h-3" style={{ color: colors.alert }} strokeWidth={2} />
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Collapsed icons */
+          <div className="py-2 space-y-1">
+            <CollapsedIcon icon={FileText} label="Recent" />
+            <CollapsedIcon icon={FolderOpen} label="Projects" />
           </div>
         )}
       </nav>
 
       {/* Bottom nav */}
-      <div className="px-4 py-3 border-t" style={{ borderColor: colors.border }}>
-        <Link
-          href="/sources"
-          className={`
-            flex items-center rounded-lg mb-1 transition-colors cursor-pointer relative group
-            ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            ${isActive('/sources') ? 'bg-white shadow-sm' : ''}
-          `}
-          onMouseEnter={(e) => !isActive('/sources') && (e.currentTarget.style.backgroundColor = colors.hover)}
-          onMouseLeave={(e) => !isActive('/sources') && (e.currentTarget.style.backgroundColor = 'transparent')}
-        >
-          <Database className="w-5 h-5 flex-shrink-0" style={{ color: colors.text }} strokeWidth={1.5} />
-          {!isCollapsed && <span className="text-sm" style={{ color: colors.text }}>Sources</span>}
-          {isCollapsed && (
-            <div 
-              className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-              style={{ backgroundColor: 'white', color: colors.text, border: `1px solid ${colors.border}` }}
-            >
-              Sources
-            </div>
-          )}
-        </Link>
-        <Link
-          href="/settings"
-          className={`
-            flex items-center rounded-lg mb-1 transition-colors cursor-pointer relative group
-            ${isCollapsed ? 'py-3 justify-center' : 'gap-3 py-2.5 px-3'}
-            ${isActive('/settings') ? 'bg-white shadow-sm' : ''}
-          `}
-          onMouseEnter={(e) => !isActive('/settings') && (e.currentTarget.style.backgroundColor = colors.hover)}
-          onMouseLeave={(e) => !isActive('/settings') && (e.currentTarget.style.backgroundColor = 'transparent')}
-        >
-          <Settings className="w-5 h-5 flex-shrink-0" style={{ color: colors.text }} strokeWidth={1.5} />
-          {!isCollapsed && <span className="text-sm" style={{ color: colors.text }}>Settings</span>}
-          {isCollapsed && (
-            <div 
-              className="absolute left-full ml-2 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-[200] shadow-lg"
-              style={{ backgroundColor: 'white', color: colors.text, border: `1px solid ${colors.border}` }}
-            >
-              Settings
-            </div>
-          )}
-        </Link>
+      <div className="px-2 py-2">
+        <NavItem 
+          href="/sources" 
+          icon={Database} 
+          label="Sources" 
+          isActive={isActive('/sources')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem 
+          href="/settings" 
+          icon={Settings} 
+          label="Settings" 
+          isActive={isActive('/settings')}
+          isCollapsed={isCollapsed}
+        />
       </div>
     </aside>
+  )
+}
+
+// Sub-components
+function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
+  href: string
+  icon: any
+  label: string
+  isActive: boolean
+  isCollapsed: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`
+        flex items-center rounded-md cursor-pointer transition-colors relative group
+        ${isCollapsed ? 'justify-center p-2' : 'gap-2.5 px-2 py-1.5'}
+        ${isActive ? 'bg-white shadow-sm' : ''}
+      `}
+      onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)')}
+      onMouseLeave={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'transparent')}
+    >
+      <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: '#1a1a1a' }} strokeWidth={1.5} />
+      {!isCollapsed && <span className="text-[13px]" style={{ color: '#1a1a1a' }}>{label}</span>}
+      {isCollapsed && (
+        <div 
+          className="absolute left-full ml-2 px-2 py-1 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-md bg-white"
+          style={{ border: '1px solid rgba(0,0,0,0.06)' }}
+        >
+          {label}
+        </div>
+      )}
+    </Link>
+  )
+}
+
+function ReportLink({ report, isActive }: { report: { id: string; name: string }; isActive: boolean }) {
+  return (
+    <Link
+      href={`/report/${report.id}`}
+      className={`
+        flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors
+        ${isActive ? 'bg-white shadow-sm' : ''}
+      `}
+      onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)')}
+      onMouseLeave={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'transparent')}
+    >
+      <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#71717a' }} strokeWidth={1.5} />
+      <span className="text-xs truncate" style={{ color: '#1a1a1a' }}>{report.name}</span>
+    </Link>
+  )
+}
+
+function CollapsedIcon({ icon: Icon, label }: { icon: any; label: string }) {
+  return (
+    <button
+      className="w-full flex items-center justify-center p-2 rounded-md cursor-pointer transition-colors relative group"
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+    >
+      <Icon className="w-[18px] h-[18px]" style={{ color: '#71717a' }} strokeWidth={1.5} />
+      <div 
+        className="absolute left-full ml-2 px-2 py-1 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-md bg-white"
+        style={{ border: '1px solid rgba(0,0,0,0.06)' }}
+      >
+        {label}
+      </div>
+    </button>
   )
 }
