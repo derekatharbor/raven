@@ -115,6 +115,14 @@ export default function OverviewPage() {
   const [activeTab, setActiveTab] = useState<'hub' | 'activity'>('hub')
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['source_verified', 'prompt_tracked']))
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    // Simulate refresh - replace with actual data fetch
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsRefreshing(false)
+  }
 
   const dismissAlert = (id: string) => {
     setDismissedAlerts(prev => new Set([...prev, id]))
@@ -156,9 +164,19 @@ export default function OverviewPage() {
               }
             </p>
           </div>
-          <div className="text-right text-sm text-gray-500">
-            <div className="font-medium text-gray-900">Mon, Jan 13</div>
-            <div>Last sync: 2h ago</div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <div className="text-right text-sm text-gray-500">
+              <div className="font-medium text-gray-900">Mon, Jan 13</div>
+              <div>Last sync: 2h ago</div>
+            </div>
           </div>
         </div>
       </div>

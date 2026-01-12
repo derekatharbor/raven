@@ -353,7 +353,7 @@ function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
       {!isCollapsed && <span className="text-[13px] text-gray-900">{label}</span>}
       {isCollapsed && (
         <div 
-          className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200]"
+          className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[300]"
           style={{ 
             backgroundColor: '#FBF9F7', 
             color: '#1a1a1a',
@@ -389,7 +389,7 @@ function CollapsedIcon({ icon: Icon, label }: { icon: any; label: string }) {
     >
       <Icon className="w-[18px] h-[18px] text-gray-500" strokeWidth={1.5} />
       <div 
-        className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200]"
+        className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[300]"
         style={{ 
           backgroundColor: '#FBF9F7', 
           color: '#1a1a1a',
