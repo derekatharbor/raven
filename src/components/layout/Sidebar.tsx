@@ -108,7 +108,7 @@ export default function Sidebar() {
   if (isCollapsed) {
     return (
       <div 
-        className="fixed left-0 top-0 h-screen w-[56px] flex flex-col py-3 z-50"
+        className="h-screen w-[56px] flex flex-col py-3 flex-shrink-0"
         style={{ backgroundColor: colors.bg }}
       >
         {/* Logo */}
@@ -174,12 +174,12 @@ export default function Sidebar() {
 
   return (
     <div 
-      className="fixed left-0 top-0 h-screen w-[220px] flex flex-col py-3 z-50"
+      className="h-screen w-[220px] flex flex-col py-3 flex-shrink-0"
       style={{ backgroundColor: colors.bg }}
     >
       {/* Header */}
-      <div className="px-4 mb-4 flex items-center justify-between">
-        <button onClick={toggleCollapse} className="flex items-center gap-2 cursor-pointer">
+      <div className="px-4 mb-4">
+        <button onClick={toggleCollapse} className="flex items-center gap-2 cursor-pointer group">
           <img 
             src="/images/harbor-dark-logo.png" 
             alt="Harbor" 
@@ -191,12 +191,11 @@ export default function Sidebar() {
           >
             Harbor
           </span>
-        </button>
-        <button 
-          className="w-6 h-6 flex items-center justify-center rounded hover:bg-black/5 cursor-pointer"
-          title="New report"
-        >
-          <Plus className="w-4 h-4" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+          <ChevronRight 
+            className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity rotate-180" 
+            style={{ color: colors.text }}
+            strokeWidth={1.5}
+          />
         </button>
       </div>
 
