@@ -6,7 +6,31 @@ import { useState, useCallback, useRef } from 'react'
 import SourcesPanel from '@/components/workspace/SourcesPanel'
 import Editor, { EditorRef } from '@/components/workspace/Editor'
 import ClaimsPanel from '@/components/workspace/ClaimsPanel'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronRight, Database } from 'lucide-react'
+
+// Collapsed sources pane - shows icon, expands on hover/click
+function CollapsedSourcesPane({ onExpand }: { onExpand: () => void }) {
+  const [isHovered, setIsHovered] = useState(false)
+  
+  return (
+    <div className="h-full border-r border-gray-200 flex flex-col">
+      <div className="px-3 py-3 border-b border-gray-200">
+        <button
+          onClick={onExpand}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 cursor-pointer transition-colors"
+        >
+          {isHovered ? (
+            <ChevronRight className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
+          ) : (
+            <Database className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // Generate unique claim IDs
 let claimCounter = 5 // Start after mock data
@@ -199,23 +223,21 @@ export default function WorkspacePage() {
 
   return (
     <div className="h-full flex">
-      {/* Left Panel - Sources (collapsible) */}
-      {leftPanelOpen ? (
-        <div className="w-[280px] flex-shrink-0">
+      {/* Left Panel - Sources (collapsible with smooth transition) */}
+      <div 
+        className="flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden"
+        style={{ width: leftPanelOpen ? 280 : 48 }}
+      >
+        {leftPanelOpen ? (
           <SourcesPanel 
             activeSourceId={activeSourceId}
             onSourceSelect={setActiveSourceId}
             onCollapse={() => setLeftPanelOpen(false)}
           />
-        </div>
-      ) : (
-        <button 
-          onClick={() => setLeftPanelOpen(true)}
-          className="w-10 flex-shrink-0 flex items-center justify-center border-r border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-        >
-          <ChevronRight className="w-4 h-4 text-gray-400" strokeWidth={2} />
-        </button>
-      )}
+        ) : (
+          <CollapsedSourcesPane onExpand={() => setLeftPanelOpen(true)} />
+        )}
+      </div>
 
       {/* Center - Editor */}
       <div className="flex-1 min-w-0 border-r border-gray-200">

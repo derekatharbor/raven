@@ -182,10 +182,10 @@ function ClaimCard({ claim, isHovered, onClick }: { claim: typeof MOCK_CLAIMS[0]
     <button
       onClick={onClick}
       className={`
-        w-full text-left p-3 bg-white border rounded-lg transition-all cursor-pointer group
+        w-full text-left p-3 border rounded-lg transition-all cursor-pointer group
         ${isHovered 
-          ? 'border-cyan-300 bg-cyan-50/50 shadow-sm' 
-          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+          ? 'bg-gray-100 border-gray-300 shadow-sm' 
+          : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
         }
       `}
     >
