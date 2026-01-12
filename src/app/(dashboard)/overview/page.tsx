@@ -231,7 +231,7 @@ export default function OverviewPage() {
   )
 }
 
-// Pending Action Tab - 70/30 split
+// Pending Action Tab - columns inside a container
 function PendingActionTab({ 
   needsAttention, 
   reviewSuggested,
@@ -242,64 +242,69 @@ function PendingActionTab({
   onDismiss: (id: string) => void
 }) {
   return (
-    <div className="flex gap-6">
-      {/* Left Column - Needs Attention (70%) */}
-      <div className="flex-[7]">
-        <div className="flex items-center gap-2 mb-3">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-          <h3 className="text-sm font-medium text-gray-900">Needs Attention</h3>
-          <span className="text-xs text-gray-400">Source-verified</span>
+    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+      <div className="flex gap-6">
+        {/* Left Column - Needs Attention */}
+        <div className="flex-[7]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <h3 className="text-sm font-medium text-gray-700">Needs Attention</h3>
+            <span className="text-xs text-gray-400">{needsAttention.length}</span>
+          </div>
+          
+          <div className="space-y-3">
+            {needsAttention.length > 0 ? (
+              needsAttention.map(item => (
+                <ActionCard key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
+              ))
+            ) : (
+              <div className="p-6 text-center text-gray-400 text-sm bg-white rounded-lg border border-gray-200">
+                All caught up!
+              </div>
+            )}
+          </div>
         </div>
-        
-        <div className="space-y-3">
-          {needsAttention.length > 0 ? (
-            needsAttention.map(item => (
-              <NeedsAttentionRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
-            ))
-          ) : (
-            <div className="p-8 text-center text-gray-400 text-sm border border-gray-200 rounded-lg">
-              All caught up!
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Right Column - Review Suggested (30%) */}
-      <div className="flex-[3]">
-        <div className="flex items-center gap-2 mb-3">
-          <Search className="w-4 h-4 text-amber-600" strokeWidth={2} />
-          <h3 className="text-sm font-medium text-gray-900">Review Suggested</h3>
-        </div>
-        
-        <div className="space-y-3">
-          {reviewSuggested.length > 0 ? (
-            reviewSuggested.map(item => (
-              <ReviewSuggestedRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
-            ))
-          ) : (
-            <div className="p-8 text-center text-gray-400 text-sm border border-gray-200 rounded-lg">
-              Nothing to review
-            </div>
-          )}
+        {/* Right Column - Review Suggested */}
+        <div className="flex-[3]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <h3 className="text-sm font-medium text-gray-700">Review Suggested</h3>
+            <span className="text-xs text-gray-400">{reviewSuggested.length}</span>
+          </div>
+          
+          <div className="space-y-3">
+            {reviewSuggested.length > 0 ? (
+              reviewSuggested.map(item => (
+                <ReviewCard key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
+              ))
+            ) : (
+              <div className="p-6 text-center text-gray-400 text-sm bg-white rounded-lg border border-gray-200">
+                Nothing to review
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-// Compact card for Needs Attention
-function NeedsAttentionRow({ item, onDismiss }: { 
+// Action Card - Linear style
+function ActionCard({ item, onDismiss }: { 
   item: typeof NEEDS_ATTENTION[0]
   onDismiss: () => void 
 }) {
   const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
   
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all group">
-      {/* Top row: source + timestamp + dismiss */}
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group"
+      style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
+    >
+      {/* Top row: logo + source name | ID */}
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+          <div className="w-6 h-6 rounded bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
             <img 
               src={`https://cdn.brandfetch.io/${item.sourceLogo}?c=1id1Fyz-h7an5-5KR_y`}
               alt={item.source}
@@ -309,89 +314,81 @@ function NeedsAttentionRow({ item, onDismiss }: {
               }}
             />
           </div>
-          <span className="text-xs text-gray-400">{item.source}</span>
+          <span className="text-sm text-gray-900">{item.source}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{item.updatedAgo}</span>
-          <button 
-            onClick={onDismiss}
-            className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
-          >
-            <X className="w-3 h-3" strokeWidth={2} />
-          </button>
-        </div>
+        <span className="text-xs text-gray-400">HAR-{item.id.padStart(3, '0')}</span>
       </div>
       
       {/* Title */}
-      <h4 className="text-sm font-medium text-gray-900 mb-1">{item.claim}</h4>
+      <h4 className="text-base text-gray-700 mb-3">{item.claim}</h4>
       
-      {/* Value change */}
-      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+      {/* Value change - subtle */}
+      <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
         <span className="line-through">{item.currentValue}</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-emerald-600 font-medium">{item.newValue}</span>
-        <span className="text-gray-300 mx-1">•</span>
-        <span className="truncate">{item.reportName}</span>
+        <span>→</span>
+        <span className="text-emerald-600">{item.newValue}</span>
       </div>
       
-      {/* Bottom row: badge + action */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-white text-xs text-gray-600">
-          <div 
-            className="w-2 h-2 rounded-sm"
-            style={{ backgroundColor: category.textColor }}
-          />
-          {category.label}
+      {/* Bottom row: priority bars + badge */}
+      <div className="flex items-center gap-3">
+        {/* Priority bars */}
+        <div className="flex items-end gap-0.5 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
+          <div className="w-1 h-2 bg-gray-300 rounded-sm" />
+          <div className="w-1 h-3 bg-gray-300 rounded-sm" />
+          <div className="w-1 h-4 bg-gray-300 rounded-sm" />
         </div>
         
-        <button className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 cursor-pointer transition-colors">
-          Update
-        </button>
+        {/* Category badge */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded border border-gray-200">
+          <div 
+            className="w-3 h-3 rounded"
+            style={{ backgroundColor: category.textColor }}
+          />
+          <span className="text-sm text-gray-700">{category.label}</span>
+        </div>
       </div>
     </div>
   )
 }
 
-// Compact card for Review Suggested
-function ReviewSuggestedRow({ item, onDismiss }: { 
+// Review Card - simpler version
+function ReviewCard({ item, onDismiss }: { 
   item: typeof REVIEW_SUGGESTED[0]
   onDismiss: () => void 
 }) {
   const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
   
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all group">
-      {/* Top row: timestamp + dismiss */}
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group"
+      style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
+    >
+      {/* Top row: ID */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-gray-400">{item.checkedAgo}</span>
-        <button 
-          onClick={onDismiss}
-          className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
-        >
-          <X className="w-3 h-3" strokeWidth={2} />
-        </button>
+        <span className="text-xs text-gray-400">HAR-{item.id.padStart(3, '0')}</span>
       </div>
       
       {/* Title */}
-      <h4 className="text-sm font-medium text-gray-900 mb-1">{item.claim}</h4>
+      <h4 className="text-base text-gray-700 mb-2">{item.claim}</h4>
       
       {/* Summary */}
-      <p className="text-xs text-gray-500 mb-3 line-clamp-2">{item.summary}</p>
+      <p className="text-xs text-gray-400 mb-4 line-clamp-2">{item.summary}</p>
       
-      {/* Bottom row: badge + action */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-white text-xs text-gray-600">
-          <div 
-            className="w-2 h-2 rounded-sm"
-            style={{ backgroundColor: category.textColor }}
-          />
-          {category.label}
+      {/* Bottom row: priority bars + badge */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-end gap-0.5 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
+          <div className="w-1 h-2 bg-gray-300 rounded-sm" />
+          <div className="w-1 h-3 bg-gray-300 rounded-sm" />
+          <div className="w-1 h-4 bg-gray-300 rounded-sm" />
         </div>
         
-        <button className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
-          Review
-          <ExternalLink className="w-3 h-3" strokeWidth={2} />
-        </button>
+        <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
+          <div 
+            className="w-2.5 h-2.5 rounded"
+            style={{ backgroundColor: category.textColor }}
+          />
+          <span className="text-xs text-gray-700">{category.label}</span>
+        </div>
       </div>
     </div>
   )
