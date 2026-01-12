@@ -278,11 +278,11 @@ function DocumentRow({ doc, isActive, onClick }: DocumentRowProps) {
       <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0" />
       
       {/* Platform logo via Brandfetch */}
-      <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-gray-50 overflow-hidden">
+      <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden">
         <img 
           src={`https://cdn.brandfetch.io/${doc.domain}?c=1id1Fyz-h7an5-5KR_y`}
           alt=""
-          className="w-6 h-6 object-contain"
+          className="w-full h-full object-cover"
           onError={(e) => {
             // Fallback to first letter if logo fails
             e.currentTarget.style.display = 'none'

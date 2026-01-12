@@ -36,9 +36,10 @@ export interface Claim {
 }
 
 export default function WorkspacePage() {
-  // Pane widths
-  const [leftWidth, setLeftWidth] = useState(240)
-  const [rightWidth, setRightWidth] = useState(320)
+  // Pane widths - wider left pane by default, right pane hidden initially
+  const [leftWidth, setLeftWidth] = useState(320)
+  const [rightWidth, setRightWidth] = useState(0) // Hidden until there's content
+  const [showRightPane, setShowRightPane] = useState(false)
   
   // Documents state
   const [documents, setDocuments] = useState<UploadedDocument[]>([])
@@ -59,14 +60,15 @@ export default function WorkspacePage() {
   
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isResizingLeft) {
-      const newWidth = Math.max(180, Math.min(400, e.clientX - 68)) // 68 = sidebar width + gap
+      // Min 60 (collapsed), max 400
+      const newWidth = Math.max(60, Math.min(400, e.clientX - 68))
       setLeftWidth(newWidth)
     }
-    if (isResizingRight) {
+    if (isResizingRight && showRightPane) {
       const newWidth = Math.max(280, Math.min(500, window.innerWidth - e.clientX))
       setRightWidth(newWidth)
     }
-  }, [isResizingLeft, isResizingRight])
+  }, [isResizingLeft, isResizingRight, showRightPane])
   
   const handleMouseUp = useCallback(() => {
     setIsResizingLeft(false)
@@ -140,7 +142,7 @@ export default function WorkspacePage() {
 
   return (
     <div 
-      className="h-[calc(100vh-24px)] flex overflow-hidden select-none"
+      className="h-[calc(100vh-24px)] flex overflow-hidden select-none rounded-xl"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -153,6 +155,7 @@ export default function WorkspacePage() {
         <DocumentPanel
           activeDocumentId={activeTab}
           onDocumentSelect={handleDocumentSelect}
+          width={leftWidth}
         />
       </div>
       
@@ -179,26 +182,30 @@ export default function WorkspacePage() {
         />
       </div>
       
-      {/* Right Resize Handle */}
-      <div
-        className="w-1 hover:bg-blue-500/20 cursor-col-resize flex-shrink-0 transition-colors"
-        onMouseDown={() => setIsResizingRight(true)}
-      />
-      
-      {/* Right Pane - Intelligence Gutter */}
-      <div 
-        className="flex-shrink-0 border-l border-gray-200 overflow-hidden"
-        style={{ width: rightWidth }}
-      >
-        <IntelligenceGutter
-          claims={documentClaims}
-          contradictionClaims={contradictionClaims}
-          visibleClaimIds={visibleClaimIds}
-          activeClaimId={activeClaimId}
-          onClaimClick={handleClaimClick}
-          onClaimHover={handleClaimHover}
-        />
-      </div>
+      {/* Right Pane - Intelligence Gutter (only show when there are claims) */}
+      {showRightPane && (
+        <>
+          {/* Right Resize Handle */}
+          <div
+            className="w-1 hover:bg-blue-500/20 cursor-col-resize flex-shrink-0 transition-colors"
+            onMouseDown={() => setIsResizingRight(true)}
+          />
+          
+          <div 
+            className="flex-shrink-0 border-l border-gray-200 overflow-hidden"
+            style={{ width: rightWidth }}
+          >
+            <IntelligenceGutter
+              claims={documentClaims}
+              contradictionClaims={contradictionClaims}
+              visibleClaimIds={visibleClaimIds}
+              activeClaimId={activeClaimId}
+              onClaimClick={handleClaimClick}
+              onClaimHover={handleClaimHover}
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }
