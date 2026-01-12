@@ -58,7 +58,7 @@ const colors = {
   text: '#1a1a1a',
   textMuted: '#71717a',
   border: 'rgba(0,0,0,0.06)',
-  hover: 'rgba(0,0,0,0.04)',
+  hover: 'rgba(0,0,0,0.06)',
   accent: '#5BDFFA',
   alert: '#EF4444',
 }
@@ -134,7 +134,7 @@ export default function Sidebar() {
           <Link
             href="/overview"
             className={`w-10 h-10 flex items-center justify-center rounded-md transition-colors ${
-              isActive('/overview') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              isActive('/overview') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
             }`}
             title="Overview"
           >
@@ -143,7 +143,7 @@ export default function Sidebar() {
           <Link
             href="/search"
             className={`w-10 h-10 flex items-center justify-center rounded-md transition-colors ${
-              isActive('/search') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              isActive('/search') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
             }`}
             title="Search"
           >
@@ -152,7 +152,7 @@ export default function Sidebar() {
           <Link
             href="/sources"
             className={`w-10 h-10 flex items-center justify-center rounded-md transition-colors ${
-              isActive('/sources') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              isActive('/sources') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
             }`}
             title="Sources"
           >
@@ -161,7 +161,7 @@ export default function Sidebar() {
           <Link
             href="/settings"
             className={`w-10 h-10 flex items-center justify-center rounded-md transition-colors ${
-              isActive('/settings') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              isActive('/settings') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
             }`}
             title="Settings"
           >
@@ -205,7 +205,7 @@ export default function Sidebar() {
         <Link
           href="/overview"
           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
-            isActive('/overview') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            isActive('/overview') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
           }`}
         >
           <LayoutDashboard className="w-[18px] h-[18px]" style={{ color: colors.text }} strokeWidth={1.5} />
@@ -214,7 +214,7 @@ export default function Sidebar() {
         <Link
           href="/search"
           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
-            isActive('/search') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            isActive('/search') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
           }`}
         >
           <Search className="w-[18px] h-[18px]" style={{ color: colors.text }} strokeWidth={1.5} />
@@ -251,7 +251,7 @@ export default function Sidebar() {
                       key={report.id}
                       href={`/report/${report.id}`}
                       className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-                        isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+                        isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-black/5'
                       }`}
                     >
                       <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
@@ -270,7 +270,7 @@ export default function Sidebar() {
                       key={report.id}
                       href={`/report/${report.id}`}
                       className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-                        isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+                        isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-black/5'
                       }`}
                     >
                       <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
@@ -316,7 +316,7 @@ export default function Sidebar() {
                   <div key={project.id}>
                     <button
                       onClick={() => toggleProject(project.id)}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-colors cursor-pointer hover:bg-white/50"
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-colors cursor-pointer hover:bg-black/5"
                     >
                       {isExpanded ? (
                         <ChevronDown className="w-3 h-3 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={2} />
@@ -344,7 +344,7 @@ export default function Sidebar() {
                             key={report.id}
                             href={`/report/${report.id}`}
                             className={`flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors cursor-pointer ${
-                              isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+                              isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-black/5'
                             }`}
                           >
                             <FileText className="w-3 h-3 flex-shrink-0" style={{ color: colors.textMuted }} strokeWidth={1.5} />
@@ -358,7 +358,7 @@ export default function Sidebar() {
                         ))}
                         <Link
                           href={`/project/${project.id}`}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors cursor-pointer hover:bg-white/50"
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors cursor-pointer hover:bg-black/5"
                         >
                           <span className="text-[11px]" style={{ color: colors.textMuted }}>View project →</span>
                         </Link>
@@ -377,7 +377,7 @@ export default function Sidebar() {
         <Link
           href="/sources"
           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
-            isActive('/sources') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            isActive('/sources') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
           }`}
         >
           <Database className="w-[18px] h-[18px]" style={{ color: colors.text }} strokeWidth={1.5} />
@@ -386,7 +386,7 @@ export default function Sidebar() {
         <Link
           href="/settings"
           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors cursor-pointer ${
-            isActive('/settings') ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+            isActive('/settings') ? 'bg-white shadow-sm' : 'hover:bg-black/5'
           }`}
         >
           <Settings className="w-[18px] h-[18px]" style={{ color: colors.text }} strokeWidth={1.5} />
