@@ -377,8 +377,12 @@ function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
       {!isCollapsed && <span className="text-[13px]" style={{ color: '#1a1a1a' }}>{label}</span>}
       {isCollapsed && (
         <div 
-          className="absolute left-full ml-2 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-lg"
-          style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}
+          className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200]"
+          style={{ 
+            backgroundColor: '#FBF9F7', 
+            color: '#1a1a1a',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
+          }}
         >
           {label}
         </div>
@@ -413,8 +417,12 @@ function CollapsedIcon({ icon: Icon, label }: { icon: any; label: string }) {
     >
       <Icon className="w-[18px] h-[18px]" style={{ color: '#71717a' }} strokeWidth={1.5} />
       <div 
-        className="absolute left-full ml-2 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-lg"
-        style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}
+        className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200]"
+        style={{ 
+          backgroundColor: '#FBF9F7', 
+          color: '#1a1a1a',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
+        }}
       >
         {label}
       </div>
