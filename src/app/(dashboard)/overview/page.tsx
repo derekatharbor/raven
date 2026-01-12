@@ -301,9 +301,17 @@ function ActionCard({ item, onDismiss }: {
   const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
   
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group"
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group relative"
       style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
     >
+      {/* Dismiss on hover - top right */}
+      <button 
+        onClick={onDismiss}
+        className="absolute top-2 right-2 p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+      >
+        <X className="w-3.5 h-3.5" strokeWidth={2} />
+      </button>
+      
       {/* Top row: logo + source name | ID */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -319,7 +327,7 @@ function ActionCard({ item, onDismiss }: {
           </div>
           <span className="text-sm text-gray-900">{item.source}</span>
         </div>
-        <span className="text-xs text-gray-400">HAR-{item.id.padStart(3, '0')}</span>
+        <span className="text-xs text-gray-400 pr-6">HAR-{item.id.padStart(3, '0')}</span>
       </div>
       
       {/* Title */}
@@ -332,23 +340,30 @@ function ActionCard({ item, onDismiss }: {
         <span className="text-emerald-600">{item.newValue}</span>
       </div>
       
-      {/* Bottom row: priority bars + badge */}
-      <div className="flex items-center gap-3">
-        {/* Priority bars */}
-        <div className="flex items-end gap-0.5 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
-          <div className="w-1 h-2 bg-gray-300 rounded-sm" />
-          <div className="w-1 h-3 bg-gray-300 rounded-sm" />
-          <div className="w-1 h-4 bg-gray-300 rounded-sm" />
+      {/* Bottom row: priority bars + badge + Update button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Priority bars */}
+          <div className="flex items-end gap-0.5 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
+            <div className="w-1 h-2 bg-gray-300 rounded-sm" />
+            <div className="w-1 h-3 bg-gray-300 rounded-sm" />
+            <div className="w-1 h-4 bg-gray-300 rounded-sm" />
+          </div>
+          
+          {/* Category badge */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded border border-gray-200">
+            <div 
+              className="w-3 h-3 rounded"
+              style={{ backgroundColor: category.textColor }}
+            />
+            <span className="text-sm text-gray-700">{category.label}</span>
+          </div>
         </div>
         
-        {/* Category badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded border border-gray-200">
-          <div 
-            className="w-3 h-3 rounded"
-            style={{ backgroundColor: category.textColor }}
-          />
-          <span className="text-sm text-gray-700">{category.label}</span>
-        </div>
+        {/* Update button */}
+        <button className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 cursor-pointer transition-colors">
+          Update
+        </button>
       </div>
     </div>
   )
@@ -362,13 +377,21 @@ function ReviewCard({ item, onDismiss }: {
   const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
   
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group"
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group relative"
       style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
     >
+      {/* Dismiss on hover - top right */}
+      <button 
+        onClick={onDismiss}
+        className="absolute top-2 right-2 p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-all opacity-0 group-hover:opacity-100"
+      >
+        <X className="w-3.5 h-3.5" strokeWidth={2} />
+      </button>
+      
       {/* Top row: ID */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-gray-400">{item.checkedAgo}</span>
-        <span className="text-xs text-gray-400">HAR-{item.id.padStart(3, '0')}</span>
+        <span className="text-xs text-gray-400 pr-6">HAR-{item.id.padStart(3, '0')}</span>
       </div>
       
       {/* Title */}
@@ -377,21 +400,29 @@ function ReviewCard({ item, onDismiss }: {
       {/* Summary */}
       <p className="text-xs text-gray-400 mb-4 line-clamp-2">{item.summary}</p>
       
-      {/* Bottom row: priority bars + badge */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-end gap-0.5 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
-          <div className="w-1 h-2 bg-gray-300 rounded-sm" />
-          <div className="w-1 h-3 bg-gray-300 rounded-sm" />
-          <div className="w-1 h-4 bg-gray-300 rounded-sm" />
+      {/* Bottom row: priority bars + badge + Review button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex items-end gap-0.5 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
+            <div className="w-1 h-2 bg-gray-300 rounded-sm" />
+            <div className="w-1 h-3 bg-gray-300 rounded-sm" />
+            <div className="w-1 h-4 bg-gray-300 rounded-sm" />
+          </div>
+          
+          <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
+            <div 
+              className="w-2.5 h-2.5 rounded"
+              style={{ backgroundColor: category.textColor }}
+            />
+            <span className="text-xs text-gray-700">{category.label}</span>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
-          <div 
-            className="w-2.5 h-2.5 rounded"
-            style={{ backgroundColor: category.textColor }}
-          />
-          <span className="text-xs text-gray-700">{category.label}</span>
-        </div>
+        {/* Review button */}
+        <button className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-1.5">
+          Review
+          <ExternalLink className="w-3 h-3" strokeWidth={2} />
+        </button>
       </div>
     </div>
   )
