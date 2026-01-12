@@ -3,74 +3,69 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Filter, FileText, FileSpreadsheet, File } from 'lucide-react'
+import { ChevronDown, ChevronRight, Filter, SlidersHorizontal } from 'lucide-react'
 
-// Mock data for now
+// Mock data with domain for Brandfetch logos
 const MOCK_DOCUMENTS = [
   {
     id: '1',
     name: 'Q4 Market Analysis',
     subtitle: 'Gartner Research Report',
-    type: 'pdf' as const,
-    status: { label: 'TAM updated to $14.2B', color: '#F97316', bg: '#FFF7ED' },
+    domain: 'gartner.com',
+    status: { label: 'TAM updated to $14.2B', color: '#F97316', bg: '#F7E3C9' },
     group: 'recently_added',
   },
   {
     id: '2', 
     name: 'Competitor Landscape',
     subtitle: 'Internal Strategy Doc',
-    type: 'docx' as const,
-    status: { label: '3 claims need review', color: '#EF4444', bg: '#FEF2F2' },
+    domain: 'notion.so',
+    status: { label: '3 claims need review', color: '#EF4444', bg: '#FBD9D4' },
     group: 'recently_added',
   },
   {
     id: '3',
     name: 'Series B Financials',
     subtitle: 'PitchBook Export',
-    type: 'xlsx' as const,
-    status: { label: 'All claims verified', color: '#22C55E', bg: '#F0FDF4' },
+    domain: 'pitchbook.com',
+    status: { label: 'All claims verified', color: '#22C55E', bg: '#CFDFD5' },
     group: 'recently_added',
   },
   {
     id: '4',
     name: 'Due Diligence Memo',
     subtitle: 'Deal Team Notes',
-    type: 'pdf' as const,
-    status: { label: 'Source data changed', color: '#F97316', bg: '#FFF7ED' },
+    domain: 'google.com',
+    status: { label: 'Source data changed', color: '#F97316', bg: '#F7E3C9' },
     group: 'needs_attention',
   },
   {
     id: '5',
     name: 'Investment Committee Deck',
     subtitle: 'Q3 Review Materials',
-    type: 'pdf' as const,
-    status: { label: '2 contradictions found', color: '#EF4444', bg: '#FEF2F2' },
+    domain: 'dropbox.com',
+    status: { label: '2 contradictions found', color: '#EF4444', bg: '#FBD9D4' },
     group: 'needs_attention',
   },
 ]
 
-const FILE_TYPE_CONFIG = {
-  pdf: { color: '#DC2626', bg: '#FEF2F2', icon: FileText },
-  docx: { color: '#2563EB', bg: '#EFF6FF', icon: FileText },
-  xlsx: { color: '#16A34A', bg: '#F0FDF4', icon: FileSpreadsheet },
-  csv: { color: '#16A34A', bg: '#F0FDF4', icon: FileSpreadsheet },
-  txt: { color: '#71717A', bg: '#F4F4F5', icon: File },
-  md: { color: '#71717A', bg: '#F4F4F5', icon: File },
-}
-
 interface DocumentPanelProps {
   activeDocumentId?: string | null
   onDocumentSelect?: (docId: string) => void
+  width?: number
 }
 
 export default function DocumentPanel({
   activeDocumentId,
   onDocumentSelect,
+  width = 320,
 }: DocumentPanelProps) {
   const [activeTab, setActiveTab] = useState<'all' | 'tracking'>('all')
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['recently_added', 'needs_attention']))
   const [groupBy, setGroupBy] = useState('Recency')
   const [sortBy, setSortBy] = useState('Date added')
+
+  const isCollapsed = width < 200
 
   const toggleGroup = (group: string) => {
     setExpandedGroups(prev => {
@@ -87,13 +82,47 @@ export default function DocumentPanel({
   const recentlyAdded = MOCK_DOCUMENTS.filter(d => d.group === 'recently_added')
   const needsAttention = MOCK_DOCUMENTS.filter(d => d.group === 'needs_attention')
 
+  // Collapsed view - just show logos
+  if (isCollapsed) {
+    return (
+      <div className="h-full flex flex-col bg-white">
+        <div className="px-2 py-3 border-b border-gray-200">
+          <div className="w-6 h-6 rounded bg-gray-900 flex items-center justify-center mx-auto">
+            <SlidersHorizontal className="w-3 h-3 text-white" strokeWidth={2} />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto py-2">
+          {MOCK_DOCUMENTS.map(doc => (
+            <button
+              key={doc.id}
+              onClick={() => onDocumentSelect?.(doc.id)}
+              className={`
+                w-full flex items-center justify-center p-2 cursor-pointer transition-colors
+                ${doc.id === activeDocumentId ? 'bg-gray-100' : 'hover:bg-gray-50'}
+              `}
+            >
+              <img 
+                src={`https://cdn.brandfetch.io/${doc.domain}?c=1id1Fyz-h7an5-5KR_y`}
+                alt=""
+                className="w-6 h-6 rounded object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded bg-gray-900 flex items-center justify-center">
-            <FileText className="w-3 h-3 text-white" strokeWidth={2} />
+            <SlidersHorizontal className="w-3 h-3 text-white" strokeWidth={2} />
           </div>
           <span className="text-[14px] font-semibold text-gray-900">Documents</span>
         </div>
@@ -136,27 +165,27 @@ export default function DocumentPanel({
       </div>
 
       {/* Toolbar */}
-      <div className="px-4 py-2.5 border-b border-gray-200 flex items-center gap-2">
+      <div className="px-3 py-2.5 border-b border-gray-200 flex items-center gap-1.5 flex-wrap">
         <button 
-          className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md bg-white cursor-pointer transition-all border border-gray-200"
+          className="flex items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900 px-2 py-1.5 rounded bg-white cursor-pointer transition-all border border-gray-200 whitespace-nowrap"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          <span className="text-gray-400">Group by:</span>
+          <span className="text-gray-400">Group:</span>
           <span className="font-medium text-gray-700">{groupBy}</span>
           <ChevronDown className="w-3 h-3 text-gray-400" strokeWidth={2} />
         </button>
         
         <button 
-          className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md bg-white cursor-pointer transition-all border border-gray-200"
+          className="flex items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900 px-2 py-1.5 rounded bg-white cursor-pointer transition-all border border-gray-200 whitespace-nowrap"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          <span className="text-gray-400">Sort by:</span>
+          <span className="text-gray-400">Sort:</span>
           <span className="font-medium text-gray-700">{sortBy}</span>
           <ChevronDown className="w-3 h-3 text-gray-400" strokeWidth={2} />
         </button>
 
         <button 
-          className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md bg-white cursor-pointer transition-all border border-gray-200"
+          className="flex items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900 px-2 py-1.5 rounded bg-white cursor-pointer transition-all border border-gray-200 whitespace-nowrap"
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
           <Filter className="w-3 h-3 text-gray-400" strokeWidth={2} />
@@ -165,12 +194,12 @@ export default function DocumentPanel({
       </div>
 
       {/* Document List */}
-      <div className="flex-1 overflow-y-auto py-2 px-1">
+      <div className="flex-1 overflow-y-auto py-2 px-1.5">
         {/* Recently Added Group */}
         <div className="mb-2">
           <button
             onClick={() => toggleGroup('recently_added')}
-            className="w-[calc(100%-4px)] flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors hover:opacity-80 mx-0.5"
+            className="w-[calc(100%-6px)] flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors hover:opacity-80 mx-[3px]"
             style={{ backgroundColor: '#FBF9F7' }}
           >
             {expandedGroups.has('recently_added') ? (
@@ -200,7 +229,7 @@ export default function DocumentPanel({
         <div className="mb-2">
           <button
             onClick={() => toggleGroup('needs_attention')}
-            className="w-[calc(100%-4px)] flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors hover:opacity-80 mx-0.5"
+            className="w-[calc(100%-6px)] flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors hover:opacity-80 mx-[3px]"
             style={{ backgroundColor: '#FBF9F7' }}
           >
             {expandedGroups.has('needs_attention') ? (
@@ -237,9 +266,6 @@ interface DocumentRowProps {
 }
 
 function DocumentRow({ doc, isActive, onClick }: DocumentRowProps) {
-  const config = FILE_TYPE_CONFIG[doc.type]
-  const Icon = config.icon
-
   return (
     <button
       onClick={onClick}
@@ -251,12 +277,18 @@ function DocumentRow({ doc, isActive, onClick }: DocumentRowProps) {
       {/* Checkbox placeholder */}
       <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0" />
       
-      {/* File type icon */}
-      <div 
-        className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: config.bg }}
-      >
-        <Icon className="w-4 h-4" style={{ color: config.color }} strokeWidth={1.5} />
+      {/* Platform logo via Brandfetch */}
+      <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-gray-50 overflow-hidden">
+        <img 
+          src={`https://cdn.brandfetch.io/${doc.domain}?c=1id1Fyz-h7an5-5KR_y`}
+          alt=""
+          className="w-6 h-6 object-contain"
+          onError={(e) => {
+            // Fallback to first letter if logo fails
+            e.currentTarget.style.display = 'none'
+            e.currentTarget.parentElement!.innerHTML = `<span class="text-[11px] font-semibold text-gray-400">${doc.name.charAt(0)}</span>`
+          }}
+        />
       </div>
 
       {/* Content */}
@@ -269,32 +301,31 @@ function DocumentRow({ doc, isActive, onClick }: DocumentRowProps) {
         </div>
       </div>
 
-      {/* Status badge */}
+      {/* Status badge - white with colored square */}
       <div 
-        className="flex items-center gap-1.5 flex-shrink-0 px-2 py-1 border"
+        className="flex items-center gap-2 flex-shrink-0 px-2 py-1.5 border"
         style={{ 
           backgroundColor: 'white', 
-          borderColor: '#F3F3F3',
-          borderRadius: '4px',
-          minWidth: '115px',
-          height: '20px',
+          borderColor: '#E5E5E5',
+          borderRadius: '6px',
         }}
       >
         <div 
           style={{ 
-            backgroundColor: doc.status.color,
+            backgroundColor: doc.status.bg,
             borderRadius: '4px',
-            width: '12px',
-            height: '12px',
+            width: '14px',
+            height: '14px',
             flexShrink: 0,
           }}
         />
         <span 
-          className="font-medium text-black truncate"
+          className="font-medium text-gray-700 truncate"
           style={{ 
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '10px',
-            lineHeight: '12px',
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: '11px',
+            lineHeight: '14px',
+            maxWidth: '110px',
           }}
         >
           {doc.status.label}
