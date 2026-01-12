@@ -18,6 +18,7 @@ import {
   Code,
   X,
   Crosshair,
+  Clock,
 } from 'lucide-react'
 import { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 
@@ -92,7 +93,17 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
   const [linkUrl, setLinkUrl] = useState('')
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null)
   const [hasSelection, setHasSelection] = useState(false)
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean
+    x: number
+    y: number
+    claimId: string
+    text: string
+    source: string
+    cadence: string
+  } | null>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const editorContainerRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
     extensions: [
@@ -132,7 +143,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
       handleClick: (view, pos, event) => {
         // Check if clicked on a tracked claim
         const target = event.target as HTMLElement
-        if (target.classList.contains('tracked-claim')) {
+        if (target.classList.contains('tracked-claim-wrapper')) {
           const claimId = target.getAttribute('data-claim-id')
           if (claimId) {
             onClaimClick?.(claimId)
@@ -140,6 +151,36 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
           }
         }
         return false
+      },
+      handleDOMEvents: {
+        mouseover: (view, event) => {
+          const target = event.target as HTMLElement
+          if (target.classList.contains('tracked-claim-wrapper')) {
+            const rect = target.getBoundingClientRect()
+            const claimId = target.getAttribute('data-claim-id') || ''
+            const source = target.getAttribute('data-source') || ''
+            const cadence = target.getAttribute('data-cadence') || ''
+            const text = target.textContent?.replace(/○\s*HAR-\d+\s*/, '') || ''
+            
+            setTooltip({
+              visible: true,
+              x: rect.left + rect.width / 2,
+              y: rect.top - 8,
+              claimId,
+              text,
+              source,
+              cadence,
+            })
+          }
+          return false
+        },
+        mouseout: (view, event) => {
+          const target = event.target as HTMLElement
+          if (target.classList.contains('tracked-claim-wrapper')) {
+            setTooltip(null)
+          }
+          return false
+        },
       },
     },
     onSelectionUpdate: ({ editor }) => {
@@ -221,7 +262,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
   if (!editor) return null
 
   return (
-    <div className="h-full flex flex-col bg-white relative">
+    <div className="h-full flex flex-col bg-white relative" ref={editorContainerRef}>
       {/* Global styles for editor */}
       <style jsx global>{`
         .ProseMirror h1 {
@@ -270,31 +311,6 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
         }
         .ProseMirror .tracked-claim-wrapper:hover::before {
           color: #6B7280;
-        }
-        /* Tooltip on hover */
-        .ProseMirror .tracked-claim-wrapper::after {
-          content: attr(data-source) ' • ' attr(data-cadence);
-          position: absolute;
-          bottom: calc(100% + 6px);
-          left: 50%;
-          transform: translateX(-50%);
-          padding: 6px 10px;
-          background: #FBF9F7;
-          border: 1px solid #E5E7EB;
-          border-radius: 6px;
-          font-size: 11px;
-          color: #374151;
-          white-space: nowrap;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.15s, visibility 0.15s;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          z-index: 100;
-          pointer-events: none;
-        }
-        .ProseMirror .tracked-claim-wrapper:hover::after {
-          opacity: 1;
-          visibility: visible;
         }
         .ProseMirror p.is-editor-empty:first-child::before {
           color: #9ca3af;
@@ -447,6 +463,54 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Claim Tooltip */}
+      {tooltip && tooltip.visible && (
+        <div 
+          className="fixed z-[100] pointer-events-none"
+          style={{
+            top: tooltip.y,
+            left: tooltip.x,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <div 
+            className="rounded-lg border border-gray-200 p-3 min-w-[200px] max-w-[280px]"
+            style={{
+              backgroundColor: '#FBF9F7',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            {/* Claim ID */}
+            <div className="text-xs text-gray-400 font-mono mb-1">{tooltip.claimId}</div>
+            
+            {/* Claim text */}
+            <p className="text-sm text-gray-900 mb-3 line-clamp-2">{tooltip.text}</p>
+            
+            {/* Divider */}
+            <div className="border-t border-gray-200 pt-2 flex items-center gap-3">
+              {/* Source with logo */}
+              <div className="flex items-center gap-1.5">
+                <img 
+                  src={`https://cdn.brandfetch.io/${tooltip.source.toLowerCase()}.com?c=1id1Fyz-h7an5-5KR_y`}
+                  alt=""
+                  className="w-4 h-4 rounded object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+                <span className="text-xs text-gray-600 capitalize">{tooltip.source}</span>
+              </div>
+              
+              {/* Cadence */}
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-gray-400" strokeWidth={2} />
+                <span className="text-xs text-gray-500 capitalize">{tooltip.cadence}</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
