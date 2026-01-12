@@ -11,20 +11,32 @@ import {
   Database, 
   CheckCircle2,
   ChevronRight,
-  ChevronDown,
   ExternalLink,
   X,
   RefreshCw,
   Clock,
   TrendingUp,
   Building2,
+  Users,
+  DollarSign,
+  BarChart3,
+  Globe,
+  Shield,
 } from 'lucide-react'
 
+// Category config
+const CATEGORIES = {
+  financial: { label: 'Financial Metric', color: '#E5D5F4', textColor: '#7C3AED' },
+  personnel: { label: 'Personnel', color: '#CFDFD5', textColor: '#059669' },
+  market: { label: 'Market Data', color: '#F7E3C9', textColor: '#D97706' },
+  competitive: { label: 'Competitive Intel', color: '#FBD9D4', textColor: '#DC2626' },
+  regulatory: { label: 'Regulatory', color: '#DBEAFE', textColor: '#2563EB' },
+}
+
 // Mock data
-const SOURCE_VERIFIED_ALERTS = [
+const NEEDS_ATTENTION = [
   {
     id: '1',
-    type: 'source_verified',
     claim: 'NVDA market cap',
     currentValue: '$1.2T',
     newValue: '$1.4T',
@@ -32,12 +44,11 @@ const SOURCE_VERIFIED_ALERTS = [
     sourceLogo: 'pitchbook.com',
     reportName: 'Q4 Revenue Model',
     reportId: 'r2',
-    projectName: 'Nordic Telecoms',
+    category: 'financial',
     updatedAgo: '2h ago',
   },
   {
     id: '2',
-    type: 'source_verified',
     claim: 'Acme Corp headcount',
     currentValue: '450',
     newValue: '512',
@@ -45,21 +56,53 @@ const SOURCE_VERIFIED_ALERTS = [
     sourceLogo: 'linkedin.com',
     reportName: 'Company Profile',
     reportId: 'r1',
-    projectName: 'Acme Corp DD',
+    category: 'personnel',
     updatedAgo: '6h ago',
+  },
+  {
+    id: '3',
+    claim: 'TSMC Q4 revenue',
+    currentValue: '$18.2B',
+    newValue: '$19.1B',
+    source: 'SEC Filing',
+    sourceLogo: 'sec.gov',
+    reportName: 'Semiconductor Analysis',
+    reportId: 'r4',
+    category: 'financial',
+    updatedAgo: '1d ago',
+  },
+  {
+    id: '4',
+    claim: 'EU AI Act status',
+    currentValue: 'Pending vote',
+    newValue: 'Passed',
+    source: 'EUR-Lex',
+    sourceLogo: 'europa.eu',
+    reportName: 'Regulatory Landscape',
+    reportId: 'r5',
+    category: 'regulatory',
+    updatedAgo: '3h ago',
   },
 ]
 
-const PROMPT_TRACKED_ALERTS = [
+const REVIEW_SUGGESTED = [
   {
-    id: '3',
-    type: 'prompt_tracked',
-    claim: 'Taiwan Strait maritime activity',
-    summary: 'Reuters reports "increased naval presence near median line"',
+    id: '5',
+    claim: 'Taiwan Strait activity',
+    summary: 'Reuters: "increased naval presence"',
     reportName: 'Taiwan Strait Analysis',
     reportId: 'r3',
-    projectName: 'Acme Corp DD',
+    category: 'competitive',
     checkedAgo: '1h ago',
+  },
+  {
+    id: '6',
+    claim: 'OpenAI valuation',
+    summary: 'TechCrunch: "discussing $150B"',
+    reportName: 'AI Market Report',
+    reportId: 'r6',
+    category: 'market',
+    checkedAgo: '4h ago',
   },
 ]
 
@@ -67,7 +110,7 @@ const RECENT_ACTIVITY = [
   {
     id: 'a1',
     action: 'Claim updated',
-    detail: 'TSMC revenue updated from $18.2B to $19.1B',
+    detail: 'TSMC revenue: $18.2B → $19.1B',
     reportName: 'Q4 Revenue Model',
     timestamp: '2h ago',
     type: 'update',
@@ -75,7 +118,7 @@ const RECENT_ACTIVITY = [
   {
     id: 'a2',
     action: 'Sync completed',
-    detail: '12 claims verified, 0 changes detected',
+    detail: '12 claims verified, 0 changes',
     reportName: 'Series B Financials',
     timestamp: '4h ago',
     type: 'sync',
@@ -83,7 +126,7 @@ const RECENT_ACTIVITY = [
   {
     id: 'a3',
     action: 'Report created',
-    detail: 'New report added to Acme Corp DD',
+    detail: 'Added to Acme Corp DD',
     reportName: 'Supply Chain Risk',
     timestamp: '1d ago',
     type: 'create',
@@ -91,35 +134,20 @@ const RECENT_ACTIVITY = [
   {
     id: 'a4',
     action: 'Source connected',
-    detail: 'PitchBook API linked to workspace',
+    detail: 'PitchBook API linked',
     reportName: null,
     timestamp: '2d ago',
     type: 'source',
   },
 ]
 
-const PROJECTS = [
-  { id: 'p1', name: 'Acme Corp DD', alerts: 2, lastSync: '2h ago', reports: 4, status: 'attention' },
-  { id: 'p2', name: 'Nordic Telecoms', alerts: 1, lastSync: '1d ago', reports: 3, status: 'attention' },
-  { id: 'p3', name: 'Series B Prep', alerts: 0, lastSync: '3h ago', reports: 2, status: 'clear' },
-]
-
-const STATS = [
-  { label: 'Reports', value: '24', icon: FileText },
-  { label: 'Alerts', value: '3', icon: AlertCircle, highlight: true },
-  { label: 'Claims Tracked', value: '156', icon: TrendingUp },
-  { label: 'Sources', value: '12', icon: Database },
-]
-
 export default function OverviewPage() {
-  const [activeTab, setActiveTab] = useState<'hub' | 'activity'>('hub')
+  const [activeTab, setActiveTab] = useState<'pending' | 'activity'>('pending')
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['source_verified', 'prompt_tracked']))
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    // Simulate refresh - replace with actual data fetch
     await new Promise(resolve => setTimeout(resolve, 1000))
     setIsRefreshing(false)
   }
@@ -128,163 +156,55 @@ export default function OverviewPage() {
     setDismissedAlerts(prev => new Set([...prev, id]))
   }
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev)
-      if (next.has(section)) next.delete(section)
-      else next.add(section)
-      return next
-    })
-  }
-
-  const visibleSourceAlerts = SOURCE_VERIFIED_ALERTS.filter(a => !dismissedAlerts.has(a.id))
-  const visiblePromptAlerts = PROMPT_TRACKED_ALERTS.filter(a => !dismissedAlerts.has(a.id))
-  const totalAlerts = visibleSourceAlerts.length + visiblePromptAlerts.length
+  const visibleNeedsAttention = NEEDS_ATTENTION.filter(a => !dismissedAlerts.has(a.id))
+  const visibleReviewSuggested = REVIEW_SUGGESTED.filter(a => !dismissedAlerts.has(a.id))
 
   return (
     <div className="h-full overflow-y-auto">
       {/* Header */}
-      <div className="px-8 pt-8 pb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-          <Building2 className="w-4 h-4" strokeWidth={1.5} />
-          <span>Workspace</span>
-          <span>/</span>
-          <span className="text-gray-900 font-medium">Overview</span>
-        </div>
-        
-        <div className="flex items-start justify-between">
+      <div className="px-8 pt-8 pb-4">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+            <h1 className="text-xl font-semibold text-gray-900 mb-1">
               Good morning, Derek
             </h1>
             <p className="text-gray-500 text-sm">
-              {totalAlerts > 0 
-                ? `You have ${totalAlerts} item${totalAlerts > 1 ? 's' : ''} to review.`
-                : 'All caught up. No items need attention.'
-              }
+              {visibleNeedsAttention.length + visibleReviewSuggested.length} items need your attention
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
-            </button>
-            <div className="text-right text-sm text-gray-500">
-              <div className="font-medium text-gray-900">Mon, Jan 13</div>
-              <div>Last sync: 2h ago</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Alerts Section */}
-      {totalAlerts > 0 && (
-        <div className="px-8 pb-6 space-y-4">
-          {/* Source-Verified Alerts */}
-          {visibleSourceAlerts.length > 0 && (
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggleSection('source_verified')}
-                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-                  <span className="text-sm font-medium text-gray-900">
-                    Needs Attention
-                  </span>
-                  <span className="text-xs text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
-                    Source-Verified
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {visibleSourceAlerts.length} item{visibleSourceAlerts.length > 1 ? 's' : ''}
-                  </span>
-                </div>
-                {expandedSections.has('source_verified') ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400" strokeWidth={2} />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-400" strokeWidth={2} />
-                )}
-              </button>
-              
-              {expandedSections.has('source_verified') && (
-                <div className="divide-y divide-gray-100">
-                  {visibleSourceAlerts.map(alert => (
-                    <SourceVerifiedAlert 
-                      key={alert.id} 
-                      alert={alert} 
-                      onDismiss={() => dismissAlert(alert.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Prompt-Tracked Alerts */}
-          {visiblePromptAlerts.length > 0 && (
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggleSection('prompt_tracked')}
-                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Search className="w-4 h-4 text-amber-600" strokeWidth={2} />
-                  <span className="text-sm font-medium text-gray-900">
-                    Review Suggested
-                  </span>
-                  <span className="text-xs text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">
-                    Prompt-Tracked
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {visiblePromptAlerts.length} item{visiblePromptAlerts.length > 1 ? 's' : ''}
-                  </span>
-                </div>
-                {expandedSections.has('prompt_tracked') ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400" strokeWidth={2} />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-400" strokeWidth={2} />
-                )}
-              </button>
-              
-              {expandedSections.has('prompt_tracked') && (
-                <div className="divide-y divide-gray-100">
-                  {visiblePromptAlerts.map(alert => (
-                    <PromptTrackedAlert 
-                      key={alert.id} 
-                      alert={alert} 
-                      onDismiss={() => dismissAlert(alert.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="px-8 border-b border-gray-200">
-        <div className="flex items-center gap-6">
           <button
-            onClick={() => setActiveTab('hub')}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-6 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('pending')}
             className={`
-              py-3 text-sm font-medium border-b-2 -mb-px cursor-pointer transition-colors
-              ${activeTab === 'hub' 
+              pb-3 text-sm font-medium border-b-2 -mb-px cursor-pointer transition-colors
+              ${activeTab === 'pending' 
                 ? 'border-gray-900 text-gray-900' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
               }
             `}
           >
-            Hub
+            Pending Action
+            {(visibleNeedsAttention.length + visibleReviewSuggested.length) > 0 && (
+              <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                {visibleNeedsAttention.length + visibleReviewSuggested.length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('activity')}
             className={`
-              py-3 text-sm font-medium border-b-2 -mb-px cursor-pointer transition-colors
+              pb-3 text-sm font-medium border-b-2 -mb-px cursor-pointer transition-colors
               ${activeTab === 'activity' 
                 ? 'border-gray-900 text-gray-900' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -298,221 +218,185 @@ export default function OverviewPage() {
 
       {/* Tab Content */}
       <div className="px-8 py-6">
-        {activeTab === 'hub' && <HubTab />}
+        {activeTab === 'pending' && (
+          <PendingActionTab 
+            needsAttention={visibleNeedsAttention}
+            reviewSuggested={visibleReviewSuggested}
+            onDismiss={dismissAlert}
+          />
+        )}
         {activeTab === 'activity' && <ActivityTab />}
       </div>
     </div>
   )
 }
 
-// Sub-components
-
-function SourceVerifiedAlert({ alert, onDismiss }: { 
-  alert: typeof SOURCE_VERIFIED_ALERTS[0]
-  onDismiss: () => void 
+// Pending Action Tab - 70/30 split
+function PendingActionTab({ 
+  needsAttention, 
+  reviewSuggested,
+  onDismiss 
+}: { 
+  needsAttention: typeof NEEDS_ATTENTION
+  reviewSuggested: typeof REVIEW_SUGGESTED
+  onDismiss: (id: string) => void
 }) {
   return (
-    <div className="px-4 py-4 hover:bg-gray-50 transition-colors">
-      <div className="flex items-start gap-4">
-        {/* Source logo */}
-        <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
-          <img 
-            src={`https://cdn.brandfetch.io/${alert.sourceLogo}?c=1id1Fyz-h7an5-5KR_y`}
-            alt={alert.source}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-              e.currentTarget.parentElement!.innerHTML = `<span class="text-xs font-medium text-gray-400">${alert.source.charAt(0)}</span>`
-            }}
-          />
+    <div className="flex gap-6">
+      {/* Left Column - Needs Attention (70%) */}
+      <div className="flex-[7]">
+        <div className="flex items-center gap-2 mb-3">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+          <h3 className="text-sm font-medium text-gray-900">Needs Attention</h3>
+          <span className="text-xs text-gray-400">Source-verified</span>
         </div>
         
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-gray-900">{alert.claim}</span>
-            <span className="text-xs text-gray-400">•</span>
-            <span className="text-xs text-gray-500">{alert.updatedAgo}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm text-gray-500 line-through">{alert.currentValue}</span>
-            <ChevronRight className="w-3 h-3 text-gray-400" />
-            <span className="text-sm font-medium text-emerald-600">{alert.newValue}</span>
-            <span className="text-xs text-gray-400">via {alert.source}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Link 
-              href={`/report/${alert.reportId}`}
-              className="hover:text-gray-900 hover:underline"
-            >
-              {alert.reportName}
-            </Link>
-            <span>•</span>
-            <span>{alert.projectName}</span>
-          </div>
-        </div>
-        
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 cursor-pointer transition-colors">
-            Update Claim
-          </button>
-          <Link 
-            href={`/report/${alert.reportId}`}
-            className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
-          >
-            View
-          </Link>
-          <button 
-            onClick={onDismiss}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded cursor-pointer transition-colors"
-          >
-            <X className="w-4 h-4" strokeWidth={2} />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function PromptTrackedAlert({ alert, onDismiss }: { 
-  alert: typeof PROMPT_TRACKED_ALERTS[0]
-  onDismiss: () => void 
-}) {
-  return (
-    <div className="px-4 py-4 hover:bg-gray-50 transition-colors">
-      <div className="flex items-start gap-4">
-        {/* Icon */}
-        <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-          <Search className="w-5 h-5 text-amber-600" strokeWidth={1.5} />
-        </div>
-        
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-gray-900">{alert.claim}</span>
-            <span className="text-xs text-gray-400">•</span>
-            <span className="text-xs text-gray-500">Checked {alert.checkedAgo}</span>
-          </div>
-          
-          <p className="text-sm text-gray-600 mb-2">
-            {alert.summary}
-          </p>
-          
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Link 
-              href={`/report/${alert.reportId}`}
-              className="hover:text-gray-900 hover:underline"
-            >
-              {alert.reportName}
-            </Link>
-            <span>•</span>
-            <span>{alert.projectName}</span>
-          </div>
-        </div>
-        
-        {/* Actions - No "Update" button, only review */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-1.5">
-            <ExternalLink className="w-3 h-3" strokeWidth={2} />
-            Review Sources
-          </button>
-          <button 
-            onClick={onDismiss}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded cursor-pointer transition-colors"
-          >
-            <X className="w-4 h-4" strokeWidth={2} />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function HubTab() {
-  return (
-    <div className="space-y-8">
-      {/* Stats */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          Quick Stats
-        </h3>
-        <div className="grid grid-cols-4 gap-4">
-          {STATS.map(stat => (
-            <div 
-              key={stat.label}
-              className="p-4 bg-gray-50 rounded-lg border border-gray-100"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <stat.icon 
-                  className={`w-4 h-4 ${stat.highlight ? 'text-amber-500' : 'text-gray-400'}`} 
-                  strokeWidth={1.5} 
-                />
-                <span className="text-xs text-gray-500">{stat.label}</span>
-              </div>
-              <div className={`text-2xl font-semibold ${stat.highlight ? 'text-amber-600' : 'text-gray-900'}`}>
-                {stat.value}
-              </div>
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {needsAttention.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {needsAttention.map(item => (
+                <NeedsAttentionRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="p-8 text-center text-gray-400 text-sm">
+              All caught up!
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Projects */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-          Projects
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          {PROJECTS.map(project => (
-            <Link
-              key={project.id}
-              href={`/project/${project.id}`}
-              className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <h4 className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
-                  {project.name}
-                </h4>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-400 transition-colors" strokeWidth={2} />
-              </div>
-              
-              <div className="flex items-center gap-3 text-xs text-gray-500">
-                {project.status === 'attention' ? (
-                  <span className="flex items-center gap-1 text-amber-600">
-                    <AlertCircle className="w-3 h-3" strokeWidth={2} />
-                    {project.alerts} alert{project.alerts > 1 ? 's' : ''}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-emerald-600">
-                    <CheckCircle2 className="w-3 h-3" strokeWidth={2} />
-                    All clear
-                  </span>
-                )}
-                <span>•</span>
-                <span>{project.reports} reports</span>
-              </div>
-              
-              <div className="mt-2 text-xs text-gray-400">
-                Last sync: {project.lastSync}
-              </div>
-            </Link>
-          ))}
+      {/* Right Column - Review Suggested (30%) */}
+      <div className="flex-[3]">
+        <div className="flex items-center gap-2 mb-3">
+          <Search className="w-4 h-4 text-amber-600" strokeWidth={2} />
+          <h3 className="text-sm font-medium text-gray-900">Review Suggested</h3>
+        </div>
+        
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          {reviewSuggested.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {reviewSuggested.map(item => (
+                <ReviewSuggestedRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-400 text-sm">
+              Nothing to review
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
+// Compact row for Needs Attention
+function NeedsAttentionRow({ item, onDismiss }: { 
+  item: typeof NEEDS_ATTENTION[0]
+  onDismiss: () => void 
+}) {
+  const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
+  
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+      {/* Source logo */}
+      <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+        <img 
+          src={`https://cdn.brandfetch.io/${item.sourceLogo}?c=1id1Fyz-h7an5-5KR_y`}
+          alt={item.source}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      </div>
+      
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-900 truncate">{item.claim}</span>
+          <span className="text-xs text-gray-400">{item.updatedAgo}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <span className="line-through">{item.currentValue}</span>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-emerald-600 font-medium">{item.newValue}</span>
+          <span className="text-gray-300">•</span>
+          <span>{item.reportName}</span>
+        </div>
+      </div>
+
+      {/* Category badge */}
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-white text-xs text-gray-600 flex-shrink-0">
+        <div 
+          className="w-2 h-2 rounded-sm"
+          style={{ backgroundColor: category.textColor }}
+        />
+        {category.label}
+      </div>
+
+      {/* Action */}
+      <button className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 cursor-pointer transition-colors flex-shrink-0">
+        Update
+      </button>
+      
+      {/* Dismiss */}
+      <button 
+        onClick={onDismiss}
+        className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
+      >
+        <X className="w-4 h-4" strokeWidth={2} />
+      </button>
+    </div>
+  )
+}
+
+// Compact row for Review Suggested
+function ReviewSuggestedRow({ item, onDismiss }: { 
+  item: typeof REVIEW_SUGGESTED[0]
+  onDismiss: () => void 
+}) {
+  const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
+  
+  return (
+    <div className="px-4 py-3 hover:bg-gray-50 transition-colors group">
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <span className="text-sm font-medium text-gray-900">{item.claim}</span>
+        <button 
+          onClick={onDismiss}
+          className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+        >
+          <X className="w-3 h-3" strokeWidth={2} />
+        </button>
+      </div>
+      
+      <p className="text-xs text-gray-500 mb-2 line-clamp-1">{item.summary}</p>
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 bg-white text-[10px] text-gray-600">
+          <div 
+            className="w-1.5 h-1.5 rounded-sm"
+            style={{ backgroundColor: category.textColor }}
+          />
+          {category.label}
+        </div>
+        
+        <button className="text-xs text-gray-500 hover:text-gray-700 cursor-pointer flex items-center gap-1">
+          Review
+          <ExternalLink className="w-3 h-3" strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Activity Tab
 function ActivityTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Recent Activity
-        </h3>
+        <h3 className="text-sm font-medium text-gray-900">Recent Activity</h3>
         <Link 
           href="/audit-log"
           className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
@@ -522,38 +406,35 @@ function ActivityTab() {
         </Link>
       </div>
       
-      <div className="space-y-1">
-        {RECENT_ACTIVITY.map((item, index) => (
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        {RECENT_ACTIVITY.map((item) => (
           <div 
             key={item.id}
-            className="flex items-start gap-4 py-3 border-b border-gray-100 last:border-0"
+            className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 last:border-0"
           >
             {/* Icon */}
             <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+              w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0
               ${item.type === 'update' ? 'bg-emerald-50' : ''}
               ${item.type === 'sync' ? 'bg-blue-50' : ''}
               ${item.type === 'create' ? 'bg-purple-50' : ''}
               ${item.type === 'source' ? 'bg-gray-100' : ''}
             `}>
-              {item.type === 'update' && <RefreshCw className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />}
-              {item.type === 'sync' && <CheckCircle2 className="w-4 h-4 text-blue-600" strokeWidth={1.5} />}
-              {item.type === 'create' && <FileText className="w-4 h-4 text-purple-600" strokeWidth={1.5} />}
-              {item.type === 'source' && <Database className="w-4 h-4 text-gray-500" strokeWidth={1.5} />}
+              {item.type === 'update' && <RefreshCw className="w-3.5 h-3.5 text-emerald-600" strokeWidth={1.5} />}
+              {item.type === 'sync' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" strokeWidth={1.5} />}
+              {item.type === 'create' && <FileText className="w-3.5 h-3.5 text-purple-600" strokeWidth={1.5} />}
+              {item.type === 'source' && <Database className="w-3.5 h-3.5 text-gray-500" strokeWidth={1.5} />}
             </div>
             
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-900">{item.action}</div>
-              <div className="text-sm text-gray-500">{item.detail}</div>
-              {item.reportName && (
-                <div className="text-xs text-gray-400 mt-0.5">{item.reportName}</div>
-              )}
+              <span className="text-sm text-gray-900">{item.action}</span>
+              <span className="text-sm text-gray-400 mx-1">•</span>
+              <span className="text-sm text-gray-500">{item.detail}</span>
             </div>
             
             {/* Timestamp */}
-            <div className="text-xs text-gray-400 flex items-center gap-1 flex-shrink-0">
-              <Clock className="w-3 h-3" strokeWidth={2} />
+            <div className="text-xs text-gray-400 flex-shrink-0">
               {item.timestamp}
             </div>
           </div>
