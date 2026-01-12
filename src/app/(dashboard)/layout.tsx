@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 
 export default function DashboardLayout({
@@ -12,41 +12,39 @@ export default function DashboardLayout({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
+  // Listen for sidebar toggle events
   useEffect(() => {
-    // Check initial state
-    if (typeof window !== 'undefined') {
+    const checkSidebarState = () => {
       const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
       setSidebarCollapsed(collapsed)
     }
 
-    // Listen for sidebar toggle events
-    const handleToggle = () => {
-      const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
-      setSidebarCollapsed(collapsed)
-    }
+    checkSidebarState()
 
-    window.addEventListener('sidebar-toggle', handleToggle)
-    return () => window.removeEventListener('sidebar-toggle', handleToggle)
+    window.addEventListener('sidebar-toggle', checkSidebarState)
+    return () => window.removeEventListener('sidebar-toggle', checkSidebarState)
   }, [])
 
   return (
     <div 
-      className="min-h-screen"
+      className="flex min-h-screen"
       style={{ backgroundColor: '#FBF9F7' }}
     >
       <Sidebar />
-      {/* Content area - margin adjusts smoothly based on sidebar state */}
+      
       <main 
-        className="min-h-screen transition-all duration-300 ease-in-out pt-3 pr-3 pb-3"
-        style={{
-          marginLeft: sidebarCollapsed ? '56px' : '220px',
-        }}
+        className={`
+          flex-1 relative p-3 pl-0
+          transition-[margin] duration-300 
+          ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}
+        `}
+        style={{ backgroundColor: '#FBF9F7' }}
       >
         <div 
           className="min-h-[calc(100vh-24px)] bg-white overflow-hidden"
           style={{ 
             borderRadius: '12px',
-            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.06), 0 0 20px rgba(0, 0, 0, 0.04)',
+            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(0, 0, 0, 0.04)',
           }}
         >
           {children}
