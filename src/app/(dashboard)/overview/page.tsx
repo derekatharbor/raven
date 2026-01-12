@@ -251,15 +251,13 @@ function PendingActionTab({
           <span className="text-xs text-gray-400">Source-verified</span>
         </div>
         
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="space-y-3">
           {needsAttention.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {needsAttention.map(item => (
-                <NeedsAttentionRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
-              ))}
-            </div>
+            needsAttention.map(item => (
+              <NeedsAttentionRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
+            ))
           ) : (
-            <div className="p-8 text-center text-gray-400 text-sm">
+            <div className="p-8 text-center text-gray-400 text-sm border border-gray-200 rounded-lg">
               All caught up!
             </div>
           )}
@@ -273,15 +271,13 @@ function PendingActionTab({
           <h3 className="text-sm font-medium text-gray-900">Review Suggested</h3>
         </div>
         
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="space-y-3">
           {reviewSuggested.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {reviewSuggested.map(item => (
-                <ReviewSuggestedRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
-              ))}
-            </div>
+            reviewSuggested.map(item => (
+              <ReviewSuggestedRow key={item.id} item={item} onDismiss={() => onDismiss(item.id)} />
+            ))
           ) : (
-            <div className="p-8 text-center text-gray-400 text-sm">
+            <div className="p-8 text-center text-gray-400 text-sm border border-gray-200 rounded-lg">
               Nothing to review
             </div>
           )}
@@ -291,7 +287,7 @@ function PendingActionTab({
   )
 }
 
-// Compact row for Needs Attention
+// Compact card for Needs Attention
 function NeedsAttentionRow({ item, onDismiss }: { 
   item: typeof NEEDS_ATTENTION[0]
   onDismiss: () => void 
@@ -299,60 +295,64 @@ function NeedsAttentionRow({ item, onDismiss }: {
   const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
   
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
-      {/* Source logo */}
-      <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
-        <img 
-          src={`https://cdn.brandfetch.io/${item.sourceLogo}?c=1id1Fyz-h7an5-5KR_y`}
-          alt={item.source}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none'
-          }}
-        />
-      </div>
-      
-      {/* Content */}
-      <div className="flex-1 min-w-0">
+    <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all group">
+      {/* Top row: source + timestamp + dismiss */}
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-900 truncate">{item.claim}</span>
+          <div className="w-5 h-5 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+            <img 
+              src={`https://cdn.brandfetch.io/${item.sourceLogo}?c=1id1Fyz-h7an5-5KR_y`}
+              alt={item.source}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          </div>
+          <span className="text-xs text-gray-400">{item.source}</span>
+        </div>
+        <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">{item.updatedAgo}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="line-through">{item.currentValue}</span>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-emerald-600 font-medium">{item.newValue}</span>
-          <span className="text-gray-300">•</span>
-          <span>{item.reportName}</span>
+          <button 
+            onClick={onDismiss}
+            className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <X className="w-3 h-3" strokeWidth={2} />
+          </button>
         </div>
       </div>
-
-      {/* Category badge */}
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-white text-xs text-gray-600 flex-shrink-0">
-        <div 
-          className="w-2 h-2 rounded-sm"
-          style={{ backgroundColor: category.textColor }}
-        />
-        {category.label}
-      </div>
-
-      {/* Action */}
-      <button className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 cursor-pointer transition-colors flex-shrink-0">
-        Update
-      </button>
       
-      {/* Dismiss */}
-      <button 
-        onClick={onDismiss}
-        className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
-      >
-        <X className="w-4 h-4" strokeWidth={2} />
-      </button>
+      {/* Title */}
+      <h4 className="text-sm font-medium text-gray-900 mb-1">{item.claim}</h4>
+      
+      {/* Value change */}
+      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+        <span className="line-through">{item.currentValue}</span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="text-emerald-600 font-medium">{item.newValue}</span>
+        <span className="text-gray-300 mx-1">•</span>
+        <span className="truncate">{item.reportName}</span>
+      </div>
+      
+      {/* Bottom row: badge + action */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-white text-xs text-gray-600">
+          <div 
+            className="w-2 h-2 rounded-sm"
+            style={{ backgroundColor: category.textColor }}
+          />
+          {category.label}
+        </div>
+        
+        <button className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 cursor-pointer transition-colors">
+          Update
+        </button>
+      </div>
     </div>
   )
 }
 
-// Compact row for Review Suggested
+// Compact card for Review Suggested
 function ReviewSuggestedRow({ item, onDismiss }: { 
   item: typeof REVIEW_SUGGESTED[0]
   onDismiss: () => void 
@@ -360,23 +360,29 @@ function ReviewSuggestedRow({ item, onDismiss }: {
   const category = CATEGORIES[item.category as keyof typeof CATEGORIES]
   
   return (
-    <div className="px-4 py-3 hover:bg-gray-50 transition-colors group">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="text-sm font-medium text-gray-900">{item.claim}</span>
+    <div className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all group">
+      {/* Top row: timestamp + dismiss */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-400">{item.checkedAgo}</span>
         <button 
           onClick={onDismiss}
-          className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+          className="p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 rounded cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
         >
           <X className="w-3 h-3" strokeWidth={2} />
         </button>
       </div>
       
-      <p className="text-xs text-gray-500 mb-2 line-clamp-1">{item.summary}</p>
+      {/* Title */}
+      <h4 className="text-sm font-medium text-gray-900 mb-1">{item.claim}</h4>
       
+      {/* Summary */}
+      <p className="text-xs text-gray-500 mb-3 line-clamp-2">{item.summary}</p>
+      
+      {/* Bottom row: badge + action */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 bg-white text-[10px] text-gray-600">
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-white text-xs text-gray-600">
           <div 
-            className="w-1.5 h-1.5 rounded-sm"
+            className="w-2 h-2 rounded-sm"
             style={{ backgroundColor: category.textColor }}
           />
           {category.label}
