@@ -2,6 +2,7 @@
 
 'use client'
 
+import { useState, useEffect } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 
 export default function DashboardLayout({
@@ -9,14 +10,38 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    // Check initial state
+    if (typeof window !== 'undefined') {
+      const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
+      setSidebarCollapsed(collapsed)
+    }
+
+    // Listen for sidebar toggle events
+    const handleToggle = () => {
+      const collapsed = localStorage.getItem('harbor-sidebar-collapsed') === 'true'
+      setSidebarCollapsed(collapsed)
+    }
+
+    window.addEventListener('sidebar-toggle', handleToggle)
+    return () => window.removeEventListener('sidebar-toggle', handleToggle)
+  }, [])
+
   return (
     <div 
-      className="min-h-screen flex"
+      className="min-h-screen"
       style={{ backgroundColor: '#FBF9F7' }}
     >
       <Sidebar />
-      {/* Content area - floats on top with shadow */}
-      <main className="flex-1 p-3 pl-0 min-w-0">
+      {/* Content area - margin adjusts smoothly based on sidebar state */}
+      <main 
+        className="min-h-screen transition-all duration-300 ease-in-out p-3 pl-0"
+        style={{
+          marginLeft: sidebarCollapsed ? '56px' : '220px',
+        }}
+      >
         <div 
           className="min-h-[calc(100vh-24px)] bg-white overflow-hidden"
           style={{ 
