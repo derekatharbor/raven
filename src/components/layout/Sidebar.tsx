@@ -17,6 +17,7 @@ import {
   Settings,
   Plus,
   AlertCircle,
+  PenTool,
 } from 'lucide-react'
 
 // Mock data
@@ -119,8 +120,8 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
   return (
     <aside 
       className={`
-        h-screen flex flex-col flex-shrink-0
-        transition-all duration-300 ease-in-out
+        h-screen flex flex-col flex-shrink-0 fixed left-0 top-0
+        transition-all duration-300 ease-in-out z-[100]
         ${isCollapsed ? 'w-16' : 'w-56'}
       `}
       style={{ backgroundColor: colors.bg }}
@@ -170,12 +171,19 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
       </div>
 
       {/* Main nav */}
-      <div className="px-2 pb-2">
+      <div className="px-2 pb-2 space-y-1">
         <NavItem 
           href="/overview" 
           icon={LayoutDashboard} 
           label="Overview" 
           isActive={isActive('/overview')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem 
+          href="/workspace" 
+          icon={PenTool} 
+          label="Workspace" 
+          isActive={isActive('/workspace')}
           isCollapsed={isCollapsed}
         />
         <NavItem 
@@ -359,7 +367,7 @@ function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
       href={href}
       className={`
         flex items-center rounded-md cursor-pointer transition-colors relative group
-        ${isCollapsed ? 'justify-center p-2' : 'gap-2.5 px-2 py-1.5'}
+        ${isCollapsed ? 'justify-center p-3' : 'gap-2.5 px-2 py-1.5'}
         ${isActive ? 'bg-white shadow-sm' : ''}
       `}
       onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)')}
@@ -369,8 +377,8 @@ function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
       {!isCollapsed && <span className="text-[13px]" style={{ color: '#1a1a1a' }}>{label}</span>}
       {isCollapsed && (
         <div 
-          className="absolute left-full ml-2 px-2 py-1 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-md bg-white"
-          style={{ border: '1px solid rgba(0,0,0,0.06)' }}
+          className="absolute left-full ml-2 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-lg"
+          style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}
         >
           {label}
         </div>
@@ -399,14 +407,14 @@ function ReportLink({ report, isActive }: { report: { id: string; name: string }
 function CollapsedIcon({ icon: Icon, label }: { icon: any; label: string }) {
   return (
     <button
-      className="w-full flex items-center justify-center p-2 rounded-md cursor-pointer transition-colors relative group"
+      className="w-full flex items-center justify-center p-3 rounded-md cursor-pointer transition-colors relative group"
       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'}
       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
     >
       <Icon className="w-[18px] h-[18px]" style={{ color: '#71717a' }} strokeWidth={1.5} />
       <div 
-        className="absolute left-full ml-2 px-2 py-1 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-md bg-white"
-        style={{ border: '1px solid rgba(0,0,0,0.06)' }}
+        className="absolute left-full ml-2 px-2.5 py-1.5 text-xs font-medium rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200] shadow-lg"
+        style={{ backgroundColor: '#1a1a1a', color: '#ffffff' }}
       >
         {label}
       </div>

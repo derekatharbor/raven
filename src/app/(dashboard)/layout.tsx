@@ -31,8 +31,13 @@ export default function DashboardLayout({
       className="flex min-h-screen"
       style={{ backgroundColor: '#FBF9F7' }}
     >
-      {/* Sidebar - part of flex, not fixed */}
+      {/* Sidebar - fixed position */}
       <Sidebar collapsed={sidebarCollapsed} />
+      
+      {/* Spacer for fixed sidebar */}
+      <div 
+        className={`flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-56'}`} 
+      />
       
       {/* Main content - padding on top and left only, bleeds right and bottom */}
       <main className="flex-1 pt-3 pl-3 min-w-0">
