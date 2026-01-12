@@ -53,7 +53,7 @@ function TrackClaimModal({
             <select 
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             >
               <option value="pitchbook">PitchBook</option>
               <option value="sec">SEC EDGAR</option>
@@ -69,7 +69,7 @@ function TrackClaimModal({
             <select 
               value={cadence}
               onChange={(e) => setCadence(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             >
               <option value="realtime">Real-time</option>
               <option value="hourly">Every hour</option>
@@ -85,7 +85,7 @@ function TrackClaimModal({
             <select 
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             >
               <option value="financial">Financial Metric</option>
               <option value="personnel">Personnel</option>
@@ -129,6 +129,17 @@ export default function WorkspacePage() {
   const [pendingTrackText, setPendingTrackText] = useState('')
   const [pendingTrackRange, setPendingTrackRange] = useState<{ from: number; to: number } | null>(null)
 
+  // Tracked claims state
+  const [trackedClaims, setTrackedClaims] = useState<Array<{
+    id: string
+    text: string
+    status: 'pending' | 'verified' | 'stale' | 'attention'
+    source: string
+    cadence: string
+    category: string
+    lastChecked: string
+  }>>([])
+
   // Editor ref for applying marks
   const editorRef = useRef<EditorRef>(null)
 
@@ -146,15 +157,27 @@ export default function WorkspacePage() {
     // Generate a new claim ID
     const claimId = generateClaimId()
     
-    // Apply the tracked mark to the editor
-    editorRef.current?.applyTrackedMark(pendingTrackRange.from, pendingTrackRange.to, claimId)
-    
-    console.log('Created tracked claim:', { 
+    // Apply the tracked mark to the editor with all config data
+    editorRef.current?.applyTrackedMark(
+      pendingTrackRange.from, 
+      pendingTrackRange.to, 
       claimId,
-      text: pendingTrackText, 
-      range: pendingTrackRange, 
-      config 
-    })
+      config
+    )
+    
+    // Add to tracked claims list
+    const newClaim = {
+      id: claimId,
+      text: pendingTrackText,
+      status: 'pending' as const,
+      source: config.source,
+      cadence: config.cadence,
+      category: config.category,
+      lastChecked: 'Just now',
+    }
+    setTrackedClaims(prev => [newClaim, ...prev])
+    
+    console.log('Created tracked claim:', newClaim)
     
     setTrackModalOpen(false)
     setPendingTrackText('')
@@ -217,6 +240,7 @@ export default function WorkspacePage() {
             <ChevronRight className="w-3 h-3 text-gray-500" strokeWidth={2} />
           </button>
           <ClaimsPanel 
+            claims={trackedClaims}
             selectedClaimId={selectedClaimId}
             onClaimSelect={setSelectedClaimId}
           />

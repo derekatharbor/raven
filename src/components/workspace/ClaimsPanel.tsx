@@ -85,19 +85,32 @@ const MOCK_CLAIMS = [
   },
 ]
 
+interface ClaimData {
+  id: string
+  text: string
+  status: 'pending' | 'verified' | 'stale' | 'attention'
+  source: string
+  cadence: string
+  category: string
+  lastChecked: string
+}
+
 interface ClaimsPanelProps {
+  claims?: ClaimData[]
   selectedClaimId?: string | null
   onClaimSelect?: (claimId: string | null) => void
   onClose?: () => void
 }
 
 export default function ClaimsPanel({
+  claims = [],
   selectedClaimId,
   onClaimSelect,
   onClose,
 }: ClaimsPanelProps) {
-  const [view, setView] = useState<'list' | 'properties'>('list')
-  const selectedClaim = MOCK_CLAIMS.find(c => c.id === selectedClaimId)
+  // Combine passed claims with mock data for demo
+  const allClaims = [...claims, ...MOCK_CLAIMS]
+  const selectedClaim = allClaims.find(c => c.id === selectedClaimId)
 
   // If a claim is selected, show properties view
   if (selectedClaimId && selectedClaim) {
@@ -119,7 +132,7 @@ export default function ClaimsPanel({
             <Circle className="w-4 h-4 text-cyan-500" strokeWidth={2} />
             <span className="text-sm font-semibold text-gray-900">Tracked Claims</span>
             <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-              {MOCK_CLAIMS.length}
+              {allClaims.length}
             </span>
           </div>
         </div>
@@ -127,15 +140,23 @@ export default function ClaimsPanel({
 
       {/* Claims List */}
       <div className="flex-1 overflow-y-auto py-2 px-2">
-        <div className="space-y-2">
-          {MOCK_CLAIMS.map(claim => (
-            <ClaimCard 
-              key={claim.id} 
-              claim={claim} 
-              onClick={() => onClaimSelect?.(claim.id)}
-            />
-          ))}
-        </div>
+        {allClaims.length > 0 ? (
+          <div className="space-y-2">
+            {allClaims.map(claim => (
+              <ClaimCard 
+                key={claim.id} 
+                claim={claim} 
+                onClick={() => onClaimSelect?.(claim.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <Circle className="w-8 h-8 text-gray-300 mb-3" strokeWidth={1.5} />
+            <p className="text-sm text-gray-500 mb-1">No tracked claims yet</p>
+            <p className="text-xs text-gray-400">Highlight text in the editor and click Track to get started</p>
+          </div>
+        )}
       </div>
     </div>
   )

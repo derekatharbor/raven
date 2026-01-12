@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 
-// TrackedClaim Mark Extension - inline
+// TrackedClaim Mark Extension - inline with Linear style
 const TrackedClaim = Mark.create({
   name: 'trackedClaim',
 
@@ -35,6 +35,30 @@ const TrackedClaim = Mark.create({
           return { 'data-claim-id': attributes.claimId }
         },
       },
+      source: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-source'),
+        renderHTML: attributes => {
+          if (!attributes.source) return {}
+          return { 'data-source': attributes.source }
+        },
+      },
+      cadence: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-cadence'),
+        renderHTML: attributes => {
+          if (!attributes.cadence) return {}
+          return { 'data-cadence': attributes.cadence }
+        },
+      },
+      category: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-category'),
+        renderHTML: attributes => {
+          if (!attributes.category) return {}
+          return { 'data-category': attributes.category }
+        },
+      },
     }
   },
 
@@ -46,7 +70,7 @@ const TrackedClaim = Mark.create({
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
-        class: 'tracked-claim',
+        class: 'tracked-claim-wrapper',
       }),
       0,
     ]
@@ -60,7 +84,7 @@ interface EditorProps {
 }
 
 export interface EditorRef {
-  applyTrackedMark: (from: number, to: number, claimId: string) => void
+  applyTrackedMark: (from: number, to: number, claimId: string, config?: { source?: string; cadence?: string; category?: string }) => void
 }
 
 const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick }, ref) => {
@@ -147,13 +171,18 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
 
   // Expose method to apply tracked mark from parent
   useImperativeHandle(ref, () => ({
-    applyTrackedMark: (from: number, to: number, claimId: string) => {
+    applyTrackedMark: (from: number, to: number, claimId: string, config?: { source?: string; cadence?: string; category?: string }) => {
       if (!editor) return
       editor
         .chain()
         .focus()
         .setTextSelection({ from, to })
-        .setMark('trackedClaim', { claimId })
+        .setMark('trackedClaim', { 
+          claimId,
+          source: config?.source,
+          cadence: config?.cadence,
+          category: config?.category,
+        })
         .run()
       setHasSelection(false)
     },
@@ -216,16 +245,48 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
           line-height: 1.7;
           margin-bottom: 1rem;
         }
-        .ProseMirror .tracked-claim {
-          background-color: rgba(91, 223, 250, 0.2);
-          border-bottom: 2px solid #5BDFFA;
-          padding: 1px 2px;
-          border-radius: 2px;
+        .ProseMirror .tracked-claim-wrapper {
+          position: relative;
+          color: #6B7280;
           cursor: pointer;
-          transition: background-color 0.15s ease;
+          transition: color 0.15s ease;
         }
-        .ProseMirror .tracked-claim:hover {
-          background-color: rgba(91, 223, 250, 0.35);
+        .ProseMirror .tracked-claim-wrapper:hover {
+          color: #374151;
+        }
+        .ProseMirror .tracked-claim-wrapper::before {
+          content: '○ ' attr(data-claim-id) ' ';
+          font-size: 0.8em;
+          color: #9CA3AF;
+          font-family: ui-monospace, monospace;
+        }
+        .ProseMirror .tracked-claim-wrapper:hover::before {
+          color: #6B7280;
+        }
+        /* Tooltip on hover */
+        .ProseMirror .tracked-claim-wrapper::after {
+          content: attr(data-source) ' • ' attr(data-cadence);
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 6px 10px;
+          background: #FBF9F7;
+          border: 1px solid #E5E7EB;
+          border-radius: 6px;
+          font-size: 11px;
+          color: #374151;
+          white-space: nowrap;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.15s, visibility 0.15s;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          z-index: 100;
+          margin-bottom: 4px;
+        }
+        .ProseMirror .tracked-claim-wrapper:hover::after {
+          opacity: 1;
+          visibility: visible;
         }
         .ProseMirror p.is-editor-empty:first-child::before {
           color: #9ca3af;
