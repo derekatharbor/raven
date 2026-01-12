@@ -135,8 +135,8 @@ export default function OverviewPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      {/* Header - add extra top padding to account for frosted fade */}
-      <div className="px-8 pt-10 pb-6">
+      {/* Header */}
+      <div className="px-8 pt-8 pb-6">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
           <Building2 className="w-4 h-4" strokeWidth={1.5} />
           <span>Workspace</span>

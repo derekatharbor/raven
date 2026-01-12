@@ -54,15 +54,6 @@ const PROJECTS = [
   },
 ]
 
-const colors = {
-  bg: '#FBF9F7',
-  text: '#1a1a1a',
-  textMuted: '#71717a',
-  border: 'rgba(0,0,0,0.06)',
-  hover: 'rgba(0,0,0,0.04)',
-  alert: '#EF4444',
-}
-
 interface SidebarProps {
   collapsed?: boolean
 }
@@ -80,7 +71,6 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['recent', 'projects']))
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
 
-  // Sync with controlled prop if provided
   useEffect(() => {
     if (controlledCollapsed !== undefined) {
       setIsCollapsed(controlledCollapsed)
@@ -118,13 +108,12 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
   const yesterdayReports = RECENT_REPORTS.filter(r => r.updatedAt === 'yesterday')
 
   return (
-    <aside 
+    <div 
       className={`
-        h-screen flex flex-col flex-shrink-0 fixed left-0 top-0
-        transition-all duration-300 ease-in-out z-[100]
+        h-full flex flex-col
+        transition-all duration-300 ease-in-out
         ${isCollapsed ? 'w-16' : 'w-56'}
       `}
-      style={{ backgroundColor: colors.bg }}
     >
       {/* Header */}
       <div className="px-3 py-4 flex items-center justify-between">
@@ -136,17 +125,15 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
                 alt="Harbor" 
                 className="w-6 h-6 object-contain"
               />
-              <span className="text-sm font-semibold" style={{ color: colors.text }}>
+              <span className="text-sm font-semibold text-gray-900">
                 Harbor
               </span>
             </div>
             <button
               onClick={toggleCollapse}
-              className="p-1 rounded-md cursor-pointer transition-colors"
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              className="p-1 rounded-md cursor-pointer hover:bg-black/5 transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+              <ChevronLeft className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
             </button>
           </>
         ) : (
@@ -161,8 +148,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
                 className="w-6 h-6 object-contain group-hover:opacity-0 transition-opacity"
               />
               <ChevronRight 
-                className="w-4 h-4 absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity" 
-                style={{ color: colors.text }}
+                className="w-4 h-4 absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-900" 
                 strokeWidth={1.5}
               />
             </div>
@@ -203,8 +189,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
             <div className="py-2">
               <button
                 onClick={() => toggleSection('recent')}
-                className="w-full flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider cursor-pointer"
-                style={{ color: colors.textMuted }}
+                className="w-full flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider cursor-pointer text-gray-500"
               >
                 {expandedSections.has('recent') ? (
                   <ChevronDown className="w-3 h-3" strokeWidth={2} />
@@ -218,7 +203,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
                 <div className="mt-1 space-y-0.5">
                   {todayReports.length > 0 && (
                     <>
-                      <div className="px-2 py-1 text-[9px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                      <div className="px-2 py-1 text-[9px] font-medium uppercase tracking-wider text-gray-400">
                         Today
                       </div>
                       {todayReports.map(report => (
@@ -228,7 +213,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
                   )}
                   {yesterdayReports.length > 0 && (
                     <>
-                      <div className="px-2 py-1 mt-1 text-[9px] font-medium uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                      <div className="px-2 py-1 mt-1 text-[9px] font-medium uppercase tracking-wider text-gray-400">
                         Yesterday
                       </div>
                       {yesterdayReports.map(report => (
@@ -245,8 +230,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
               <div className="flex items-center justify-between px-2 py-1">
                 <button
                   onClick={() => toggleSection('projects')}
-                  className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider cursor-pointer"
-                  style={{ color: colors.textMuted }}
+                  className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider cursor-pointer text-gray-500"
                 >
                   {expandedSections.has('projects') ? (
                     <ChevronDown className="w-3 h-3" strokeWidth={2} />
@@ -256,7 +240,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
                   Projects
                 </button>
                 <button className="p-0.5 rounded cursor-pointer hover:bg-black/5">
-                  <Plus className="w-3.5 h-3.5" style={{ color: colors.textMuted }} strokeWidth={1.5} />
+                  <Plus className="w-3.5 h-3.5 text-gray-500" strokeWidth={1.5} />
                 </button>
               </div>
               
@@ -270,48 +254,41 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
                       <div key={project.id}>
                         <button
                           onClick={() => toggleProject(project.id)}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors"
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-black/5 transition-colors"
                         >
                           {isExpanded ? (
-                            <ChevronDown className="w-3 h-3" style={{ color: colors.textMuted }} strokeWidth={2} />
+                            <ChevronDown className="w-3 h-3 text-gray-500" strokeWidth={2} />
                           ) : (
-                            <ChevronRight className="w-3 h-3" style={{ color: colors.textMuted }} strokeWidth={2} />
+                            <ChevronRight className="w-3 h-3 text-gray-500" strokeWidth={2} />
                           )}
-                          <FolderOpen className="w-3.5 h-3.5" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-                          <span className="text-xs flex-1 text-left truncate" style={{ color: colors.text }}>
+                          <FolderOpen className="w-3.5 h-3.5 text-gray-500" strokeWidth={1.5} />
+                          <span className="text-xs flex-1 text-left truncate text-gray-900">
                             {project.name}
                           </span>
                           {totalAlerts > 0 && (
-                            <span 
-                              className="text-[9px] font-medium px-1.5 py-0.5 rounded-full"
-                              style={{ backgroundColor: '#FEE2E2', color: colors.alert }}
-                            >
+                            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">
                               {totalAlerts}
                             </span>
                           )}
                         </button>
                         
                         {isExpanded && (
-                          <div className="ml-4 pl-2 border-l mt-0.5 space-y-0.5" style={{ borderColor: colors.border }}>
+                          <div className="ml-5 pl-3 border-l border-gray-200 mt-0.5 space-y-0.5">
                             {project.reports.map(report => (
                               <Link
                                 key={report.id}
                                 href={`/report/${report.id}`}
                                 className={`
                                   flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-colors
-                                  ${isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : ''}
+                                  ${isActive(`/report/${report.id}`) ? 'bg-white shadow-sm' : 'hover:bg-black/5'}
                                 `}
-                                onMouseEnter={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = colors.hover)}
-                                onMouseLeave={(e) => !isActive(`/report/${report.id}`) && (e.currentTarget.style.backgroundColor = 'transparent')}
                               >
-                                <FileText className="w-3 h-3" style={{ color: colors.textMuted }} strokeWidth={1.5} />
-                                <span className="text-[11px] flex-1 truncate" style={{ color: colors.text }}>
+                                <FileText className="w-3 h-3 text-gray-500" strokeWidth={1.5} />
+                                <span className="text-[11px] flex-1 truncate text-gray-900">
                                   {report.name}
                                 </span>
                                 {report.alerts > 0 && (
-                                  <AlertCircle className="w-3 h-3" style={{ color: colors.alert }} strokeWidth={2} />
+                                  <AlertCircle className="w-3 h-3 text-red-500" strokeWidth={2} />
                                 )}
                               </Link>
                             ))}
@@ -326,7 +303,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
           </>
         ) : (
           /* Collapsed icons */
-          <div className="py-2 space-y-1">
+          <div className="py-2 space-y-2">
             <CollapsedIcon icon={FileText} label="Recent" />
             <CollapsedIcon icon={FolderOpen} label="Projects" />
           </div>
@@ -334,7 +311,7 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
       </nav>
 
       {/* Bottom nav */}
-      <div className="px-2 py-2">
+      <div className="px-2 py-2 space-y-1">
         <NavItem 
           href="/sources" 
           icon={Database} 
@@ -350,11 +327,12 @@ export default function Sidebar({ collapsed: controlledCollapsed }: SidebarProps
           isCollapsed={isCollapsed}
         />
       </div>
-    </aside>
+    </div>
   )
 }
 
 // Sub-components
+
 function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
   href: string
   icon: any
@@ -368,13 +346,11 @@ function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
       className={`
         flex items-center rounded-md cursor-pointer transition-colors relative group
         ${isCollapsed ? 'justify-center p-3' : 'gap-2.5 px-2 py-1.5'}
-        ${isActive ? 'bg-white shadow-sm' : ''}
+        ${isActive ? 'bg-white shadow-sm' : 'hover:bg-black/5'}
       `}
-      onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)')}
-      onMouseLeave={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'transparent')}
     >
-      <Icon className="w-[18px] h-[18px] flex-shrink-0" style={{ color: '#1a1a1a' }} strokeWidth={1.5} />
-      {!isCollapsed && <span className="text-[13px]" style={{ color: '#1a1a1a' }}>{label}</span>}
+      <Icon className="w-[18px] h-[18px] flex-shrink-0 text-gray-900" strokeWidth={1.5} />
+      {!isCollapsed && <span className="text-[13px] text-gray-900">{label}</span>}
       {isCollapsed && (
         <div 
           className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200]"
@@ -397,13 +373,11 @@ function ReportLink({ report, isActive }: { report: { id: string; name: string }
       href={`/report/${report.id}`}
       className={`
         flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors
-        ${isActive ? 'bg-white shadow-sm' : ''}
+        ${isActive ? 'bg-white shadow-sm' : 'hover:bg-black/5'}
       `}
-      onMouseEnter={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)')}
-      onMouseLeave={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'transparent')}
     >
-      <FileText className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#71717a' }} strokeWidth={1.5} />
-      <span className="text-xs truncate" style={{ color: '#1a1a1a' }}>{report.name}</span>
+      <FileText className="w-3.5 h-3.5 flex-shrink-0 text-gray-500" strokeWidth={1.5} />
+      <span className="text-xs truncate text-gray-900">{report.name}</span>
     </Link>
   )
 }
@@ -411,11 +385,9 @@ function ReportLink({ report, isActive }: { report: { id: string; name: string }
 function CollapsedIcon({ icon: Icon, label }: { icon: any; label: string }) {
   return (
     <button
-      className="w-full flex items-center justify-center p-3 rounded-md cursor-pointer transition-colors relative group"
-      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)'}
-      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+      className="w-full flex items-center justify-center p-3 rounded-md cursor-pointer hover:bg-black/5 transition-colors relative group"
     >
-      <Icon className="w-[18px] h-[18px]" style={{ color: '#71717a' }} strokeWidth={1.5} />
+      <Icon className="w-[18px] h-[18px] text-gray-500" strokeWidth={1.5} />
       <div 
         className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[200]"
         style={{ 
