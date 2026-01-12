@@ -151,10 +151,8 @@ export default function WorkspacePage() {
         style={{ width: leftWidth }}
       >
         <DocumentPanel
-          documents={documents}
           activeDocumentId={activeTab}
           onDocumentSelect={handleDocumentSelect}
-          onDocumentUpload={handleDocumentUpload}
         />
       </div>
       

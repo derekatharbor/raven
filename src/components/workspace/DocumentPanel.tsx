@@ -1,218 +1,305 @@
-// Route: src/app/(dashboard)/workspace/page.tsx
+// Route: src/components/workspace/DocumentPanel.tsx
 
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import DocumentPanel from '@/components/workspace/DocumentPanel'
-import EditorCanvas from '@/components/workspace/EditorCanvas'
-import IntelligenceGutter from '@/components/workspace/IntelligenceGutter'
+import { useState } from 'react'
+import { ChevronDown, ChevronRight, Filter, FileText, FileSpreadsheet, File } from 'lucide-react'
 
-export interface UploadedDocument {
-  id: string
-  name: string
-  type: 'pdf' | 'docx' | 'xlsx' | 'csv' | 'txt' | 'md'
-  uploadedAt: string
-  uploadedBy?: string
-  content?: string
+// Mock data for now
+const MOCK_DOCUMENTS = [
+  {
+    id: '1',
+    name: 'Q4 Market Analysis',
+    subtitle: 'Gartner Research Report',
+    type: 'pdf' as const,
+    status: { label: 'TAM updated to $14.2B', color: '#F97316', bg: '#FFF7ED' },
+    group: 'recently_added',
+  },
+  {
+    id: '2', 
+    name: 'Competitor Landscape',
+    subtitle: 'Internal Strategy Doc',
+    type: 'docx' as const,
+    status: { label: '3 claims need review', color: '#EF4444', bg: '#FEF2F2' },
+    group: 'recently_added',
+  },
+  {
+    id: '3',
+    name: 'Series B Financials',
+    subtitle: 'PitchBook Export',
+    type: 'xlsx' as const,
+    status: { label: 'All claims verified', color: '#22C55E', bg: '#F0FDF4' },
+    group: 'recently_added',
+  },
+  {
+    id: '4',
+    name: 'Due Diligence Memo',
+    subtitle: 'Deal Team Notes',
+    type: 'pdf' as const,
+    status: { label: 'Source data changed', color: '#F97316', bg: '#FFF7ED' },
+    group: 'needs_attention',
+  },
+  {
+    id: '5',
+    name: 'Investment Committee Deck',
+    subtitle: 'Q3 Review Materials',
+    type: 'pdf' as const,
+    status: { label: '2 contradictions found', color: '#EF4444', bg: '#FEF2F2' },
+    group: 'needs_attention',
+  },
+]
+
+const FILE_TYPE_CONFIG = {
+  pdf: { color: '#DC2626', bg: '#FEF2F2', icon: FileText },
+  docx: { color: '#2563EB', bg: '#EFF6FF', icon: FileText },
+  xlsx: { color: '#16A34A', bg: '#F0FDF4', icon: FileSpreadsheet },
+  csv: { color: '#16A34A', bg: '#F0FDF4', icon: FileSpreadsheet },
+  txt: { color: '#71717A', bg: '#F4F4F5', icon: File },
+  md: { color: '#71717A', bg: '#F4F4F5', icon: File },
 }
 
-export interface Claim {
-  id: string
-  documentId: string
-  text: string
-  startOffset: number
-  endOffset: number
-  status: 'verified' | 'contradiction' | 'pending' | 'stale'
-  source: {
-    name: string
-    logo?: string
-    forecast?: string
-    analyst?: string
-    publishedDate?: string
-    keyDataPoint?: string
-    confidence?: number
-    lastChecked?: string
-  }
+interface DocumentPanelProps {
+  activeDocumentId?: string | null
+  onDocumentSelect?: (docId: string) => void
 }
 
-export default function WorkspacePage() {
-  // Pane widths
-  const [leftWidth, setLeftWidth] = useState(240)
-  const [rightWidth, setRightWidth] = useState(320)
-  
-  // Documents state
-  const [documents, setDocuments] = useState<UploadedDocument[]>([])
-  const [openTabs, setOpenTabs] = useState<string[]>([])
-  const [activeTab, setActiveTab] = useState<string | null>(null)
-  
-  // Claims state
-  const [claims, setClaims] = useState<Claim[]>([])
-  const [activeClaimId, setActiveClaimId] = useState<string | null>(null)
-  const [visibleClaimIds, setVisibleClaimIds] = useState<Set<string>>(new Set())
-  
-  // Refs for bidirectional scroll sync
-  const editorRef = useRef<HTMLDivElement>(null)
-  
-  // Resizing logic
-  const [isResizingLeft, setIsResizingLeft] = useState(false)
-  const [isResizingRight, setIsResizingRight] = useState(false)
-  
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isResizingLeft) {
-      const newWidth = Math.max(180, Math.min(400, e.clientX - 68)) // 68 = sidebar width + gap
-      setLeftWidth(newWidth)
-    }
-    if (isResizingRight) {
-      const newWidth = Math.max(280, Math.min(500, window.innerWidth - e.clientX))
-      setRightWidth(newWidth)
-    }
-  }, [isResizingLeft, isResizingRight])
-  
-  const handleMouseUp = useCallback(() => {
-    setIsResizingLeft(false)
-    setIsResizingRight(false)
-  }, [])
-  
-  // Document handlers
-  const handleDocumentUpload = (files: File[]) => {
-    const newDocs: UploadedDocument[] = files.map(file => ({
-      id: crypto.randomUUID(),
-      name: file.name,
-      type: getFileType(file.name),
-      uploadedAt: new Date().toISOString(),
-    }))
-    setDocuments(prev => [...prev, ...newDocs])
-    
-    // Auto-open first uploaded doc
-    if (newDocs.length > 0 && openTabs.length === 0) {
-      setOpenTabs([newDocs[0].id])
-      setActiveTab(newDocs[0].id)
-    }
-  }
-  
-  const handleDocumentSelect = (docId: string) => {
-    if (!openTabs.includes(docId)) {
-      setOpenTabs(prev => [...prev, docId])
-    }
-    setActiveTab(docId)
-  }
-  
-  const handleTabClose = (docId: string) => {
-    setOpenTabs(prev => prev.filter(id => id !== docId))
-    if (activeTab === docId) {
-      const remaining = openTabs.filter(id => id !== docId)
-      setActiveTab(remaining.length > 0 ? remaining[remaining.length - 1] : null)
-    }
-  }
-  
-  // Claim handlers
-  const handleClaimVisibilityChange = (claimId: string, isVisible: boolean) => {
-    setVisibleClaimIds(prev => {
+export default function DocumentPanel({
+  activeDocumentId,
+  onDocumentSelect,
+}: DocumentPanelProps) {
+  const [activeTab, setActiveTab] = useState<'all' | 'tracking'>('all')
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['recently_added', 'needs_attention']))
+  const [groupBy, setGroupBy] = useState('Recency')
+  const [sortBy, setSortBy] = useState('Date added')
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups(prev => {
       const next = new Set(prev)
-      if (isVisible) {
-        next.add(claimId)
+      if (next.has(group)) {
+        next.delete(group)
       } else {
-        next.delete(claimId)
+        next.add(group)
       }
       return next
     })
   }
-  
-  const handleClaimClick = (claimId: string) => {
-    setActiveClaimId(claimId)
-    // Scroll to claim in editor
-    const element = document.querySelector(`[data-claim-id="${claimId}"]`)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-  }
-  
-  const handleClaimHover = (claimId: string | null) => {
-    setActiveClaimId(claimId)
-  }
-  
-  const activeDocument = documents.find(d => d.id === activeTab)
-  const documentClaims = claims.filter(c => c.documentId === activeTab)
-  
-  // Separate claims by status for smart stacking
-  const contradictionClaims = documentClaims.filter(c => c.status === 'contradiction')
-  const otherClaims = documentClaims.filter(c => c.status !== 'contradiction')
+
+  const recentlyAdded = MOCK_DOCUMENTS.filter(d => d.group === 'recently_added')
+  const needsAttention = MOCK_DOCUMENTS.filter(d => d.group === 'needs_attention')
 
   return (
-    <div 
-      className="h-[calc(100vh-24px)] flex overflow-hidden select-none"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {/* Left Pane - Document Panel */}
-      <div 
-        className="flex-shrink-0 border-r border-gray-200 overflow-hidden"
-        style={{ width: leftWidth }}
-      >
-        <DocumentPanel
-          activeDocumentId={activeTab}
-          onDocumentSelect={handleDocumentSelect}
-        />
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-gray-900 flex items-center justify-center">
+            <FileText className="w-3 h-3 text-white" strokeWidth={2} />
+          </div>
+          <span className="text-[14px] font-semibold text-gray-900">Documents</span>
+        </div>
       </div>
-      
-      {/* Left Resize Handle */}
-      <div
-        className="w-1 hover:bg-blue-500/20 cursor-col-resize flex-shrink-0 transition-colors"
-        onMouseDown={() => setIsResizingLeft(true)}
-      />
-      
-      {/* Center Pane - Editor Canvas */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <EditorCanvas
-          ref={editorRef}
-          document={activeDocument}
-          claims={documentClaims}
-          openTabs={openTabs}
-          activeTab={activeTab}
-          documents={documents}
-          activeClaimId={activeClaimId}
-          onTabSelect={setActiveTab}
-          onTabClose={handleTabClose}
-          onClaimVisibilityChange={handleClaimVisibilityChange}
-          onClaimHover={handleClaimHover}
-        />
+
+      {/* Tabs */}
+      <div className="px-4 py-2 border-b border-gray-200">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`text-[13px] font-medium cursor-pointer transition-colors ${
+              activeTab === 'all' 
+                ? 'text-gray-900' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            All documents
+            <span className={`ml-1.5 text-[12px] px-1.5 py-0.5 rounded ${
+              activeTab === 'all' ? 'bg-gray-100 text-gray-600' : 'text-gray-400'
+            }`}>
+              {MOCK_DOCUMENTS.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('tracking')}
+            className={`text-[13px] font-medium cursor-pointer transition-colors ${
+              activeTab === 'tracking' 
+                ? 'text-gray-900' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Tracking
+            <span className={`ml-1.5 text-[12px] px-1.5 py-0.5 rounded ${
+              activeTab === 'tracking' ? 'bg-gray-100 text-gray-600' : 'text-gray-400'
+            }`}>
+              3
+            </span>
+          </button>
+        </div>
       </div>
-      
-      {/* Right Resize Handle */}
-      <div
-        className="w-1 hover:bg-blue-500/20 cursor-col-resize flex-shrink-0 transition-colors"
-        onMouseDown={() => setIsResizingRight(true)}
-      />
-      
-      {/* Right Pane - Intelligence Gutter */}
-      <div 
-        className="flex-shrink-0 border-l border-gray-200 overflow-hidden"
-        style={{ width: rightWidth }}
-      >
-        <IntelligenceGutter
-          claims={documentClaims}
-          contradictionClaims={contradictionClaims}
-          visibleClaimIds={visibleClaimIds}
-          activeClaimId={activeClaimId}
-          onClaimClick={handleClaimClick}
-          onClaimHover={handleClaimHover}
-        />
+
+      {/* Toolbar */}
+      <div className="px-4 py-2.5 border-b border-gray-200 flex items-center gap-2">
+        <button 
+          className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md bg-white cursor-pointer transition-all border border-gray-200"
+          style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+        >
+          <span className="text-gray-400">Group by:</span>
+          <span className="font-medium text-gray-700">{groupBy}</span>
+          <ChevronDown className="w-3 h-3 text-gray-400" strokeWidth={2} />
+        </button>
+        
+        <button 
+          className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md bg-white cursor-pointer transition-all border border-gray-200"
+          style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+        >
+          <span className="text-gray-400">Sort by:</span>
+          <span className="font-medium text-gray-700">{sortBy}</span>
+          <ChevronDown className="w-3 h-3 text-gray-400" strokeWidth={2} />
+        </button>
+
+        <button 
+          className="flex items-center gap-1.5 text-[12px] text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md bg-white cursor-pointer transition-all border border-gray-200"
+          style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+        >
+          <Filter className="w-3 h-3 text-gray-400" strokeWidth={2} />
+          <span className="font-medium text-gray-700">Filter</span>
+        </button>
+      </div>
+
+      {/* Document List */}
+      <div className="flex-1 overflow-y-auto py-2 px-1">
+        {/* Recently Added Group */}
+        <div className="mb-2">
+          <button
+            onClick={() => toggleGroup('recently_added')}
+            className="w-[calc(100%-4px)] flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors hover:opacity-80 mx-0.5"
+            style={{ backgroundColor: '#FBF9F7' }}
+          >
+            {expandedGroups.has('recently_added') ? (
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+            )}
+            <span className="text-[12px] font-medium text-gray-600">Recently added</span>
+            <span className="text-[11px] text-gray-400">{recentlyAdded.length}</span>
+          </button>
+          
+          {expandedGroups.has('recently_added') && (
+            <div className="mt-1">
+              {recentlyAdded.map(doc => (
+                <DocumentRow
+                  key={doc.id}
+                  doc={doc}
+                  isActive={doc.id === activeDocumentId}
+                  onClick={() => onDocumentSelect?.(doc.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Needs Attention Group */}
+        <div className="mb-2">
+          <button
+            onClick={() => toggleGroup('needs_attention')}
+            className="w-[calc(100%-4px)] flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-colors hover:opacity-80 mx-0.5"
+            style={{ backgroundColor: '#FBF9F7' }}
+          >
+            {expandedGroups.has('needs_attention') ? (
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+            )}
+            <span className="text-[12px] font-medium text-gray-600">Needs attention</span>
+            <span className="text-[11px] text-gray-400">{needsAttention.length}</span>
+          </button>
+          
+          {expandedGroups.has('needs_attention') && (
+            <div className="mt-1">
+              {needsAttention.map(doc => (
+                <DocumentRow
+                  key={doc.id}
+                  doc={doc}
+                  isActive={doc.id === activeDocumentId}
+                  onClick={() => onDocumentSelect?.(doc.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-function getFileType(filename: string): UploadedDocument['type'] {
-  const ext = filename.split('.').pop()?.toLowerCase()
-  switch (ext) {
-    case 'pdf': return 'pdf'
-    case 'docx':
-    case 'doc': return 'docx'
-    case 'xlsx':
-    case 'xls': return 'xlsx'
-    case 'csv': return 'csv'
-    case 'md': return 'md'
-    default: return 'txt'
-  }
+interface DocumentRowProps {
+  doc: typeof MOCK_DOCUMENTS[0]
+  isActive: boolean
+  onClick: () => void
+}
+
+function DocumentRow({ doc, isActive, onClick }: DocumentRowProps) {
+  const config = FILE_TYPE_CONFIG[doc.type]
+  const Icon = config.icon
+
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full flex items-center gap-3 px-3 py-2.5 text-left cursor-pointer transition-colors rounded-md
+        ${isActive ? 'bg-gray-100' : 'hover:bg-gray-50'}
+      `}
+    >
+      {/* Checkbox placeholder */}
+      <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0" />
+      
+      {/* File type icon */}
+      <div 
+        className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: config.bg }}
+      >
+        <Icon className="w-4 h-4" style={{ color: config.color }} strokeWidth={1.5} />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-medium text-gray-900 truncate">
+          {doc.name}
+        </div>
+        <div className="text-[11px] text-gray-500 truncate">
+          {doc.subtitle}
+        </div>
+      </div>
+
+      {/* Status badge */}
+      <div 
+        className="flex items-center gap-1.5 flex-shrink-0 px-2 py-1 border"
+        style={{ 
+          backgroundColor: 'white', 
+          borderColor: '#F3F3F3',
+          borderRadius: '4px',
+          minWidth: '115px',
+          height: '20px',
+        }}
+      >
+        <div 
+          style={{ 
+            backgroundColor: doc.status.color,
+            borderRadius: '4px',
+            width: '12px',
+            height: '12px',
+            flexShrink: 0,
+          }}
+        />
+        <span 
+          className="font-medium text-black truncate"
+          style={{ 
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '10px',
+            lineHeight: '12px',
+          }}
+        >
+          {doc.status.label}
+        </span>
+      </div>
+    </button>
+  )
 }
