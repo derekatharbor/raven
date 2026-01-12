@@ -79,17 +79,19 @@ const TrackedClaim = Mark.create({
 })
 
 interface EditorProps {
-  content?: string
-  onTrackSelection?: (text: string, from: number, to: number) => void
+  content?: string | object
+  onTrackSelection?: (text: string, from: number, to: number, context: string) => void
   onClaimClick?: (claimId: string) => void
   onClaimHover?: (claimId: string | null) => void
+  onContentChange?: (content: any) => void
 }
 
 export interface EditorRef {
   applyTrackedMark: (from: number, to: number, claimId: string, config?: { source?: string; cadence?: string; category?: string }) => void
+  getContent: () => any
 }
 
-const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick, onClaimHover }, ref) => {
+const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick, onClaimHover, onContentChange }, ref) => {
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null)
@@ -206,6 +208,10 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
         setHasSelection(false)
       }
     },
+    onUpdate: ({ editor }) => {
+      // Notify parent of content changes for auto-save
+      onContentChange?.(editor.getJSON())
+    },
     onBlur: () => {
       setTimeout(() => {
         if (!toolbarRef.current?.contains(document.activeElement)) {
@@ -215,7 +221,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
     },
   })
 
-  // Expose method to apply tracked mark from parent
+  // Expose methods to parent
   useImperativeHandle(ref, () => ({
     applyTrackedMark: (from: number, to: number, claimId: string, config?: { source?: string; cadence?: string; category?: string }) => {
       if (!editor) return
@@ -232,6 +238,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
         .run()
       setHasSelection(false)
     },
+    getContent: () => {
+      return editor?.getJSON() || null
+    },
   }))
 
   const handleTrack = useCallback(() => {
@@ -241,7 +250,13 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
     const text = editor.state.doc.textBetween(from, to, ' ')
     
     if (text.trim()) {
-      onTrackSelection?.(text, from, to)
+      // Capture surrounding context (±100 chars)
+      const docSize = editor.state.doc.content.size
+      const contextStart = Math.max(0, from - 100)
+      const contextEnd = Math.min(docSize, to + 100)
+      const context = editor.state.doc.textBetween(contextStart, contextEnd, ' ')
+      
+      onTrackSelection?.(text, from, to, context)
     }
   }, [editor, onTrackSelection])
 

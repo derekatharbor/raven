@@ -1,14 +1,26 @@
-// Route: src/app/(dashboard)/workspace/page.tsx
+// Route: src/app/(dashboard)/workspace/[id]/page.tsx
+// This is the actual document editing page with persistence
 
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import SourcesPanel from '@/components/workspace/SourcesPanel'
 import Editor, { EditorRef } from '@/components/workspace/Editor'
 import ClaimsPanel from '@/components/workspace/ClaimsPanel'
-import { ChevronRight, Database } from 'lucide-react'
+import { ChevronRight, Database, Loader2 } from 'lucide-react'
+import { useDocument } from '@/lib/hooks/useDocument'
+import { useDebouncedCallback } from 'use-debounce'
 
-// Collapsed sources pane - shows icon, expands on hover/click
+// Generate unique claim IDs
+let claimCounter = 0
+
+function generateClaimId() {
+  claimCounter++
+  return `HAR-${String(claimCounter).padStart(3, '0')}`
+}
+
+// Collapsed sources pane
 function CollapsedSourcesPane({ onExpand }: { onExpand: () => void }) {
   const [isHovered, setIsHovered] = useState(false)
   
@@ -32,15 +44,7 @@ function CollapsedSourcesPane({ onExpand }: { onExpand: () => void }) {
   )
 }
 
-// Generate unique claim IDs
-let claimCounter = 5 // Start after mock data
-
-function generateClaimId() {
-  claimCounter++
-  return `HAR-${String(claimCounter).padStart(3, '0')}`
-}
-
-// Track claim modal for when user clicks Track in bubble menu
+// Track claim modal
 function TrackClaimModal({ 
   text, 
   onConfirm, 
@@ -57,21 +61,17 @@ function TrackClaimModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl w-[400px] overflow-hidden">
-        {/* Header */}
         <div className="px-5 py-4 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Track Selection</h3>
           <p className="text-sm text-gray-500 mt-1">Configure monitoring for this claim</p>
         </div>
 
-        {/* Content */}
         <div className="px-5 py-4">
-          {/* Selected text preview */}
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div className="text-xs text-gray-500 mb-1">Selected text</div>
             <p className="text-sm text-gray-900">"{text}"</p>
           </div>
 
-          {/* Source selection */}
           <div className="mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">Data Source</label>
             <select 
@@ -87,7 +87,6 @@ function TrackClaimModal({
             </select>
           </div>
 
-          {/* Cadence selection */}
           <div className="mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">Check Cadence</label>
             <select 
@@ -103,7 +102,6 @@ function TrackClaimModal({
             </select>
           </div>
 
-          {/* Category selection */}
           <div className="mb-4">
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">Category</label>
             <select 
@@ -120,7 +118,6 @@ function TrackClaimModal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-3">
           <button 
             onClick={onCancel}
@@ -140,48 +137,63 @@ function TrackClaimModal({
   )
 }
 
-export default function WorkspacePage() {
+export default function WorkspaceDocumentPage() {
+  const params = useParams()
+  const router = useRouter()
+  const documentId = params.id as string
+  
+  // Fetch document and claims from Supabase
+  const { 
+    document, 
+    claims, 
+    loading, 
+    saving,
+    error,
+    updateContent,
+    addClaim,
+  } = useDocument(documentId)
+
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null)
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null)
   const [hoveredClaimId, setHoveredClaimId] = useState<string | null>(null)
-  
-  // Panel visibility - only left panel is collapsible
   const [leftPanelOpen, setLeftPanelOpen] = useState(true)
   
   // Track modal state
   const [trackModalOpen, setTrackModalOpen] = useState(false)
   const [pendingTrackText, setPendingTrackText] = useState('')
   const [pendingTrackRange, setPendingTrackRange] = useState<{ from: number; to: number } | null>(null)
+  const [pendingTrackContext, setPendingTrackContext] = useState('')
 
-  // Tracked claims state
-  const [trackedClaims, setTrackedClaims] = useState<Array<{
-    id: string
-    text: string
-    status: 'pending' | 'verified' | 'stale' | 'attention'
-    source: string
-    cadence: string
-    category: string
-    lastChecked: string
-  }>>([])
-
-  // Editor ref for applying marks
   const editorRef = useRef<EditorRef>(null)
+
+  // Debounced content save (auto-save every 1s after changes stop)
+  const debouncedSave = useDebouncedCallback(
+    (content: any) => {
+      updateContent(content)
+    },
+    1000
+  )
+
+  // Handle editor content change
+  const handleContentChange = useCallback((content: any) => {
+    debouncedSave(content)
+  }, [debouncedSave])
 
   // Handle track selection from editor
   const handleTrackSelection = useCallback((text: string, from: number, to: number, context: string) => {
     setPendingTrackText(text)
     setPendingTrackRange({ from, to })
+    setPendingTrackContext(context)
     setTrackModalOpen(true)
   }, [])
 
   // Handle track confirmation
-  const handleTrackConfirm = useCallback((config: { source: string; cadence: string; category: string }) => {
+  const handleTrackConfirm = useCallback(async (config: { source: string; cadence: string; category: string }) => {
     if (!pendingTrackRange) return
     
-    // Generate a new claim ID
     const claimId = generateClaimId()
     
-    // Apply the tracked mark to the editor with all config data
+    // Apply mark to editor
     editorRef.current?.applyTrackedMark(
       pendingTrackRange.from, 
       pendingTrackRange.to, 
@@ -189,41 +201,100 @@ export default function WorkspacePage() {
       config
     )
     
-    // Add to tracked claims list
-    const newClaim = {
-      id: claimId,
+    // Save to database
+    await addClaim({
+      claimId,
       text: pendingTrackText,
-      status: 'pending' as const,
+      context: pendingTrackContext,
+      startOffset: pendingTrackRange.from,
+      endOffset: pendingTrackRange.to,
       source: config.source,
       cadence: config.cadence,
       category: config.category,
-      lastChecked: 'Just now',
-    }
-    setTrackedClaims(prev => [newClaim, ...prev])
-    
-    console.log('Created tracked claim:', newClaim)
+    })
     
     setTrackModalOpen(false)
     setPendingTrackText('')
     setPendingTrackRange(null)
-    
-    // Select the new claim in the panel
+    setPendingTrackContext('')
     setSelectedClaimId(claimId)
-  }, [pendingTrackText, pendingTrackRange])
+  }, [pendingTrackText, pendingTrackRange, pendingTrackContext, addClaim])
 
-  // Handle claim click from editor
   const handleClaimClick = useCallback((claimId: string) => {
     setSelectedClaimId(claimId)
   }, [])
 
-  // Handle claim hover from editor
   const handleClaimHover = useCallback((claimId: string | null) => {
     setHoveredClaimId(claimId)
   }, [])
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-2">Error loading document</p>
+          <button 
+            onClick={() => router.push('/workspace')}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Back to documents
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Not found
+  if (!document) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-2">Document not found</p>
+          <button 
+            onClick={() => router.push('/workspace')}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Back to documents
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Transform claims to the format ClaimsPanel expects
+  const transformedClaims = claims.map(c => ({
+    id: c.claim_id,
+    text: c.text,
+    status: c.current_status === 'ok' ? 'verified' as const : 
+           c.current_status === 'contradiction' ? 'attention' as const :
+           c.current_status === 'pending' ? 'pending' as const : 'stale' as const,
+    source: c.source,
+    cadence: c.cadence,
+    category: c.category,
+    lastChecked: c.last_checked_at ? new Date(c.last_checked_at).toRelativeString() : 'Never',
+  }))
+
   return (
     <div className="h-full flex">
-      {/* Left Panel - Sources (collapsible with smooth transition) */}
+      {/* Saving indicator */}
+      {saving && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-full">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          Saving...
+        </div>
+      )}
+
+      {/* Left Panel - Sources */}
       <div 
         className="flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden"
         style={{ width: leftPanelOpen ? 280 : 48 }}
@@ -243,16 +314,18 @@ export default function WorkspacePage() {
       <div className="flex-1 min-w-0 border-r border-gray-200">
         <Editor 
           ref={editorRef}
+          content={document.content}
+          onContentChange={handleContentChange}
           onTrackSelection={handleTrackSelection}
           onClaimClick={handleClaimClick}
           onClaimHover={handleClaimHover}
         />
       </div>
 
-      {/* Right Panel - Claims (always visible) */}
+      {/* Right Panel - Claims */}
       <div className="w-[300px] flex-shrink-0">
         <ClaimsPanel 
-          claims={trackedClaims}
+          claims={transformedClaims}
           selectedClaimId={selectedClaimId}
           hoveredClaimId={hoveredClaimId}
           onClaimSelect={setSelectedClaimId}
@@ -268,9 +341,31 @@ export default function WorkspacePage() {
             setTrackModalOpen(false)
             setPendingTrackText('')
             setPendingTrackRange(null)
+            setPendingTrackContext('')
           }}
         />
       )}
     </div>
   )
+}
+
+// Helper to format relative time (would normally use a library)
+declare global {
+  interface Date {
+    toRelativeString(): string
+  }
+}
+
+Date.prototype.toRelativeString = function() {
+  const now = new Date()
+  const diff = now.getTime() - this.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 7) return `${days}d ago`
+  return this.toLocaleDateString()
 }
