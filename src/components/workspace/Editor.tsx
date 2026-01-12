@@ -247,18 +247,26 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
         }
         .ProseMirror .tracked-claim-wrapper {
           position: relative;
-          color: #6B7280;
+          display: inline;
+          background-color: #F9FAFB;
+          border: 1px solid #E5E7EB;
+          border-radius: 4px;
+          padding: 2px 6px;
+          color: #4B5563;
           cursor: pointer;
-          transition: color 0.15s ease;
+          transition: all 0.15s ease;
+          text-decoration: none;
         }
         .ProseMirror .tracked-claim-wrapper:hover {
+          background-color: #F3F4F6;
+          border-color: #D1D5DB;
           color: #374151;
         }
         .ProseMirror .tracked-claim-wrapper::before {
           content: '○ ' attr(data-claim-id) ' ';
-          font-size: 0.8em;
+          font-size: 0.85em;
           color: #9CA3AF;
-          font-family: ui-monospace, monospace;
+          font-family: ui-monospace, SFMono-Regular, monospace;
         }
         .ProseMirror .tracked-claim-wrapper:hover::before {
           color: #6B7280;
@@ -267,7 +275,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
         .ProseMirror .tracked-claim-wrapper::after {
           content: attr(data-source) ' • ' attr(data-cadence);
           position: absolute;
-          bottom: 100%;
+          bottom: calc(100% + 6px);
           left: 50%;
           transform: translateX(-50%);
           padding: 6px 10px;
@@ -282,7 +290,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
           transition: opacity 0.15s, visibility 0.15s;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           z-index: 100;
-          margin-bottom: 4px;
+          pointer-events: none;
         }
         .ProseMirror .tracked-claim-wrapper:hover::after {
           opacity: 1;
