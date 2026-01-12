@@ -344,25 +344,13 @@ function NavItem({ href, icon: Icon, label, isActive, isCollapsed }: {
     <Link
       href={href}
       className={`
-        flex items-center rounded-md cursor-pointer transition-colors relative group
+        flex items-center rounded-md cursor-pointer transition-colors
         ${isCollapsed ? 'justify-center p-3' : 'gap-2.5 px-2 py-1.5'}
         ${isActive ? 'bg-white shadow-sm' : 'hover:bg-black/5'}
       `}
     >
       <Icon className="w-[18px] h-[18px] flex-shrink-0 text-gray-900" strokeWidth={1.5} />
       {!isCollapsed && <span className="text-[13px] text-gray-900">{label}</span>}
-      {isCollapsed && (
-        <div 
-          className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[300]"
-          style={{ 
-            backgroundColor: '#FBF9F7', 
-            color: '#1a1a1a',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
-          }}
-        >
-          {label}
-        </div>
-      )}
     </Link>
   )
 }
@@ -385,19 +373,9 @@ function ReportLink({ report, isActive }: { report: { id: string; name: string }
 function CollapsedIcon({ icon: Icon, label }: { icon: any; label: string }) {
   return (
     <button
-      className="w-full flex items-center justify-center p-3 rounded-md cursor-pointer hover:bg-black/5 transition-colors relative group"
+      className="w-full flex items-center justify-center p-3 rounded-md cursor-pointer hover:bg-black/5 transition-colors"
     >
       <Icon className="w-[18px] h-[18px] text-gray-500" strokeWidth={1.5} />
-      <div 
-        className="absolute left-full ml-3 px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[300]"
-        style={{ 
-          backgroundColor: '#FBF9F7', 
-          color: '#1a1a1a',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
-        }}
-      >
-        {label}
-      </div>
     </button>
   )
 }

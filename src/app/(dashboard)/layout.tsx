@@ -28,15 +28,15 @@ export default function DashboardLayout({
 
   return (
     <>
-      {/* Layer 1: Background + Sidebar (low z-index) */}
+      {/* Layer 1: Background + Sidebar */}
       <div 
-        className="fixed inset-0 z-0"
+        className="fixed inset-0"
         style={{ backgroundColor: '#FBF9F7' }}
       >
         <Sidebar collapsed={sidebarCollapsed} />
       </div>
       
-      {/* Layer 2: Main content (higher z-index, sits on top) */}
+      {/* Layer 2: Main content (sits on top) */}
       <div 
         className={`
           fixed top-3 right-0 bottom-0 z-10
