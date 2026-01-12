@@ -36,6 +36,42 @@ export interface Claim {
   created_at: string
 }
 
+// Helper to transform DB row to Document type
+function toDocument(row: any): Document {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    title: row.title || 'Untitled',
+    content: row.content || {},
+    status: row.status || 'active',
+    claims_count: row.claims_count || 0,
+    active_contradictions: row.active_contradictions || 0,
+    created_at: row.created_at || new Date().toISOString(),
+    updated_at: row.updated_at || new Date().toISOString(),
+  }
+}
+
+// Helper to transform DB row to Claim type
+function toClaim(row: any): Claim {
+  return {
+    id: row.id,
+    document_id: row.document_id,
+    user_id: row.user_id,
+    claim_id: row.claim_id || row.id,
+    text: row.text || '',
+    context: row.context || null,
+    start_offset: row.start_offset || null,
+    end_offset: row.end_offset || null,
+    source: row.source || 'web',
+    cadence: row.cadence || 'daily',
+    category: row.category || 'general',
+    status: row.status || 'active',
+    current_status: row.current_status || 'pending',
+    last_checked_at: row.last_checked_at || null,
+    created_at: row.created_at || new Date().toISOString(),
+  }
+}
+
 // Hook for single document with its claims
 export function useDocument(documentId: string | null) {
   const [document, setDocument] = useState<Document | null>(null)
@@ -67,7 +103,7 @@ export function useDocument(documentId: string | null) {
         .single()
       
       if (docError) throw docError
-      setDocument(doc)
+      setDocument(toDocument(doc))
 
       // Fetch claims for this document
       const { data: claimsData, error: claimsError } = await supabase
@@ -77,7 +113,7 @@ export function useDocument(documentId: string | null) {
         .order('created_at', { ascending: false })
       
       if (claimsError) throw claimsError
-      setClaims(claimsData || [])
+      setClaims((claimsData || []).map(toClaim))
 
     } catch (err) {
       setError(err as Error)
@@ -173,10 +209,10 @@ export function useDocument(documentId: string | null) {
       
       if (error) throw error
       
-      // Add to local state
-      setClaims(prev => [data, ...prev])
+      const newClaim = toClaim(data)
+      setClaims(prev => [newClaim, ...prev])
       
-      return data
+      return newClaim
     } catch (err) {
       setError(err as Error)
       return null
@@ -262,7 +298,7 @@ export function useDocuments() {
         .order('updated_at', { ascending: false })
       
       if (error) throw error
-      setDocuments(data || [])
+      setDocuments((data || []).map(toDocument))
     } catch (err) {
       setError(err as Error)
     } finally {
@@ -304,8 +340,9 @@ export function useDocuments() {
       
       if (error) throw error
       
-      setDocuments(prev => [data, ...prev])
-      return data
+      const newDoc = toDocument(data)
+      setDocuments(prev => [newDoc, ...prev])
+      return newDoc
     } catch (err) {
       setError(err as Error)
       return null
