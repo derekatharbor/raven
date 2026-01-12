@@ -2,11 +2,19 @@
 
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import SourcesPanel from '@/components/workspace/SourcesPanel'
-import Editor from '@/components/workspace/Editor'
+import Editor, { EditorRef } from '@/components/workspace/Editor'
 import ClaimsPanel from '@/components/workspace/ClaimsPanel'
-import { GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+// Generate unique claim IDs
+let claimCounter = 5 // Start after mock data
+
+function generateClaimId() {
+  claimCounter++
+  return `HAR-${String(claimCounter).padStart(3, '0')}`
+}
 
 // Track claim modal for when user clicks Track in bubble menu
 function TrackClaimModal({ 
@@ -121,6 +129,9 @@ export default function WorkspacePage() {
   const [pendingTrackText, setPendingTrackText] = useState('')
   const [pendingTrackRange, setPendingTrackRange] = useState<{ from: number; to: number } | null>(null)
 
+  // Editor ref for applying marks
+  const editorRef = useRef<EditorRef>(null)
+
   // Handle track selection from editor
   const handleTrackSelection = useCallback((text: string, from: number, to: number) => {
     setPendingTrackText(text)
@@ -130,18 +141,28 @@ export default function WorkspacePage() {
 
   // Handle track confirmation
   const handleTrackConfirm = useCallback((config: { source: string; cadence: string; category: string }) => {
-    // Here you would:
-    // 1. Create the claim in the database
-    // 2. Apply the TrackedClaim mark to the editor
-    // 3. Update the claims panel
-    console.log('Creating tracked claim:', { text: pendingTrackText, range: pendingTrackRange, config })
+    if (!pendingTrackRange) return
+    
+    // Generate a new claim ID
+    const claimId = generateClaimId()
+    
+    // Apply the tracked mark to the editor
+    editorRef.current?.applyTrackedMark(pendingTrackRange.from, pendingTrackRange.to, claimId)
+    
+    console.log('Created tracked claim:', { 
+      claimId,
+      text: pendingTrackText, 
+      range: pendingTrackRange, 
+      config 
+    })
     
     setTrackModalOpen(false)
     setPendingTrackText('')
     setPendingTrackRange(null)
     
-    // Open right panel to show the new claim
+    // Open right panel and select the new claim
     setRightPanelOpen(true)
+    setSelectedClaimId(claimId)
   }, [pendingTrackText, pendingTrackRange])
 
   // Handle claim click from editor
@@ -179,6 +200,7 @@ export default function WorkspacePage() {
       {/* Center - Editor */}
       <div className="flex-1 min-w-0 border-x border-gray-200">
         <Editor 
+          ref={editorRef}
           onTrackSelection={handleTrackSelection}
           onClaimClick={handleClaimClick}
         />

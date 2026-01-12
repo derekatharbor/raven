@@ -7,6 +7,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import { Mark, mergeAttributes } from '@tiptap/core'
 import { 
   Bold, 
   Italic, 
@@ -18,7 +19,39 @@ import {
   X,
   Crosshair,
 } from 'lucide-react'
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
+
+// TrackedClaim Mark Extension - inline
+const TrackedClaim = Mark.create({
+  name: 'trackedClaim',
+
+  addAttributes() {
+    return {
+      claimId: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-claim-id'),
+        renderHTML: attributes => {
+          if (!attributes.claimId) return {}
+          return { 'data-claim-id': attributes.claimId }
+        },
+      },
+    }
+  },
+
+  parseHTML() {
+    return [{ tag: 'span[data-claim-id]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'span',
+      mergeAttributes(HTMLAttributes, {
+        class: 'tracked-claim',
+      }),
+      0,
+    ]
+  },
+})
 
 interface EditorProps {
   content?: string
@@ -26,7 +59,11 @@ interface EditorProps {
   onClaimClick?: (claimId: string) => void
 }
 
-export default function Editor({ content, onTrackSelection, onClaimClick }: EditorProps) {
+export interface EditorRef {
+  applyTrackedMark: (from: number, to: number, claimId: string) => void
+}
+
+const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onClaimClick }, ref) => {
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null)
@@ -46,6 +83,7 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
       Placeholder.configure({
         placeholder: 'Start writing your report...',
       }),
+      TrackedClaim,
     ],
     content: content || `
       <h1>Q4 2024 Investment Memo</h1>
@@ -65,7 +103,19 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
     `,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-full px-12 py-8',
+        class: 'focus:outline-none min-h-full px-12 py-8',
+      },
+      handleClick: (view, pos, event) => {
+        // Check if clicked on a tracked claim
+        const target = event.target as HTMLElement
+        if (target.classList.contains('tracked-claim')) {
+          const claimId = target.getAttribute('data-claim-id')
+          if (claimId) {
+            onClaimClick?.(claimId)
+            return true
+          }
+        }
+        return false
       },
     },
     onSelectionUpdate: ({ editor }) => {
@@ -73,12 +123,10 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
       const text = editor.state.doc.textBetween(from, to, ' ')
       
       if (text.trim().length > 0) {
-        // Get selection coordinates
         const { view } = editor
         const start = view.coordsAtPos(from)
         const end = view.coordsAtPos(to)
         
-        // Position toolbar above selection, centered
         const left = (start.left + end.left) / 2
         const top = start.top - 50
         
@@ -89,7 +137,6 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
       }
     },
     onBlur: () => {
-      // Delay hiding to allow button clicks
       setTimeout(() => {
         if (!toolbarRef.current?.contains(document.activeElement)) {
           setHasSelection(false)
@@ -97,6 +144,20 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
       }, 150)
     },
   })
+
+  // Expose method to apply tracked mark from parent
+  useImperativeHandle(ref, () => ({
+    applyTrackedMark: (from: number, to: number, claimId: string) => {
+      if (!editor) return
+      editor
+        .chain()
+        .focus()
+        .setTextSelection({ from, to })
+        .setMark('trackedClaim', { claimId })
+        .run()
+      setHasSelection(false)
+    },
+  }))
 
   const handleTrack = useCallback(() => {
     if (!editor) return
@@ -132,20 +193,65 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
 
   return (
     <div className="h-full flex flex-col bg-white relative">
+      {/* Global styles for editor */}
+      <style jsx global>{`
+        .ProseMirror h1 {
+          font-size: 1.875rem;
+          font-weight: 700;
+          color: #111827;
+          margin-bottom: 1rem;
+          line-height: 1.2;
+        }
+        .ProseMirror h2 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1f2937;
+          margin-top: 2rem;
+          margin-bottom: 0.75rem;
+          line-height: 1.3;
+        }
+        .ProseMirror p {
+          font-size: 0.9375rem;
+          color: #374151;
+          line-height: 1.7;
+          margin-bottom: 1rem;
+        }
+        .ProseMirror .tracked-claim {
+          background-color: rgba(91, 223, 250, 0.2);
+          border-bottom: 2px solid #5BDFFA;
+          padding: 1px 2px;
+          border-radius: 2px;
+          cursor: pointer;
+          transition: background-color 0.15s ease;
+        }
+        .ProseMirror .tracked-claim:hover {
+          background-color: rgba(91, 223, 250, 0.35);
+        }
+        .ProseMirror p.is-editor-empty:first-child::before {
+          color: #9ca3af;
+          content: attr(data-placeholder);
+          float: left;
+          height: 0;
+          pointer-events: none;
+        }
+      `}</style>
+
       {/* Editor Content */}
       <div className="flex-1 overflow-y-auto">
         <EditorContent editor={editor} className="h-full" />
       </div>
 
-      {/* Floating Toolbar - appears on text selection */}
+      {/* Floating Toolbar - off-white to match sidebar */}
       {hasSelection && selectionPos && (
         <div 
           ref={toolbarRef}
-          className="fixed z-50 flex items-center gap-0.5 px-1 py-1 bg-gray-900 rounded-lg shadow-xl"
+          className="fixed z-50 flex items-center gap-0.5 px-1.5 py-1.5 rounded-lg border border-gray-200"
           style={{
             top: selectionPos.top,
             left: selectionPos.left,
             transform: 'translateX(-50%)',
+            backgroundColor: '#FBF9F7',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           }}
         >
           {isLinkInputOpen ? (
@@ -156,18 +262,18 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSetLink()}
-                className="bg-transparent text-white text-sm outline-none w-48 placeholder-gray-400"
+                className="bg-transparent text-gray-900 text-sm outline-none w-48 placeholder-gray-400"
                 autoFocus
               />
               <button 
                 onClick={handleSetLink}
-                className="p-1 text-gray-400 hover:text-white cursor-pointer"
+                className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
               >
                 <LinkIcon className="w-4 h-4" strokeWidth={1.5} />
               </button>
               <button 
                 onClick={() => setIsLinkInputOpen(false)}
-                className="p-1 text-gray-400 hover:text-white cursor-pointer"
+                className="p-1 text-gray-500 hover:text-gray-900 cursor-pointer"
               >
                 <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
@@ -175,20 +281,20 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
           ) : (
             <>
               {/* Text style dropdown placeholder */}
-              <button className="px-2 py-1.5 text-sm text-gray-300 hover:text-white cursor-pointer flex items-center gap-1">
+              <button className="px-2 py-1.5 text-sm text-gray-500 hover:text-gray-900 cursor-pointer flex items-center gap-1 rounded hover:bg-white/50">
                 Aa
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               
-              <div className="w-px h-5 bg-gray-700 mx-1" />
+              <div className="w-px h-5 bg-gray-300 mx-1" />
               
               {/* Bold */}
               <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('bold') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('bold') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <Bold className="w-4 h-4" strokeWidth={2} />
@@ -198,7 +304,7 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
               <button
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('italic') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('italic') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <Italic className="w-4 h-4" strokeWidth={2} />
@@ -208,7 +314,7 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
               <button
                 onClick={() => editor.chain().focus().toggleStrike().run()}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('strike') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('strike') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <Strikethrough className="w-4 h-4" strokeWidth={2} />
@@ -218,7 +324,7 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
               <button
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('underline') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('underline') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <UnderlineIcon className="w-4 h-4" strokeWidth={2} />
@@ -234,7 +340,7 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
                   }
                 }}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('link') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('link') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <LinkIcon className="w-4 h-4" strokeWidth={2} />
@@ -244,7 +350,7 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
               <button
                 onClick={() => editor.chain().focus().toggleBlockquote().run()}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('blockquote') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('blockquote') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <Quote className="w-4 h-4" strokeWidth={2} />
@@ -254,18 +360,18 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
               <button
                 onClick={() => editor.chain().focus().toggleCode().run()}
                 className={`p-1.5 rounded cursor-pointer transition-colors ${
-                  editor.isActive('code') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'
+                  editor.isActive('code') ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
                 }`}
               >
                 <Code className="w-4 h-4" strokeWidth={2} />
               </button>
               
-              <div className="w-px h-5 bg-gray-700 mx-1" />
+              <div className="w-px h-5 bg-gray-300 mx-1" />
               
               {/* Track - the key feature! */}
               <button
                 onClick={handleTrack}
-                className="p-1.5 rounded cursor-pointer transition-colors text-cyan-400 hover:text-cyan-300 hover:bg-gray-700"
+                className="p-1.5 rounded cursor-pointer transition-colors text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
                 title="Track this selection"
               >
                 <Crosshair className="w-4 h-4" strokeWidth={2} />
@@ -276,4 +382,8 @@ export default function Editor({ content, onTrackSelection, onClaimClick }: Edit
       )}
     </div>
   )
-}
+})
+
+Editor.displayName = 'Editor'
+
+export default Editor
