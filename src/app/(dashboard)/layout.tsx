@@ -37,7 +37,7 @@ export default function DashboardLayout({
       <Sidebar />
       {/* Content area - margin adjusts smoothly based on sidebar state */}
       <main 
-        className="min-h-screen transition-all duration-300 ease-in-out p-3 pl-0"
+        className="min-h-screen transition-all duration-300 ease-in-out pt-3 pr-3 pb-3"
         style={{
           marginLeft: sidebarCollapsed ? '56px' : '220px',
         }}
@@ -46,7 +46,7 @@ export default function DashboardLayout({
           className="min-h-[calc(100vh-24px)] bg-white overflow-hidden"
           style={{ 
             borderRadius: '12px',
-            boxShadow: '0 0 20px rgba(0, 0, 0, 0.06)',
+            boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.06), 0 0 20px rgba(0, 0, 0, 0.04)',
           }}
         >
           {children}
