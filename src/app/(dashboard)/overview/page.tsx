@@ -242,10 +242,13 @@ function PendingActionTab({
   onDismiss: (id: string) => void
 }) {
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+    <div 
+      className="border border-gray-200 rounded-xl p-6"
+      style={{ backgroundColor: '#FBF9F7' }}
+    >
       <div className="flex gap-6">
         {/* Left Column - Needs Attention */}
-        <div className="flex-[7]">
+        <div className="flex-1">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
             <h3 className="text-sm font-medium text-gray-700">Needs Attention</h3>
@@ -266,7 +269,7 @@ function PendingActionTab({
         </div>
 
         {/* Right Column - Review Suggested */}
-        <div className="flex-[3]">
+        <div className="flex-1">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-2 h-2 rounded-full bg-amber-500" />
             <h3 className="text-sm font-medium text-gray-700">Review Suggested</h3>
