@@ -12,6 +12,14 @@ interface TrackingBadgeProps {
   className?: string
 }
 
+// Color palette (pastels, not Skittles)
+const COLORS = {
+  grey: '#9C9DA1',
+  yellow: '#F3C94D',   // Stale
+  orange: '#FD7941',   // Contradiction / Deviation
+  purple: '#5F6AD2',   // Verified
+}
+
 // Shield path (for verification)
 const SHIELD_PATHS = {
   sm: { width: 16, height: 18, path: 'M8 1 L15 4 L15 10 C15 14 8 17 8 17 C8 17 1 14 1 10 L1 4 Z' },
@@ -21,9 +29,9 @@ const SHIELD_PATHS = {
 
 // Circle sizes
 const CIRCLE_SIZES = {
-  sm: 16,
-  md: 22,
-  lg: 28,
+  sm: 14,
+  md: 20,
+  lg: 26,
 }
 
 export default function TrackingBadge({ 
@@ -37,16 +45,16 @@ export default function TrackingBadge({
   const getColors = () => {
     switch (status) {
       case 'verified':
-        return { fill: '#22c55e', stroke: '#22c55e', strokeDasharray: 'none' } // Green
+        return { fill: COLORS.purple, stroke: COLORS.purple, strokeDasharray: 'none' }
       case 'contradiction':
-        return { fill: '#ef4444', stroke: '#ef4444', strokeDasharray: 'none' } // Red
+        return { fill: COLORS.orange, stroke: COLORS.orange, strokeDasharray: 'none' }
       case 'stale':
-        return { fill: '#f59e0b', stroke: '#f59e0b', strokeDasharray: 'none' } // Amber
+        return { fill: COLORS.yellow, stroke: COLORS.yellow, strokeDasharray: 'none' }
       case 'deviation':
-        return { fill: 'transparent', stroke: '#ef4444', strokeDasharray: 'none' } // Red ring
+        return { fill: 'transparent', stroke: COLORS.orange, strokeDasharray: 'none' }
       case 'pending':
       default:
-        return { fill: 'transparent', stroke: '#9ca3af', strokeDasharray: '3 2' } // Dashed grey
+        return { fill: 'transparent', stroke: COLORS.grey, strokeDasharray: '3 2' }
     }
   }
   
@@ -95,14 +103,13 @@ export default function TrackingBadge({
     )
   }
   
-  // Render both (shield + circle side by side)
+  // Render both - shield with circle badge overlay
   if (type === 'both') {
     const shield = SHIELD_PATHS[size]
-    const circleSize = CIRCLE_SIZES[size]
-    const radius = (circleSize - 3) / 2
+    const circleSize = size === 'sm' ? 8 : size === 'md' ? 10 : 12
     
     return (
-      <div className={`inline-flex items-center ${className}`}>
+      <div className={`inline-flex items-center justify-center relative ${className}`}>
         <svg 
           width={shield.width} 
           height={shield.height} 
@@ -116,20 +123,24 @@ export default function TrackingBadge({
             strokeDasharray={colors.strokeDasharray}
           />
         </svg>
+        {/* Small circle badge in bottom-right */}
         <svg 
           width={circleSize} 
           height={circleSize} 
           viewBox={`0 0 ${circleSize} ${circleSize}`}
-          style={{ marginLeft: -4 }}
+          className="absolute"
+          style={{ 
+            bottom: size === 'sm' ? -2 : 0, 
+            right: size === 'sm' ? -3 : -4,
+          }}
         >
           <circle
             cx={circleSize / 2}
             cy={circleSize / 2}
-            r={radius}
+            r={(circleSize - 2) / 2}
             fill={colors.fill}
-            stroke={colors.stroke}
+            stroke="#ffffff"
             strokeWidth={1.5}
-            strokeDasharray={colors.strokeDasharray}
           />
         </svg>
       </div>
