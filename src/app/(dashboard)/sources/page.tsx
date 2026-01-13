@@ -335,14 +335,6 @@ const sourcesData: SourcesData = {
   ],
 }
 
-const categories = [
-  { id: 'all', label: 'All Sources' },
-  { id: 'public', label: 'Public Data' },
-  { id: 'market', label: 'Market Intelligence' },
-  { id: 'systems', label: 'Your Systems' },
-  { id: 'comingSoon', label: 'Coming Soon' },
-]
-
 // Modal for API key input
 function ApiKeyModal({ 
   source, 
@@ -651,27 +643,49 @@ export default function SourcesPage() {
             Sources
           </h1>
           <p className="text-gray-500 text-sm">
-            Connect data sources for claim verification. {connectedCount} of {totalCount} sources active.
+            Your claims are verified against {connectedCount} active sources. Add more to expand coverage.
           </p>
         </div>
 
-        {/* Coverage Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <div className="text-2xl font-semibold text-gray-900">{sources.public.filter(s => s.connected).length}</div>
-            <div className="text-xs text-gray-500 mt-1">Public Sources</div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <div className="text-2xl font-semibold text-gray-900">{sources.market.filter(s => s.connected).length}</div>
-            <div className="text-xs text-gray-500 mt-1">Market Intel</div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <div className="text-2xl font-semibold text-gray-900">{sources.legal.filter(s => s.connected).length}</div>
-            <div className="text-xs text-gray-500 mt-1">Legal Sources</div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <div className="text-2xl font-semibold text-gray-900">{sources.systems.filter(s => s.connected).length}</div>
-            <div className="text-xs text-gray-500 mt-1">Internal Systems</div>
+        {/* Active Coverage - emphasize what's working */}
+        <div 
+          className="rounded-lg p-4 mb-6 border border-gray-200"
+          style={{ backgroundColor: '#FAFAF9' }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-sm text-gray-700">
+                  <span className="font-medium">{sources.public.filter(s => s.connected).length}</span> Public
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-sm text-gray-700">
+                  <span className="font-medium">{sources.legal.filter(s => s.connected).length}</span> Legal
+                </span>
+              </div>
+              {sources.market.filter(s => s.connected).length > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-sm text-gray-700">
+                    <span className="font-medium">{sources.market.filter(s => s.connected).length}</span> Market Intel
+                  </span>
+                </div>
+              )}
+              {sources.systems.filter(s => s.connected).length > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-sm text-gray-700">
+                    <span className="font-medium">{sources.systems.filter(s => s.connected).length}</span> Internal
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="text-xs text-gray-400">
+              Verifying against government filings, regulatory data, and public records
+            </div>
           </div>
         </div>
 
