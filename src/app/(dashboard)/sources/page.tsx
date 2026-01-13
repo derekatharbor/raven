@@ -33,9 +33,20 @@ interface Source {
 interface SourcesData {
   public: Source[]
   market: Source[]
+  legal: Source[]
   systems: Source[]
   comingSoon: Source[]
 }
+
+// Category metadata with descriptions
+const categories = [
+  { id: 'all', label: 'All Sources', description: null },
+  { id: 'public', label: 'Public Data', description: 'Government and regulatory filings' },
+  { id: 'market', label: 'Market Intelligence', description: 'External claims stay current' },
+  { id: 'legal', label: 'Legal & Regulatory', description: 'Compliance shifts in real-time' },
+  { id: 'systems', label: 'Your Systems', description: 'Sync to actual performance' },
+  { id: 'comingSoon', label: 'Coming Soon', description: null },
+]
 
 // Source data organized by category
 const sourcesData: SourcesData = {
@@ -90,6 +101,15 @@ const sourcesData: SourcesData = {
       name: 'ClinicalTrials.gov',
       description: 'Clinical study registrations and results',
       domain: 'clinicaltrials.gov',
+      connected: true,
+      free: true,
+      autoEnabled: true,
+    },
+    {
+      id: 'federal-register',
+      name: 'Federal Register',
+      description: 'Proposed rules, final rules, and executive orders',
+      domain: 'federalregister.gov',
       connected: true,
       free: true,
       autoEnabled: true,
@@ -186,6 +206,41 @@ const sourcesData: SourcesData = {
       requiresKey: true,
     },
   ],
+  legal: [
+    {
+      id: 'lexisnexis',
+      name: 'LexisNexis',
+      description: 'Case law, statutes, legal analytics, and citations',
+      domain: 'lexisnexis.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'westlaw',
+      name: 'Westlaw',
+      description: 'Legal research, court documents, and dockets',
+      domain: 'thomsonreuters.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'lex-machina',
+      name: 'Lex Machina',
+      description: 'Litigation analytics and case outcome predictions',
+      domain: 'lexmachina.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'pacer',
+      name: 'PACER',
+      description: 'Federal court records and case documents',
+      domain: 'uscourts.gov',
+      connected: true,
+      free: true,
+      autoEnabled: true,
+    },
+  ],
   systems: [
     {
       id: 'google-sheets',
@@ -227,6 +282,14 @@ const sourcesData: SourcesData = {
       connected: false,
       oauth: true,
     },
+    {
+      id: 'monday',
+      name: 'Monday.com',
+      description: 'Project data, timelines, and team metrics',
+      domain: 'monday.com',
+      connected: false,
+      oauth: true,
+    },
   ],
   comingSoon: [
     {
@@ -258,6 +321,14 @@ const sourcesData: SourcesData = {
       name: 'PostgreSQL',
       description: 'Direct database connection for custom queries',
       domain: 'postgresql.org',
+      connected: false,
+      comingSoon: true,
+    },
+    {
+      id: 'sap',
+      name: 'SAP',
+      description: 'ERP data, financials, and operations metrics',
+      domain: 'sap.com',
       connected: false,
       comingSoon: true,
     },
@@ -518,8 +589,7 @@ export default function SourcesPage() {
     let filtered: Source[] = []
     
     if (activeTab === 'all') {
-      // Exclude comingSoon from "All" to avoid clutter, or include - your call
-      filtered = [...sources.public, ...sources.market, ...sources.systems, ...sources.comingSoon]
+      filtered = [...sources.public, ...sources.market, ...sources.legal, ...sources.systems, ...sources.comingSoon]
     } else {
       filtered = sources[activeTab as keyof SourcesData] || []
     }
@@ -569,8 +639,8 @@ export default function SourcesPage() {
   }
 
   const filteredSources = getFilteredSources()
-  const connectedCount = [...sources.public, ...sources.market, ...sources.systems].filter((s) => s.connected).length
-  const totalCount = [...sources.public, ...sources.market, ...sources.systems].length
+  const connectedCount = [...sources.public, ...sources.market, ...sources.legal, ...sources.systems].filter((s) => s.connected).length
+  const totalCount = [...sources.public, ...sources.market, ...sources.legal, ...sources.systems].length
 
   return (
     <div className="h-full overflow-y-auto">
@@ -583,6 +653,26 @@ export default function SourcesPage() {
           <p className="text-gray-500 text-sm">
             Connect data sources for claim verification. {connectedCount} of {totalCount} sources active.
           </p>
+        </div>
+
+        {/* Coverage Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-2xl font-semibold text-gray-900">{sources.public.filter(s => s.connected).length}</div>
+            <div className="text-xs text-gray-500 mt-1">Public Sources</div>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-2xl font-semibold text-gray-900">{sources.market.filter(s => s.connected).length}</div>
+            <div className="text-xs text-gray-500 mt-1">Market Intel</div>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-2xl font-semibold text-gray-900">{sources.legal.filter(s => s.connected).length}</div>
+            <div className="text-xs text-gray-500 mt-1">Legal Sources</div>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div className="text-2xl font-semibold text-gray-900">{sources.systems.filter(s => s.connected).length}</div>
+            <div className="text-xs text-gray-500 mt-1">Internal Systems</div>
+          </div>
         </div>
 
         {/* Tabs */}
