@@ -49,18 +49,17 @@ const MOCK_CLAIMS = [
   {
     id: 'HAR-004',
     text: 'China accounts for approximately 20% of revenue',
-    status: 'attention' as const,
-    type: 'both' as const,
+    status: 'contradiction' as const,
+    type: 'verify' as const,
     source: 'web',
     cadence: 'weekly',
     category: 'Regulatory',
     lastChecked: '1d ago',
-    signal: { name: 'Regulatory action', categoryId: 'regulatory' },
   },
   {
     id: 'HAR-005',
     text: 'price target of $650',
-    status: 'pending' as const,
+    status: 'deviation' as const,
     type: 'signal' as const,
     source: 'reuters',
     cadence: 'daily',
@@ -73,7 +72,7 @@ const MOCK_CLAIMS = [
 interface ClaimData {
   id: string
   text: string
-  status: 'pending' | 'verified' | 'stale' | 'attention'
+  status: 'pending' | 'verified' | 'stale' | 'contradiction' | 'deviation'
   type: 'verify' | 'signal' | 'both'
   source: string
   cadence: string
@@ -82,12 +81,13 @@ interface ClaimData {
   signal?: { name: string; categoryId: string }
 }
 
-// Status labels (text only, no colors)
+// Status labels
 const STATUS_LABELS = {
   verified: 'Verified',
-  pending: 'Checking...',
+  pending: 'Pending',
   stale: 'Stale',
-  attention: 'Needs attention',
+  contradiction: 'Contradiction',
+  deviation: 'Deviation detected',
 }
 
 // Claim card in the list view

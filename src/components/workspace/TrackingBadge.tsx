@@ -2,9 +2,7 @@
 
 'use client'
 
-import { Shield, Radar } from 'lucide-react'
-
-type TrackingStatus = 'verified' | 'pending' | 'stale' | 'attention'
+type TrackingStatus = 'verified' | 'pending' | 'stale' | 'contradiction' | 'deviation'
 type TrackingType = 'verify' | 'signal' | 'both'
 
 interface TrackingBadgeProps {
@@ -14,11 +12,18 @@ interface TrackingBadgeProps {
   className?: string
 }
 
-// Hexagon SVG path for different sizes
-const HEXAGON_PATHS = {
-  sm: { width: 20, height: 22, path: 'M10 1 L18.5 5.5 L18.5 16.5 L10 21 L1.5 16.5 L1.5 5.5 Z' },
-  md: { width: 28, height: 32, path: 'M14 2 L26 8 L26 24 L14 30 L2 24 L2 8 Z' },
-  lg: { width: 36, height: 40, path: 'M18 2 L34 10 L34 30 L18 38 L2 30 L2 10 Z' },
+// Shield path (for verification)
+const SHIELD_PATHS = {
+  sm: { width: 16, height: 18, path: 'M8 1 L15 4 L15 10 C15 14 8 17 8 17 C8 17 1 14 1 10 L1 4 Z' },
+  md: { width: 22, height: 26, path: 'M11 1 L21 5 L21 14 C21 20 11 25 11 25 C11 25 1 20 1 14 L1 5 Z' },
+  lg: { width: 28, height: 32, path: 'M14 1 L27 6 L27 18 C27 26 14 31 14 31 C14 31 1 26 1 18 L1 6 Z' },
+}
+
+// Circle sizes
+const CIRCLE_SIZES = {
+  sm: 16,
+  md: 22,
+  lg: 28,
 }
 
 export default function TrackingBadge({ 
@@ -27,140 +32,111 @@ export default function TrackingBadge({
   size = 'md',
   className = '' 
 }: TrackingBadgeProps) {
-  const hex = HEXAGON_PATHS[size]
   
-  // Status determines the hexagon style
-  const statusStyles = {
-    verified: {
-      fill: '#1a1a1a',
-      stroke: '#1a1a1a',
-      strokeDasharray: 'none',
-      iconColor: '#ffffff',
-    },
-    pending: {
-      fill: 'transparent',
-      stroke: '#9ca3af',
-      strokeDasharray: '4 2',
-      iconColor: '#9ca3af',
-    },
-    stale: {
-      fill: 'transparent',
-      stroke: '#9ca3af',
-      strokeDasharray: 'none',
-      iconColor: '#9ca3af',
-    },
-    attention: {
-      fill: '#fef2f2',
-      stroke: '#ef4444',
-      strokeDasharray: 'none',
-      iconColor: '#ef4444',
-    },
+  // Determine colors based on status
+  const getColors = () => {
+    switch (status) {
+      case 'verified':
+        return { fill: '#22c55e', stroke: '#22c55e', strokeDasharray: 'none' } // Green
+      case 'contradiction':
+        return { fill: '#ef4444', stroke: '#ef4444', strokeDasharray: 'none' } // Red
+      case 'stale':
+        return { fill: '#f59e0b', stroke: '#f59e0b', strokeDasharray: 'none' } // Amber
+      case 'deviation':
+        return { fill: 'transparent', stroke: '#ef4444', strokeDasharray: 'none' } // Red ring
+      case 'pending':
+      default:
+        return { fill: 'transparent', stroke: '#9ca3af', strokeDasharray: '3 2' } // Dashed grey
+    }
   }
   
-  const style = statusStyles[status]
+  const colors = getColors()
   
-  // Icon sizes based on badge size
-  const iconSize = {
-    sm: 10,
-    md: 14,
-    lg: 18,
-  }[size]
-  
-  // Calculate center position for icon
-  const centerX = hex.width / 2
-  const centerY = hex.height / 2
-  
-  // Render the appropriate icon(s) based on type
-  const renderIcon = () => {
-    const iconProps = {
-      width: iconSize,
-      height: iconSize,
-      color: style.iconColor,
-      strokeWidth: 2,
-    }
-    
-    if (type === 'verify') {
-      return (
-        <Shield 
-          {...iconProps} 
-          style={{ 
-            position: 'absolute', 
-            left: centerX - iconSize / 2, 
-            top: centerY - iconSize / 2 
-          }} 
-        />
-      )
-    }
-    
-    if (type === 'signal') {
-      return (
-        <Radar 
-          {...iconProps} 
-          style={{ 
-            position: 'absolute', 
-            left: centerX - iconSize / 2, 
-            top: centerY - iconSize / 2 
-          }} 
-        />
-      )
-    }
-    
-    // Both - show combined icon or stacked
-    if (type === 'both') {
-      const smallerSize = iconSize * 0.7
-      return (
-        <>
-          <Shield 
-            width={smallerSize}
-            height={smallerSize}
-            color={style.iconColor}
-            strokeWidth={2}
-            style={{ 
-              position: 'absolute', 
-              left: centerX - smallerSize / 2 - 2, 
-              top: centerY - smallerSize / 2 
-            }} 
+  // Render shield for verify type
+  if (type === 'verify') {
+    const shield = SHIELD_PATHS[size]
+    return (
+      <div className={`inline-flex items-center justify-center ${className}`}>
+        <svg 
+          width={shield.width} 
+          height={shield.height} 
+          viewBox={`0 0 ${shield.width} ${shield.height}`}
+        >
+          <path
+            d={shield.path}
+            fill={colors.fill}
+            stroke={colors.stroke}
+            strokeWidth={1.5}
+            strokeDasharray={colors.strokeDasharray}
           />
-          <Radar 
-            width={smallerSize}
-            height={smallerSize}
-            color={style.iconColor}
-            strokeWidth={2}
-            style={{ 
-              position: 'absolute', 
-              left: centerX - smallerSize / 2 + 2, 
-              top: centerY - smallerSize / 2 
-            }} 
-          />
-        </>
-      )
-    }
-    
-    return null
+        </svg>
+      </div>
+    )
   }
   
-  return (
-    <div 
-      className={`relative inline-flex items-center justify-center ${className}`}
-      style={{ width: hex.width, height: hex.height }}
-    >
-      <svg 
-        width={hex.width} 
-        height={hex.height} 
-        viewBox={`0 0 ${hex.width} ${hex.height}`}
-        className="absolute inset-0"
-      >
-        <path
-          d={hex.path}
-          fill={style.fill}
-          stroke={style.stroke}
-          strokeWidth={1.5}
-          strokeDasharray={style.strokeDasharray}
-        />
-      </svg>
-      {renderIcon()}
-    </div>
-  )
+  // Render circle for signal type
+  if (type === 'signal') {
+    const circleSize = CIRCLE_SIZES[size]
+    const radius = (circleSize - 3) / 2
+    return (
+      <div className={`inline-flex items-center justify-center ${className}`}>
+        <svg width={circleSize} height={circleSize} viewBox={`0 0 ${circleSize} ${circleSize}`}>
+          <circle
+            cx={circleSize / 2}
+            cy={circleSize / 2}
+            r={radius}
+            fill={colors.fill}
+            stroke={colors.stroke}
+            strokeWidth={1.5}
+            strokeDasharray={colors.strokeDasharray}
+          />
+        </svg>
+      </div>
+    )
+  }
+  
+  // Render both (shield + circle side by side)
+  if (type === 'both') {
+    const shield = SHIELD_PATHS[size]
+    const circleSize = CIRCLE_SIZES[size]
+    const radius = (circleSize - 3) / 2
+    
+    return (
+      <div className={`inline-flex items-center ${className}`}>
+        <svg 
+          width={shield.width} 
+          height={shield.height} 
+          viewBox={`0 0 ${shield.width} ${shield.height}`}
+        >
+          <path
+            d={shield.path}
+            fill={colors.fill}
+            stroke={colors.stroke}
+            strokeWidth={1.5}
+            strokeDasharray={colors.strokeDasharray}
+          />
+        </svg>
+        <svg 
+          width={circleSize} 
+          height={circleSize} 
+          viewBox={`0 0 ${circleSize} ${circleSize}`}
+          style={{ marginLeft: -4 }}
+        >
+          <circle
+            cx={circleSize / 2}
+            cy={circleSize / 2}
+            r={radius}
+            fill={colors.fill}
+            stroke={colors.stroke}
+            strokeWidth={1.5}
+            strokeDasharray={colors.strokeDasharray}
+          />
+        </svg>
+      </div>
+    )
+  }
+  
+  return null
 }
 
 // Compact inline version for use in text/cards
