@@ -163,7 +163,7 @@ export default function WorkspacePage() {
   const [trackedClaims, setTrackedClaims] = useState<Array<{
     id: string
     text: string
-    status: 'pending' | 'verified' | 'stale' | 'attention'
+    status: 'pending' | 'verified' | 'stale' | 'contradiction' | 'deviation'
     type: 'verify' | 'signal' | 'both'
     source: string
     cadence: string
