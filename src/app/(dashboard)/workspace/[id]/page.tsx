@@ -276,7 +276,7 @@ export default function WorkspaceDocumentPage() {
     id: c.claim_id,
     text: c.text,
     status: c.current_status === 'ok' ? 'verified' as const : 
-           c.current_status === 'contradiction' ? 'attention' as const :
+           c.current_status === 'contradiction' ? 'contradiction' as const :
            c.current_status === 'pending' ? 'pending' as const : 'stale' as const,
     type: 'verify' as const, // Default to verify for DB claims
     source: c.source,
