@@ -12,6 +12,8 @@ import {
   Unlock,
   ExternalLink,
   ChevronRight,
+  Link,
+  Clock,
 } from 'lucide-react'
 
 // Source type
@@ -21,21 +23,23 @@ interface Source {
   description: string
   domain: string
   connected: boolean
-  free: boolean
+  free?: boolean
   autoEnabled?: boolean
   requiresKey?: boolean
+  oauth?: boolean
+  comingSoon?: boolean
 }
 
 interface SourcesData {
-  government: Source[]
-  financial: Source[]
-  research: Source[]
-  news: Source[]
+  public: Source[]
+  market: Source[]
+  systems: Source[]
+  comingSoon: Source[]
 }
 
 // Source data organized by category
 const sourcesData: SourcesData = {
-  government: [
+  public: [
     {
       id: 'sec-edgar',
       name: 'SEC EDGAR',
@@ -90,75 +94,6 @@ const sourcesData: SourcesData = {
       free: true,
       autoEnabled: true,
     },
-  ],
-  financial: [
-    {
-      id: 'crunchbase',
-      name: 'Crunchbase',
-      description: 'Private company funding, firmographics, and insights',
-      domain: 'crunchbase.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-    {
-      id: 'pitchbook',
-      name: 'PitchBook',
-      description: 'VC/PE deals, valuations, and investor data',
-      domain: 'pitchbook.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-    {
-      id: 'factset',
-      name: 'FactSet',
-      description: 'Financial data, analytics, and M&A intelligence',
-      domain: 'factset.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-    {
-      id: 'capitaliq',
-      name: 'S&P Capital IQ',
-      description: 'Company intelligence and financial research',
-      domain: 'spglobal.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-  ],
-  research: [
-    {
-      id: 'statista',
-      name: 'Statista',
-      description: 'Market research, statistics, and industry reports',
-      domain: 'statista.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-    {
-      id: 'gartner',
-      name: 'Gartner',
-      description: 'Technology research and advisory insights',
-      domain: 'gartner.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-    {
-      id: 'ibisworld',
-      name: 'IBISWorld',
-      description: 'Industry research and market analysis reports',
-      domain: 'ibisworld.com',
-      connected: false,
-      free: false,
-      requiresKey: true,
-    },
-  ],
-  news: [
     {
       id: 'web-search',
       name: 'Web Search',
@@ -168,24 +103,173 @@ const sourcesData: SourcesData = {
       free: true,
       autoEnabled: true,
     },
+  ],
+  market: [
+    {
+      id: 'alphasense',
+      name: 'AlphaSense',
+      description: 'Filings, transcripts, expert calls, broker research',
+      domain: 'alpha-sense.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'crunchbase',
+      name: 'Crunchbase',
+      description: 'Private company funding, firmographics, and insights',
+      domain: 'crunchbase.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'pitchbook',
+      name: 'PitchBook',
+      description: 'VC/PE deals, valuations, and investor data',
+      domain: 'pitchbook.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'statista',
+      name: 'Statista',
+      description: 'Market research, statistics, and industry reports',
+      domain: 'statista.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'morningstar',
+      name: 'Morningstar',
+      description: 'Fund data, ratings, and analyst reports',
+      domain: 'morningstar.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'factset',
+      name: 'FactSet',
+      description: 'Financial data, analytics, and M&A intelligence',
+      domain: 'factset.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'capitaliq',
+      name: 'S&P Capital IQ',
+      description: 'Company intelligence and financial research',
+      domain: 'spglobal.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'gartner',
+      name: 'Gartner',
+      description: 'Technology research and advisory insights',
+      domain: 'gartner.com',
+      connected: false,
+      requiresKey: true,
+    },
+    {
+      id: 'ibisworld',
+      name: 'IBISWorld',
+      description: 'Industry research and market analysis reports',
+      domain: 'ibisworld.com',
+      connected: false,
+      requiresKey: true,
+    },
     {
       id: 'newsapi',
       name: 'News API',
       description: 'Breaking news and headlines from global sources',
       domain: 'newsapi.org',
       connected: false,
-      free: false,
       requiresKey: true,
+    },
+  ],
+  systems: [
+    {
+      id: 'google-sheets',
+      name: 'Google Sheets',
+      description: 'Verify claims against your spreadsheet data',
+      domain: 'google.com',
+      connected: false,
+      oauth: true,
+    },
+    {
+      id: 'salesforce',
+      name: 'Salesforce',
+      description: 'CRM data, pipeline metrics, and account records',
+      domain: 'salesforce.com',
+      connected: false,
+      oauth: true,
+    },
+    {
+      id: 'hubspot',
+      name: 'HubSpot',
+      description: 'Deals, contacts, and marketing metrics',
+      domain: 'hubspot.com',
+      connected: false,
+      oauth: true,
+    },
+    {
+      id: 'notion',
+      name: 'Notion',
+      description: 'Databases, wikis, and team documentation',
+      domain: 'notion.so',
+      connected: false,
+      oauth: true,
+    },
+    {
+      id: 'airtable',
+      name: 'Airtable',
+      description: 'Structured data from your bases and tables',
+      domain: 'airtable.com',
+      connected: false,
+      oauth: true,
+    },
+  ],
+  comingSoon: [
+    {
+      id: 'bloomberg',
+      name: 'Bloomberg Terminal',
+      description: 'Real-time market data and reference data',
+      domain: 'bloomberg.com',
+      connected: false,
+      comingSoon: true,
+    },
+    {
+      id: 'refinitiv',
+      name: 'Refinitiv Eikon',
+      description: 'Financial data and analytics platform',
+      domain: 'refinitiv.com',
+      connected: false,
+      comingSoon: true,
+    },
+    {
+      id: 'snowflake',
+      name: 'Snowflake',
+      description: 'Cloud data warehouse queries',
+      domain: 'snowflake.com',
+      connected: false,
+      comingSoon: true,
+    },
+    {
+      id: 'postgres',
+      name: 'PostgreSQL',
+      description: 'Direct database connection for custom queries',
+      domain: 'postgresql.org',
+      connected: false,
+      comingSoon: true,
     },
   ],
 }
 
 const categories = [
   { id: 'all', label: 'All Sources' },
-  { id: 'government', label: 'Government & Public' },
-  { id: 'financial', label: 'Financial Intelligence' },
-  { id: 'research', label: 'Research & Analysis' },
-  { id: 'news', label: 'News & Events' },
+  { id: 'public', label: 'Public Data' },
+  { id: 'market', label: 'Market Intelligence' },
+  { id: 'systems', label: 'Your Systems' },
+  { id: 'comingSoon', label: 'Coming Soon' },
 ]
 
 // Modal for API key input
@@ -292,15 +376,17 @@ function ApiKeyModal({
 function SourceCard({ 
   source, 
   onConnect, 
-  onDisconnect 
+  onDisconnect,
+  onOAuthConnect,
 }: { 
   source: Source
   onConnect: (source: Source) => void
   onDisconnect: (id: string) => void
+  onOAuthConnect: (source: Source) => void
 }) {
   return (
     <div 
-      className="bg-white border border-gray-200 rounded-lg p-5 flex flex-col h-full hover:shadow-md transition-shadow"
+      className={`bg-white border border-gray-200 rounded-lg p-5 flex flex-col h-full transition-shadow ${source.comingSoon ? 'opacity-60' : 'hover:shadow-md'}`}
       style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
     >
       {/* Header row */}
@@ -319,18 +405,32 @@ function SourceCard({
           </div>
           
           {/* Status badge */}
-          {source.connected ? (
+          {source.comingSoon ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-50 border border-gray-200">
+              <Clock className="w-3 h-3 text-gray-400" strokeWidth={1.5} />
+              <span className="text-gray-500 text-[10px] font-medium uppercase tracking-wide">
+                Soon
+              </span>
+            </div>
+          ) : source.connected ? (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 border border-emerald-100">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-emerald-700 text-[10px] font-medium uppercase tracking-wide">
                 Connected
               </span>
             </div>
+          ) : source.oauth ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 border border-blue-100">
+              <Link className="w-3 h-3 text-blue-500" strokeWidth={1.5} />
+              <span className="text-blue-600 text-[10px] font-medium uppercase tracking-wide">
+                OAuth
+              </span>
+            </div>
           ) : source.requiresKey ? (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-50 border border-gray-200">
               <Lock className="w-3 h-3 text-gray-400" strokeWidth={1.5} />
               <span className="text-gray-500 text-[10px] font-medium uppercase tracking-wide">
-                BYOK
+                API Key
               </span>
             </div>
           ) : null}
@@ -356,7 +456,14 @@ function SourceCard({
 
       {/* Action footer */}
       <div className="mt-4 pt-4 border-t border-gray-100">
-        {source.autoEnabled ? (
+        {source.comingSoon ? (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400">Coming soon</span>
+            <button className="text-xs text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+              Notify me
+            </button>
+          </div>
+        ) : source.autoEnabled ? (
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">Always enabled</span>
             <div className="flex items-center gap-1.5 text-gray-400">
@@ -377,6 +484,14 @@ function SourceCard({
               <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
           </div>
+        ) : source.oauth ? (
+          <button
+            onClick={() => onOAuthConnect(source)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-sm font-medium transition-colors cursor-pointer"
+          >
+            <Link className="w-4 h-4" strokeWidth={1.5} />
+            Connect Account
+          </button>
         ) : (
           <button
             onClick={() => onConnect(source)}
@@ -403,7 +518,8 @@ export default function SourcesPage() {
     let filtered: Source[] = []
     
     if (activeTab === 'all') {
-      filtered = Object.values(sources).flat()
+      // Exclude comingSoon from "All" to avoid clutter, or include - your call
+      filtered = [...sources.public, ...sources.market, ...sources.systems, ...sources.comingSoon]
     } else {
       filtered = sources[activeTab as keyof SourcesData] || []
     }
@@ -440,9 +556,21 @@ export default function SourcesPage() {
     setSources(newSources)
   }
 
+  const handleOAuthConnect = (source: Source) => {
+    // In real implementation, this would redirect to OAuth flow
+    // For now, just simulate connection
+    const newSources = { ...sources }
+    ;(Object.keys(newSources) as Array<keyof SourcesData>).forEach(category => {
+      newSources[category] = newSources[category].map(s =>
+        s.id === source.id ? { ...s, connected: true } : s
+      )
+    })
+    setSources(newSources)
+  }
+
   const filteredSources = getFilteredSources()
-  const connectedCount = Object.values(sources).flat().filter((s) => s.connected).length
-  const totalCount = Object.values(sources).flat().length
+  const connectedCount = [...sources.public, ...sources.market, ...sources.systems].filter((s) => s.connected).length
+  const totalCount = [...sources.public, ...sources.market, ...sources.systems].length
 
   return (
     <div className="h-full overflow-y-auto">
@@ -501,6 +629,7 @@ export default function SourcesPage() {
                 source={source}
                 onConnect={setModalSource}
                 onDisconnect={handleDisconnect}
+                onOAuthConnect={handleOAuthConnect}
               />
             ))}
           </div>
