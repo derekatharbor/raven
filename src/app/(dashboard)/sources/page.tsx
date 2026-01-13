@@ -14,8 +14,27 @@ import {
   ChevronRight,
 } from 'lucide-react'
 
+// Source type
+interface Source {
+  id: string
+  name: string
+  description: string
+  domain: string
+  connected: boolean
+  free: boolean
+  autoEnabled?: boolean
+  requiresKey?: boolean
+}
+
+interface SourcesData {
+  government: Source[]
+  financial: Source[]
+  research: Source[]
+  news: Source[]
+}
+
 // Source data organized by category
-const sourcesData = {
+const sourcesData: SourcesData = {
   government: [
     {
       id: 'sec-edgar',
@@ -175,7 +194,7 @@ function ApiKeyModal({
   onClose, 
   onConnect 
 }: { 
-  source: any
+  source: Source
   onClose: () => void
   onConnect: (id: string, key: string) => void 
 }) {
@@ -275,8 +294,8 @@ function SourceCard({
   onConnect, 
   onDisconnect 
 }: { 
-  source: any
-  onConnect: (source: any) => void
+  source: Source
+  onConnect: (source: Source) => void
   onDisconnect: (id: string) => void
 }) {
   return (
@@ -376,23 +395,23 @@ function SourceCard({
 export default function SourcesPage() {
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [sources, setSources] = useState(sourcesData)
-  const [modalSource, setModalSource] = useState<any>(null)
+  const [sources, setSources] = useState<SourcesData>(sourcesData)
+  const [modalSource, setModalSource] = useState<Source | null>(null)
 
   // Get filtered sources
-  const getFilteredSources = () => {
-    let filtered: any[] = []
+  const getFilteredSources = (): Source[] => {
+    let filtered: Source[] = []
     
     if (activeTab === 'all') {
       filtered = Object.values(sources).flat()
     } else {
-      filtered = sources[activeTab as keyof typeof sources] || []
+      filtered = sources[activeTab as keyof SourcesData] || []
     }
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
-        (source: any) =>
+        (source) =>
           source.name.toLowerCase().includes(query) ||
           source.description.toLowerCase().includes(query)
       )
@@ -403,8 +422,8 @@ export default function SourcesPage() {
 
   const handleConnect = (sourceId: string, apiKey: string) => {
     const newSources = { ...sources }
-    Object.keys(newSources).forEach(category => {
-      newSources[category as keyof typeof newSources] = newSources[category as keyof typeof newSources].map(source =>
+    ;(Object.keys(newSources) as Array<keyof SourcesData>).forEach(category => {
+      newSources[category] = newSources[category].map(source =>
         source.id === sourceId ? { ...source, connected: true } : source
       )
     })
@@ -413,8 +432,8 @@ export default function SourcesPage() {
 
   const handleDisconnect = (sourceId: string) => {
     const newSources = { ...sources }
-    Object.keys(newSources).forEach(category => {
-      newSources[category as keyof typeof newSources] = newSources[category as keyof typeof newSources].map(source =>
+    ;(Object.keys(newSources) as Array<keyof SourcesData>).forEach(category => {
+      newSources[category] = newSources[category].map(source =>
         source.id === sourceId ? { ...source, connected: false } : source
       )
     })
@@ -422,7 +441,7 @@ export default function SourcesPage() {
   }
 
   const filteredSources = getFilteredSources()
-  const connectedCount = Object.values(sources).flat().filter((s: any) => s.connected).length
+  const connectedCount = Object.values(sources).flat().filter((s) => s.connected).length
   const totalCount = Object.values(sources).flat().length
 
   return (
@@ -476,7 +495,7 @@ export default function SourcesPage() {
       <div className="px-8 pb-8">
         {filteredSources.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredSources.map((source: any) => (
+            {filteredSources.map((source) => (
               <SourceCard
                 key={source.id}
                 source={source}
