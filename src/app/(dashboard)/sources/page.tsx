@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { 
   Search, 
   Check, 
@@ -18,7 +18,6 @@ import {
   Key,
   Link2,
 } from 'lucide-react'
-import Image from 'next/image'
 
 // =============================================================================
 // TYPES
@@ -29,7 +28,6 @@ interface Source {
   name: string
   description: string
   domain: string
-  logo: string
   connected: boolean
   free?: boolean
   autoEnabled?: boolean
@@ -54,7 +52,7 @@ interface SourcesData {
 // SMALL SHIELD STATUS ICON
 // =============================================================================
 
-function ShieldStatus({ connected, size = 14 }: { connected: boolean; size?: number }) {
+function ShieldStatus({ connected, size = 12 }: { connected: boolean; size?: number }) {
   return (
     <svg 
       width={size} 
@@ -65,8 +63,8 @@ function ShieldStatus({ connected, size = 14 }: { connected: boolean; size?: num
     >
       <path 
         d="M12 2L4 6v6c0 5.25 3.4 10.15 8 11.25 4.6-1.1 8-6 8-11.25V6l-8-4z" 
-        fill={connected ? '#22c55e' : '#9ca3af'}
-        stroke={connected ? '#22c55e' : '#9ca3af'}
+        fill={connected ? '#22c55e' : '#d1d5db'}
+        stroke={connected ? '#22c55e' : '#d1d5db'}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -130,7 +128,6 @@ const sourcesData: SourcesData = {
       name: 'SEC EDGAR',
       description: 'Public company filings including 10-Ks, 10-Qs, 8-Ks, and proxy statements',
       domain: 'sec.gov',
-      logo: '/logos/sec.svg',
       connected: true,
       free: true,
       autoEnabled: true,
@@ -144,7 +141,6 @@ const sourcesData: SourcesData = {
       name: 'Federal Register',
       description: 'Daily journal of the U.S. Government with rules and notices',
       domain: 'federalregister.gov',
-      logo: '/logos/federal-register.svg',
       connected: true,
       free: true,
       autoEnabled: true,
@@ -158,7 +154,6 @@ const sourcesData: SourcesData = {
       name: 'USPTO Patents',
       description: 'Patent grants, applications, and intellectual property records',
       domain: 'uspto.gov',
-      logo: '/logos/uspto.svg',
       connected: true,
       free: true,
       autoEnabled: true,
@@ -172,7 +167,6 @@ const sourcesData: SourcesData = {
       name: 'OpenCorporates',
       description: 'Global company registry data from 140+ jurisdictions',
       domain: 'opencorporates.com',
-      logo: '/logos/opencorporates.svg',
       connected: true,
       free: true,
       autoEnabled: true,
@@ -186,7 +180,6 @@ const sourcesData: SourcesData = {
       name: 'Web Search',
       description: 'Real-time news, press releases, and web content monitoring',
       domain: 'google.com',
-      logo: '/logos/google.svg',
       connected: true,
       free: true,
       autoEnabled: true,
@@ -202,7 +195,6 @@ const sourcesData: SourcesData = {
       name: 'Bloomberg',
       description: 'Financial data, market analytics, and real-time pricing',
       domain: 'bloomberg.com',
-      logo: '/logos/bloomberg.svg',
       connected: false,
       requiresKey: true,
       category: 'market',
@@ -215,7 +207,6 @@ const sourcesData: SourcesData = {
       name: 'FactSet',
       description: 'Financial data and analytics for investment professionals',
       domain: 'factset.com',
-      logo: '/logos/factset.svg',
       connected: false,
       requiresKey: true,
       category: 'market',
@@ -228,7 +219,6 @@ const sourcesData: SourcesData = {
       name: 'PitchBook',
       description: 'Private market data, VC, PE, and M&A intelligence',
       domain: 'pitchbook.com',
-      logo: '/logos/pitchbook.svg',
       connected: false,
       requiresKey: true,
       category: 'market',
@@ -241,7 +231,6 @@ const sourcesData: SourcesData = {
       name: 'Morningstar',
       description: 'Investment research, fund ratings, and portfolio tools',
       domain: 'morningstar.com',
-      logo: '/logos/morningstar.svg',
       connected: false,
       requiresKey: true,
       category: 'market',
@@ -254,7 +243,6 @@ const sourcesData: SourcesData = {
       name: 'IBISWorld',
       description: 'Industry research reports and market analysis',
       domain: 'ibisworld.com',
-      logo: '/logos/ibisworld.svg',
       connected: false,
       requiresKey: true,
       category: 'market',
@@ -267,7 +255,6 @@ const sourcesData: SourcesData = {
       name: 'News API',
       description: 'Global news aggregation from 80,000+ sources',
       domain: 'newsapi.org',
-      logo: '/logos/newsapi.svg',
       connected: false,
       requiresKey: true,
       category: 'market',
@@ -282,7 +269,6 @@ const sourcesData: SourcesData = {
       name: 'LexisNexis',
       description: 'Case law, statutes, regulations, and legal analytics',
       domain: 'lexisnexis.com',
-      logo: '/logos/lexisnexis.svg',
       connected: false,
       requiresKey: true,
       category: 'legal',
@@ -295,7 +281,6 @@ const sourcesData: SourcesData = {
       name: 'Westlaw',
       description: 'Legal research, court documents, and practice tools',
       domain: 'thomsonreuters.com',
-      logo: '/logos/westlaw.svg',
       connected: false,
       requiresKey: true,
       category: 'legal',
@@ -307,8 +292,7 @@ const sourcesData: SourcesData = {
       id: 'pacer',
       name: 'PACER',
       description: 'Federal court records, filings, and docket information',
-      domain: 'pacer.uscourts.gov',
-      logo: '/logos/pacer.svg',
+      domain: 'uscourts.gov',
       connected: false,
       requiresKey: true,
       category: 'legal',
@@ -322,8 +306,7 @@ const sourcesData: SourcesData = {
       id: 'google-sheets',
       name: 'Google Sheets',
       description: 'Verify claims against your own spreadsheet data',
-      domain: 'google.com',
-      logo: '/logos/google-sheets.svg',
+      domain: 'sheets.google.com',
       connected: false,
       oauth: true,
       category: 'systems',
@@ -336,7 +319,6 @@ const sourcesData: SourcesData = {
       name: 'Airtable',
       description: 'Connect your Airtable bases for verification',
       domain: 'airtable.com',
-      logo: '/logos/airtable.svg',
       connected: false,
       oauth: true,
       category: 'systems',
@@ -349,7 +331,6 @@ const sourcesData: SourcesData = {
       name: 'Notion',
       description: 'Sync your Notion workspace and knowledge base',
       domain: 'notion.so',
-      logo: '/logos/notion.svg',
       connected: false,
       oauth: true,
       category: 'systems',
@@ -364,7 +345,6 @@ const sourcesData: SourcesData = {
       name: 'Salesforce',
       description: 'CRM data, customer records, and pipeline metrics',
       domain: 'salesforce.com',
-      logo: '/logos/salesforce.svg',
       connected: false,
       comingSoon: true,
       category: 'comingSoon',
@@ -377,7 +357,6 @@ const sourcesData: SourcesData = {
       name: 'HubSpot',
       description: 'Marketing automation and sales platform data',
       domain: 'hubspot.com',
-      logo: '/logos/hubspot.svg',
       connected: false,
       comingSoon: true,
       category: 'comingSoon',
@@ -390,7 +369,6 @@ const sourcesData: SourcesData = {
       name: 'Snowflake',
       description: 'Data warehouse integration for enterprise verification',
       domain: 'snowflake.com',
-      logo: '/logos/snowflake.svg',
       connected: false,
       comingSoon: true,
       category: 'comingSoon',
@@ -438,35 +416,37 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
       onClick={onClose}
     >
       <div 
-        className="bg-white border border-[#E6E6E7] rounded-xl w-full max-w-lg shadow-lg overflow-hidden"
+        className="bg-white border border-gray-200 rounded-xl w-full max-w-lg overflow-hidden"
+        style={{ boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-[#E6E6E7]">
+        <div className="px-6 pt-6 pb-4 border-b border-gray-200">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#F7F7F8] rounded-lg flex items-center justify-center border border-[#E6E6E7] overflow-hidden">
-                <Image
-                  src={source.logo}
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                <img
+                  src={`https://cdn.brandfetch.io/${source.domain}?c=1id1Fyz-h7an5-5KR_y`}
                   alt={source.name}
-                  width={32}
-                  height={32}
-                  className="object-contain"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
                 />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-[#1C1C1E] font-semibold text-lg" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <h2 className="text-gray-900 font-semibold text-lg">
                     {source.name}
                   </h2>
                   <ShieldStatus connected={source.connected} size={14} />
                 </div>
-                <p className="text-[#6b7280] text-sm">{source.domain}</p>
+                <p className="text-gray-500 text-sm">{source.domain}</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="text-[#9ca3af] hover:text-[#6b7280] transition-colors p-1"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -477,18 +457,18 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
         <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
           {/* Overview */}
           <div>
-            <h3 className="text-[#6b7280] text-xs font-medium uppercase tracking-wider mb-2">Overview</h3>
-            <p className="text-[#2A2A2C] text-sm leading-relaxed">{source.overview}</p>
+            <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">Overview</h3>
+            <p className="text-gray-700 text-sm leading-relaxed">{source.overview}</p>
           </div>
 
           {/* What we verify */}
           <div>
-            <h3 className="text-[#6b7280] text-xs font-medium uppercase tracking-wider mb-2">What Harbor Verifies</h3>
+            <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">What Harbor Verifies</h3>
             <div className="flex flex-wrap gap-2">
               {source.verifies.map((item, idx) => (
                 <span 
                   key={idx}
-                  className="px-2.5 py-1 bg-[#F7F7F8] border border-[#E6E6E7] rounded text-[#2A2A2C] text-xs"
+                  className="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded text-gray-700 text-xs"
                 >
                   {item}
                 </span>
@@ -498,11 +478,11 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
 
           {/* Use Cases */}
           <div>
-            <h3 className="text-[#6b7280] text-xs font-medium uppercase tracking-wider mb-2">Use Cases</h3>
+            <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">Use Cases</h3>
             <ul className="space-y-1.5">
               {source.useCases.map((useCase, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-[#2A2A2C] text-sm">
-                  <ChevronRight size={12} className="text-[#9ca3af]" />
+                <li key={idx} className="flex items-center gap-2 text-gray-700 text-sm">
+                  <ChevronRight size={12} className="text-gray-400" />
                   {useCase}
                 </li>
               ))}
@@ -512,20 +492,20 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
           {/* API Key Input */}
           {source.requiresKey && !source.connected && showApiInput && (
             <div className="pt-2">
-              <label className="text-[#6b7280] text-xs font-medium uppercase tracking-wider mb-2 block">
+              <label className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2 block">
                 API Key
               </label>
               <div className="relative">
-                <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="Enter your API key"
-                  className="w-full bg-[#F7F7F8] border border-[#E6E6E7] rounded-lg pl-9 pr-4 py-2.5 text-[#1C1C1E] text-sm placeholder:text-[#9ca3af] focus:outline-none focus:border-[#9ca3af] transition-colors"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-colors"
                 />
               </div>
-              <p className="text-[#9ca3af] text-xs mt-2">
+              <p className="text-gray-400 text-xs mt-2">
                 Your API key is encrypted and stored securely.
               </p>
             </div>
@@ -533,22 +513,25 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-[#E6E6E7] bg-[#F7F7F8]">
+        <div 
+          className="px-6 py-4 border-t border-gray-200"
+          style={{ backgroundColor: '#FBF9F7' }}
+        >
           {source.comingSoon ? (
             <button
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-[#E6E6E7] rounded-lg text-[#2A2A2C] text-sm font-medium hover:bg-[#EFEFF0] transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Bell size={14} />
               Notify me when available
             </button>
           ) : source.connected ? (
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-green-600 text-sm">
+              <div className="flex items-center gap-2 text-emerald-600 text-sm">
                 <ShieldStatus connected={true} size={14} />
                 <span>{source.free ? 'Active' : 'Connected'}</span>
               </div>
               {!source.free && (
-                <button className="text-[#6b7280] text-sm hover:text-[#2A2A2C] transition-colors">
+                <button className="text-gray-500 text-sm hover:text-gray-700 transition-colors cursor-pointer">
                   Disconnect
                 </button>
               )}
@@ -557,7 +540,7 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
             <button
               onClick={handleOAuthConnect}
               disabled={isConnecting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1C1C1E] text-white rounded-lg text-sm font-medium hover:bg-[#2A2A2C] transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {isConnecting ? (
                 <span className="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -573,7 +556,7 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
               <button
                 onClick={handleConnect}
                 disabled={isConnecting || !apiKey}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1C1C1E] text-white rounded-lg text-sm font-medium hover:bg-[#2A2A2C] transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isConnecting ? (
                   <span className="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -587,7 +570,7 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
             ) : (
               <button
                 onClick={() => setShowApiInput(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1C1C1E] text-white rounded-lg text-sm font-medium hover:bg-[#2A2A2C] transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer"
               >
                 <Key size={14} />
                 Add API Key
@@ -600,7 +583,7 @@ function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProp
             href={`https://${source.domain}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 text-[#9ca3af] text-xs mt-3 hover:text-[#6b7280] transition-colors"
+            className="flex items-center justify-center gap-1.5 text-gray-400 text-xs mt-3 hover:text-gray-600 transition-colors"
           >
             Visit {source.domain}
             <ExternalLink size={10} />
@@ -624,30 +607,32 @@ function SourceCard({ source, onClick }: SourceCardProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white border border-[#E6E6E7] rounded-xl p-4 hover:border-[#d1d5db] hover:shadow-sm transition-all group"
+      className="w-full text-left bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
+      style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
     >
       {/* Logo + Name Row */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 bg-[#F7F7F8] rounded-lg flex items-center justify-center border border-[#E6E6E7] overflow-hidden flex-shrink-0">
-          <Image
-            src={source.logo}
+        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+          <img
+            src={`https://cdn.brandfetch.io/${source.domain}?c=1id1Fyz-h7an5-5KR_y`}
             alt={source.name}
-            width={24}
-            height={24}
-            className="object-contain"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
           />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-[#1C1C1E] text-sm font-medium truncate">{source.name}</span>
+            <span className="text-gray-900 text-sm font-medium truncate">{source.name}</span>
             <ShieldStatus connected={source.connected} size={12} />
           </div>
-          <span className="text-[#9ca3af] text-xs">{source.domain}</span>
+          <span className="text-gray-400 text-xs">{source.domain}</span>
         </div>
       </div>
 
       {/* Description */}
-      <p className="text-[#6b7280] text-sm leading-relaxed line-clamp-2">
+      <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
         {source.description}
       </p>
     </button>
@@ -662,6 +647,48 @@ export default function SourcesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSource, setSelectedSource] = useState<Source | null>(null)
   const [sources, setSources] = useState<SourcesData>(sourcesData)
+  const [activeCategory, setActiveCategory] = useState('essentials')
+  
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const mainContentRef = useRef<HTMLDivElement>(null)
+
+  // Scroll spy effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!mainContentRef.current) return
+      
+      const scrollTop = mainContentRef.current.scrollTop
+      const offset = 150
+
+      for (const category of categories) {
+        const section = sectionRefs.current[category.id]
+        if (section) {
+          const sectionTop = section.offsetTop - offset
+          const sectionBottom = sectionTop + section.offsetHeight
+          
+          if (scrollTop >= sectionTop && scrollTop < sectionBottom) {
+            setActiveCategory(category.id)
+            break
+          }
+        }
+      }
+    }
+
+    const mainContent = mainContentRef.current
+    mainContent?.addEventListener('scroll', handleScroll)
+    return () => mainContent?.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Scroll to section
+  const scrollToSection = (categoryId: string) => {
+    const section = sectionRefs.current[categoryId]
+    if (section && mainContentRef.current) {
+      mainContentRef.current.scrollTo({
+        top: section.offsetTop - 24,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   // Handle source connection
   const handleConnect = (sourceId: string, apiKey?: string) => {
@@ -674,6 +701,12 @@ export default function SourcesPage() {
       }
       return newSources
     })
+  }
+
+  // Count connected sources per category
+  const getConnectedCount = (categoryId: string) => {
+    const categorySources = sources[categoryId as keyof SourcesData] || []
+    return categorySources.filter(s => s.connected).length
   }
 
   // Total connected count
@@ -691,59 +724,88 @@ export default function SourcesPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#F7F7F8]">
-      {/* Page Header */}
-      <div className="bg-white border-b border-[#E6E6E7]">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 
-                className="text-[#1C1C1E] text-2xl font-semibold"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                Sources
-              </h1>
-              <p className="text-[#6b7280] text-sm mt-1">
-                {totalConnected} sources active
-              </p>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search sources..."
-              className="w-full bg-[#F7F7F8] border border-[#E6E6E7] rounded-lg pl-10 pr-4 py-2.5 text-[#1C1C1E] text-sm placeholder:text-[#9ca3af] focus:outline-none focus:border-[#9ca3af] transition-colors"
-            />
-          </div>
+    <div className="h-full flex">
+      {/* Left Sidebar - Category Navigation */}
+      <div className="w-56 flex-shrink-0 border-r border-gray-200 p-4 flex flex-col">
+        {/* Title */}
+        <div className="mb-6">
+          <h1 className="text-gray-900 text-xl font-semibold mb-1">
+            Sources
+          </h1>
+          <p className="text-gray-500 text-sm">
+            {totalConnected} sources active
+          </p>
         </div>
+
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search sources..."
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-colors"
+          />
+        </div>
+
+        {/* Category Navigation */}
+        <nav className="space-y-1 flex-1">
+          {categories.map(category => {
+            const Icon = category.icon
+            const connectedCount = getConnectedCount(category.id)
+            const isActive = activeCategory === category.id
+            
+            return (
+              <button
+                key={category.id}
+                onClick={() => scrollToSection(category.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer ${
+                  isActive 
+                    ? 'bg-gray-100 text-gray-900' 
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Icon size={14} className={isActive ? 'text-gray-700' : 'text-gray-400'} strokeWidth={1.5} />
+                <span className="text-sm flex-1">{category.label}</span>
+                {connectedCount > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                    isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {connectedCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div 
+        ref={mainContentRef}
+        className="flex-1 overflow-y-auto p-8"
+      >
         {categories.map(category => {
           const categorySources = filterSources(sources[category.id as keyof SourcesData] || [])
           if (categorySources.length === 0 && searchQuery) return null
 
           return (
-            <div key={category.id} className="mb-10">
+            <div
+              key={category.id}
+              ref={el => { sectionRefs.current[category.id] = el }}
+              className="mb-10"
+            >
               {/* Section Header */}
               <div className="mb-4">
-                <h2 
-                  className="text-[#1C1C1E] text-lg font-semibold"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                >
+                <h2 className="text-gray-900 text-lg font-semibold mb-1">
                   {category.label}
                 </h2>
-                <p className="text-[#6b7280] text-sm mt-0.5">{category.description}</p>
+                <p className="text-gray-500 text-sm">{category.description}</p>
               </div>
 
               {/* Card Grid - 3 columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {categorySources.map(source => (
                   <SourceCard
                     key={source.id}
