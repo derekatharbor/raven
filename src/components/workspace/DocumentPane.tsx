@@ -18,9 +18,10 @@ interface DocumentPaneProps {
   activeDocumentId: string | null
   onDocumentSelect: (id: string) => void
   onDocumentCreate: () => void
+  onDocumentDelete: (id: string) => void
 }
 
-export default function DocumentPane({ workspaceName, documents, activeDocumentId, onDocumentSelect, onDocumentCreate }: DocumentPaneProps) {
+export default function DocumentPane({ workspaceName, documents, activeDocumentId, onDocumentSelect, onDocumentCreate, onDocumentDelete }: DocumentPaneProps) {
   const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null)
   const [search, setSearch] = useState('')
 
@@ -90,8 +91,8 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
 
       {contextMenu && (
         <div className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]" style={{ left: contextMenu.x, top: contextMenu.y }} onClick={(e) => e.stopPropagation()}>
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"><Copy className="w-3.5 h-3.5" />Duplicate</button>
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"><Trash2 className="w-3.5 h-3.5" />Delete</button>
+          <button onClick={() => setContextMenu(null)} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"><Copy className="w-3.5 h-3.5" />Duplicate</button>
+          <button onClick={() => { onDocumentDelete(contextMenu.id); setContextMenu(null) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"><Trash2 className="w-3.5 h-3.5" />Delete</button>
         </div>
       )}
     </div>
