@@ -77,15 +77,14 @@ export default function ChatPanel({ onClose, initialContext }: ChatPanelProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#FBF9F7] border-l border-gray-200 w-[380px] relative">
-      {/* Close button */}
-      <button onClick={onClose} className="absolute top-2 right-2 p-1.5 rounded hover:bg-black/5 cursor-pointer z-10">
-        <X className="w-4 h-4 text-gray-400" />
-      </button>
-
+    <div className="h-full flex flex-col bg-[#FBF9F7] border-l border-gray-200 w-[380px]">
       {/* Input container at TOP - badge + textarea together */}
       <div className="p-3 border-b border-gray-200">
-        <div className="bg-white border-2 border-[#5F6AD2] rounded-lg overflow-hidden">
+        <div className="bg-white border-2 border-[#5F6AD2] rounded-lg overflow-hidden relative">
+          {/* Close button inside input container */}
+          <button onClick={onClose} className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 cursor-pointer z-10">
+            <X className="w-3.5 h-3.5 text-gray-400" />
+          </button>
           {/* Context badge INSIDE the input container */}
           {context && (
             <div className="px-3 pt-3 pb-1">

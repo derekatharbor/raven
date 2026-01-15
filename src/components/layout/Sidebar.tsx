@@ -55,8 +55,11 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
             </button>
           </>
         ) : (
-          <button onClick={() => setIsCollapsed(false)} className="w-full flex items-center justify-center cursor-pointer">
-            <img src="/images/raven-logo.png" alt="Raven" className="w-5 h-5 object-contain" />
+          <button onClick={() => setIsCollapsed(false)} className="w-full flex items-center justify-center cursor-pointer group">
+            <div className="relative">
+              <img src="/images/raven-logo.png" alt="Raven" className="w-5 h-5 object-contain group-hover:opacity-0 transition-opacity" />
+              <ChevronRight className="w-4 h-4 absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-500" />
+            </div>
           </button>
         )}
       </div>
