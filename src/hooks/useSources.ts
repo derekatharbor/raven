@@ -40,12 +40,30 @@ import type {
  * ```
  */
 
+// Cache for stable references
+let cachedConnectedSources: ConnectedSource[] = []
+
+function getConnectedSourcesSnapshot(): ConnectedSource[] {
+  const current = sourceRegistry.getConnectedSources()
+  // Only update cache if contents changed
+  if (
+    current.length !== cachedConnectedSources.length ||
+    current.some((s, i) => 
+      s.type !== cachedConnectedSources[i]?.type || 
+      s.status !== cachedConnectedSources[i]?.status
+    )
+  ) {
+    cachedConnectedSources = current
+  }
+  return cachedConnectedSources
+}
+
 export function useSources() {
   // Subscribe to registry changes
   const connectedSources = useSyncExternalStore(
     useCallback((cb) => sourceRegistry.subscribe(cb), []),
-    () => sourceRegistry.getConnectedSources(),
-    () => sourceRegistry.getConnectedSources()
+    getConnectedSourcesSnapshot,
+    getConnectedSourcesSnapshot
   )
 
   const availableSources = sourceRegistry.getAvailableSources()
