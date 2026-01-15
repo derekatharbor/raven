@@ -36,8 +36,6 @@ interface TrackedClaim {
   text: string
   status: 'pending' | 'verified' | 'stale' | 'contradiction'
   source: string
-  cadence: string
-  category: string
   lastChecked: string
 }
 
@@ -55,7 +53,6 @@ function generateClaimId() {
 }
 
 export default function WorkspacePage() {
-  // State
   const [activeWorkspaceId, setActiveWorkspaceId] = useState('w1')
   const [activeDocumentId, setActiveDocumentId] = useState('d1')
   const [openTabs, setOpenTabs] = useState<Tab[]>([
@@ -63,7 +60,7 @@ export default function WorkspacePage() {
   ])
   const [marginCollapsed, setMarginCollapsed] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
-  const [chatContext, setChatContext] = useState<{ text: string; type: 'selection' } | null>(null)
+  const [chatContext, setChatContext] = useState<{ text: string } | null>(null)
   const [trackModalOpen, setTrackModalOpen] = useState(false)
   const [pendingTrackText, setPendingTrackText] = useState('')
   const [pendingTrackRange, setPendingTrackRange] = useState<{ from: number; to: number } | null>(null)
@@ -74,7 +71,6 @@ export default function WorkspacePage() {
   const editorRef = useRef<EditorRef>(null)
   const workspace = WORKSPACES[activeWorkspaceId]
 
-  // Handlers
   const handleWorkspaceSelect = (id: string) => {
     setActiveWorkspaceId(id)
     const ws = WORKSPACES[id]
@@ -116,7 +112,7 @@ export default function WorkspacePage() {
   }, [])
 
   const handleAddToChat = useCallback((text: string) => {
-    setChatContext({ text, type: 'selection' })
+    setChatContext({ text })
     setChatOpen(true)
     setMarginCollapsed(true)
   }, [])
@@ -129,7 +125,7 @@ export default function WorkspacePage() {
       id: claimId,
       text: pendingTrackText,
       status: 'pending',
-      ...config,
+      source: config.source,
       lastChecked: 'Just now',
     }, ...prev])
     setTrackModalOpen(false)
@@ -165,7 +161,7 @@ export default function WorkspacePage() {
         />
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 bg-white">
             <Editor 
               ref={editorRef}
               onTrackSelection={handleTrackSelection}
@@ -181,18 +177,18 @@ export default function WorkspacePage() {
               initialContext={chatContext}
             />
           ) : (
-            <div className={`flex-shrink-0 border-l border-gray-200 bg-gray-50/50 transition-all duration-200 ${marginCollapsed ? 'w-10' : 'w-[200px]'}`}>
+            <div className={`flex-shrink-0 transition-all duration-200 overflow-hidden ${marginCollapsed ? 'w-10' : 'w-[200px]'}`}>
               {marginCollapsed ? (
-                <div className="h-full flex flex-col">
-                  <button onClick={() => setMarginCollapsed(false)} className="p-2.5 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
-                    <ChevronLeft className="w-4 h-4 text-gray-500" />
+                <div className="h-full flex flex-col bg-[#F8F8F7] border-l border-[#E8E8E6]">
+                  <button onClick={() => setMarginCollapsed(false)} className="p-2.5 border-b border-[#E8E8E6] hover:bg-black/5 cursor-pointer">
+                    <ChevronLeft className="w-4 h-4 text-gray-400" />
                   </button>
                   {claims.length > 0 && (
                     <div className="flex-1 flex flex-col items-center py-3 gap-2">
-                      {claims.some(c => c.status === 'verified') && <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center"><Check className="w-3.5 h-3.5 text-green-600" /></div>}
-                      {claims.some(c => c.status === 'pending') && <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center"><Clock className="w-3.5 h-3.5 text-gray-500" /></div>}
-                      {claims.some(c => c.status === 'stale') && <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center"><AlertTriangle className="w-3.5 h-3.5 text-amber-600" /></div>}
-                      {claims.some(c => c.status === 'contradiction') && <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center"><X className="w-3.5 h-3.5 text-red-600" /></div>}
+                      {claims.some(c => c.status === 'verified') && <div className="w-5 h-5 rounded-full bg-[#5F6AD2] flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
+                      {claims.some(c => c.status === 'pending') && <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center"><Clock className="w-3 h-3 text-gray-600" /></div>}
+                      {claims.some(c => c.status === 'stale') && <div className="w-5 h-5 rounded-full bg-[#F3C94D] flex items-center justify-center"><AlertTriangle className="w-3 h-3 text-white" /></div>}
+                      {claims.some(c => c.status === 'contradiction') && <div className="w-5 h-5 rounded-full bg-[#FD7941] flex items-center justify-center"><X className="w-3 h-3 text-white" /></div>}
                     </div>
                   )}
                 </div>
