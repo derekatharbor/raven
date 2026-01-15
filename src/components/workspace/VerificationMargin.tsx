@@ -87,7 +87,7 @@ export default function VerificationMargin({
         </span>
         <button
           onClick={onCollapse}
-          className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+          className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
           title="Collapse panel"
         >
           <ChevronRight className="w-3.5 h-3.5" />
@@ -148,7 +148,7 @@ export default function VerificationMargin({
                   onMouseEnter={() => onClaimHover(claim.id)}
                   onMouseLeave={() => onClaimHover(null)}
                   className={`
-                    w-full text-left p-2 rounded-lg border transition-all
+                    w-full text-left p-2 rounded-lg border transition-all cursor-pointer
                     ${config.bg} ${config.border}
                     ${isSelected || isHovered ? 'ring-1 ring-gray-400' : ''}
                   `}
@@ -191,7 +191,7 @@ export default function VerificationMargin({
       {/* Refresh all button */}
       {claims.length > 0 && (
         <div className="p-2 border-t border-gray-100">
-          <button className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
+          <button className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer">
             <RefreshCw className="w-3 h-3" />
             Check all
           </button>

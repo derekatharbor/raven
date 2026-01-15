@@ -1,4 +1,4 @@
-// Route: src/components/workspace/Editor.tsx
+// src/components/workspace/Editor.tsx
 
 'use client'
 
@@ -17,9 +17,6 @@ import {
   Quote, 
   Code,
   X,
-  Crosshair,
-  Shield,
-  Radar,
   Clock,
 } from 'lucide-react'
 import { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
@@ -83,7 +80,7 @@ const TrackedClaim = Mark.create({
 interface EditorProps {
   content?: string | object
   onTrackSelection?: (text: string, from: number, to: number, context: string) => void
-  onSignalSelection?: (text: string, from: number, to: number, context: string) => void
+  onAddToChat?: (text: string, from: number, to: number, context: string) => void
   onClaimClick?: (claimId: string) => void
   onClaimHover?: (claimId: string | null) => void
   onContentChange?: (content: any) => void
@@ -94,7 +91,7 @@ export interface EditorRef {
   getContent: () => any
 }
 
-const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onSignalSelection, onClaimClick, onClaimHover, onContentChange }, ref) => {
+const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onAddToChat, onClaimClick, onClaimHover, onContentChange }, ref) => {
   const [isLinkInputOpen, setIsLinkInputOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null)
@@ -263,7 +260,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
     }
   }, [editor, onTrackSelection])
 
-  const handleSignal = useCallback(() => {
+  const handleAddToChat = useCallback(() => {
     if (!editor) return
     
     const { from, to } = editor.state.selection
@@ -276,9 +273,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
       const contextEnd = Math.min(docSize, to + 100)
       const context = editor.state.doc.textBetween(contextStart, contextEnd, ' ')
       
-      onSignalSelection?.(text, from, to, context)
+      onAddToChat?.(text, from, to, context)
     }
-  }, [editor, onSignalSelection])
+  }, [editor, onAddToChat])
 
   const handleSetLink = useCallback(() => {
     if (!editor || !linkUrl) return
@@ -493,22 +490,20 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
               
               <div className="w-px h-5 bg-gray-300 mx-1" />
               
-              {/* Verify - integrity tracking */}
+              {/* Add to Chat */}
               <button
-                onClick={handleTrack}
-                className="p-1.5 rounded cursor-pointer transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                title="Verify this claim"
+                onClick={handleAddToChat}
+                className="px-2.5 py-1.5 rounded cursor-pointer transition-colors text-gray-600 hover:text-gray-900 hover:bg-white/50 text-sm font-medium"
               >
-                <Shield className="w-4 h-4" strokeWidth={2} />
+                Add to Chat
               </button>
               
-              {/* Signal - intelligence tracking */}
+              {/* Track */}
               <button
-                onClick={handleSignal}
-                className="p-1.5 rounded cursor-pointer transition-colors text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                title="Add signal for this text"
+                onClick={handleTrack}
+                className="px-2.5 py-1.5 rounded cursor-pointer transition-colors bg-gray-900 text-white hover:bg-gray-800 text-sm font-medium"
               >
-                <Radar className="w-4 h-4" strokeWidth={2} />
+                Track
               </button>
             </>
           )}
