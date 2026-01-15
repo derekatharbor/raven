@@ -14,6 +14,7 @@ import {
   Settings,
   Plus,
   Layers,
+  Check,
 } from 'lucide-react'
 
 const WORKSPACES = [
@@ -25,9 +26,11 @@ const WORKSPACES = [
 interface SidebarProps {
   activeWorkspaceId?: string | null
   onWorkspaceSelect?: (workspaceId: string) => void
+  onSourcesClick?: () => void
+  connectedSourceCount?: number
 }
 
-export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: SidebarProps) {
+export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, onSourcesClick, connectedSourceCount = 0 }: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [workspacesExpanded, setWorkspacesExpanded] = useState(true)
@@ -111,10 +114,19 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
       <div className="px-2 py-2 space-y-0.5 border-t border-gray-200">
         {!isCollapsed ? (
           <>
-            <Link href="/sources" className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/sources') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}>
+            <button 
+              onClick={onSourcesClick}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors hover:bg-black/5"
+            >
               <Database className="w-4 h-4 text-gray-400" />
-              <span className="text-[13px] text-gray-900">Sources</span>
-            </Link>
+              <span className="text-[13px] text-gray-900 flex-1 text-left">Sources</span>
+              {connectedSourceCount > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                  <Check className="w-2.5 h-2.5" />
+                  {connectedSourceCount}
+                </span>
+              )}
+            </button>
             <Link href="/settings" className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/settings') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}>
               <Settings className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Settings</span>
@@ -122,9 +134,16 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
           </>
         ) : (
           <>
-            <Link href="/sources" className="flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" title="Sources">
+            <button 
+              onClick={onSourcesClick}
+              className="relative flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" 
+              title="Sources"
+            >
               <Database className="w-4 h-4 text-gray-500" />
-            </Link>
+              {connectedSourceCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border border-[#FBF9F7]" />
+              )}
+            </button>
             <Link href="/settings" className="flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" title="Settings">
               <Settings className="w-4 h-4 text-gray-500" />
             </Link>

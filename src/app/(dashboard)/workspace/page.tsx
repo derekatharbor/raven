@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 import DocumentPane from '@/components/workspace/DocumentPane'
 import EditorTabs from '@/components/workspace/EditorTabs'
@@ -10,6 +10,8 @@ import Editor, { EditorRef } from '@/components/workspace/Editor'
 import TrackClaimModal from '@/components/workspace/TrackClaimModal'
 import VerificationMargin from '@/components/workspace/VerificationMargin'
 import ChatPanel from '@/components/workspace/ChatPanel'
+import SourceManager from '@/components/settings/SourceManager'
+import { useSources } from '@/hooks/useSources'
 import { Check, AlertTriangle, X, Clock, ChevronLeft } from 'lucide-react'
 
 // Mock data
@@ -67,6 +69,21 @@ export default function WorkspacePage() {
   const [claims, setClaims] = useState<TrackedClaim[]>([])
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null)
   const [hoveredClaimId, setHoveredClaimId] = useState<string | null>(null)
+  const [sourcePanelOpen, setSourcePanelOpen] = useState(false)
+
+  const { connectedSources, connect } = useSources()
+  const connectedCount = connectedSources.filter(s => s.status === 'connected').length
+
+  // Auto-connect to SEC EDGAR on mount (no auth required)
+  useEffect(() => {
+    const autoConnect = async () => {
+      const isSecConnected = connectedSources.some(s => s.type === 'sec-edgar' && s.status === 'connected')
+      if (!isSecConnected) {
+        await connect({ type: 'sec-edgar', config: { userAgent: 'Raven/1.0 (contact@tryraven.io)' } })
+      }
+    }
+    autoConnect()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const editorRef = useRef<EditorRef>(null)
   const workspace = WORKSPACES[activeWorkspaceId]
@@ -138,9 +155,21 @@ export default function WorkspacePage() {
 
   return (
     <div className="h-screen flex bg-white">
-      <Sidebar activeWorkspaceId={activeWorkspaceId} onWorkspaceSelect={handleWorkspaceSelect} />
+      <Sidebar 
+        activeWorkspaceId={activeWorkspaceId} 
+        onWorkspaceSelect={handleWorkspaceSelect}
+        onSourcesClick={() => setSourcePanelOpen(true)}
+        connectedSourceCount={connectedCount}
+      />
       
-      {workspace && (
+      {/* Source Manager Panel - slides over DocumentPane */}
+      {sourcePanelOpen && (
+        <div className="w-[300px] flex-shrink-0 border-r border-gray-200 z-10">
+          <SourceManager onClose={() => setSourcePanelOpen(false)} />
+        </div>
+      )}
+      
+      {workspace && !sourcePanelOpen && (
         <DocumentPane
           workspaceName={workspace.name}
           documents={workspace.documents}
