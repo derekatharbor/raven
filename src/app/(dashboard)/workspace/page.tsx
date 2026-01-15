@@ -179,8 +179,8 @@ export default function WorkspacePage() {
           ) : (
             <div className={`flex-shrink-0 transition-all duration-200 overflow-hidden ${marginCollapsed ? 'w-10' : 'w-[200px]'}`}>
               {marginCollapsed ? (
-                <div className="h-full flex flex-col bg-[#F8F8F7] border-l border-[#E8E8E6]">
-                  <button onClick={() => setMarginCollapsed(false)} className="p-2.5 border-b border-[#E8E8E6] hover:bg-black/5 cursor-pointer">
+                <div className="h-full flex flex-col bg-[#FBF9F7] border-l border-gray-200">
+                  <button onClick={() => setMarginCollapsed(false)} className="p-2.5 border-b border-gray-200 hover:bg-black/5 cursor-pointer">
                     <ChevronLeft className="w-4 h-4 text-gray-400" />
                   </button>
                   {claims.length > 0 && (

@@ -34,7 +34,7 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
     <button
       onClick={() => onDocumentSelect(doc.id)}
       onContextMenu={(e) => { e.preventDefault(); setContextMenu({ id: doc.id, x: e.clientX, y: e.clientY }) }}
-      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer group text-left transition-colors ${activeDocumentId === doc.id ? 'bg-white shadow-sm border border-[#E8E8E6]' : 'hover:bg-black/5'}`}
+      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer group text-left transition-colors ${activeDocumentId === doc.id ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
     >
       <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
       <span className="text-[13px] text-gray-900 truncate flex-1">{doc.name}</span>
@@ -59,9 +59,9 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#F8F8F7] border-r border-[#E8E8E6] w-[200px]" onClick={() => setContextMenu(null)}>
+    <div className="h-full flex flex-col bg-[#FBF9F7] border-r border-gray-200 w-[200px]" onClick={() => setContextMenu(null)}>
       {/* Header */}
-      <div className="h-11 flex items-center justify-between px-3 border-b border-[#E8E8E6]">
+      <div className="h-11 flex items-center justify-between px-3 border-b border-gray-200">
         <div className="flex items-center gap-1.5 min-w-0">
           <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
           <span className="text-[13px] font-medium text-gray-900 truncate">{workspaceName}</span>
@@ -72,8 +72,8 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
       </div>
 
       {/* Search */}
-      <div className="px-2 py-2 border-b border-[#E8E8E6]">
-        <div className="flex items-center gap-2 px-2 py-1.5 bg-white border border-[#E8E8E6] rounded">
+      <div className="px-2 py-2 border-b border-gray-200">
+        <div className="flex items-center gap-2 px-2 py-1.5 bg-white border border-gray-200 rounded">
           <Search className="w-3.5 h-3.5 text-gray-400" />
           <input 
             type="text" 
@@ -104,7 +104,7 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
       {/* Context menu */}
       {contextMenu && (
         <div 
-          className="fixed bg-white border border-[#E8E8E6] rounded-lg shadow-lg py-1 z-50 min-w-[140px]" 
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]" 
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >

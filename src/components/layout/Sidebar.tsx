@@ -37,36 +37,26 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
   return (
     <div 
       className={`
-        h-full flex flex-col bg-[#F8F8F7] border-r border-[#E8E8E6]
+        h-full flex flex-col bg-[#FBF9F7] border-r border-gray-200
         transition-all duration-200 ease-in-out
         ${isCollapsed ? 'w-12' : 'w-[200px]'}
       `}
     >
       {/* Header */}
-      <div className="h-11 flex items-center justify-between px-3 border-b border-[#E8E8E6]">
+      <div className="h-11 flex items-center justify-between px-3 border-b border-gray-200">
         {!isCollapsed ? (
           <>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-[#5F6AD2] flex items-center justify-center">
-                <span className="text-white text-[10px] font-bold">R</span>
-              </div>
+              <img src="/images/raven-logo.png" alt="Raven" className="w-5 h-5 object-contain" />
               <span className="text-sm font-semibold text-gray-900">Raven</span>
             </div>
-            <button
-              onClick={() => setIsCollapsed(true)}
-              className="p-1 rounded hover:bg-black/5 cursor-pointer transition-colors"
-            >
+            <button onClick={() => setIsCollapsed(true)} className="p-1 rounded hover:bg-black/5 cursor-pointer">
               <ChevronLeft className="w-4 h-4 text-gray-400" />
             </button>
           </>
         ) : (
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="w-full flex items-center justify-center cursor-pointer group"
-          >
-            <div className="w-5 h-5 rounded bg-[#5F6AD2] flex items-center justify-center group-hover:bg-[#4F5AC2] transition-colors">
-              <span className="text-white text-[10px] font-bold">R</span>
-            </div>
+          <button onClick={() => setIsCollapsed(false)} className="w-full flex items-center justify-center cursor-pointer">
+            <img src="/images/raven-logo.png" alt="Raven" className="w-5 h-5 object-contain" />
           </button>
         )}
       </div>
@@ -87,27 +77,18 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
                 <Plus className="w-3.5 h-3.5 text-gray-400" />
               </button>
             </div>
-
             {workspacesExpanded && (
               <div className="space-y-0.5">
                 {WORKSPACES.map(ws => (
                   <button
                     key={ws.id}
                     onClick={() => onWorkspaceSelect?.(ws.id)}
-                    className={`
-                      w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors
-                      ${activeWorkspaceId === ws.id 
-                        ? 'bg-white shadow-sm border border-[#E8E8E6]' 
-                        : 'hover:bg-black/5'
-                      }
-                    `}
+                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${activeWorkspaceId === ws.id ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
                   >
                     <FolderOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <span className="text-[13px] text-gray-900 truncate flex-1 text-left">{ws.name}</span>
                     {ws.alerts > 0 && (
-                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-[#FD7941]/10 text-[#FD7941]">
-                        {ws.alerts}
-                      </span>
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">{ws.alerts}</span>
                     )}
                   </button>
                 ))}
@@ -115,13 +96,8 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
             )}
           </div>
         ) : (
-          /* Collapsed: single workspaces icon */
           <div className="px-2 py-3">
-            <button
-              onClick={() => setIsCollapsed(false)}
-              className="w-full flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer transition-colors"
-              title="Workspaces"
-            >
+            <button onClick={() => setIsCollapsed(false)} className="w-full flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" title="Workspaces">
               <Layers className="w-4 h-4 text-gray-500" />
             </button>
           </div>
@@ -129,20 +105,14 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect }: Sideba
       </div>
 
       {/* Bottom nav */}
-      <div className="px-2 py-2 space-y-0.5 border-t border-[#E8E8E6]">
+      <div className="px-2 py-2 space-y-0.5 border-t border-gray-200">
         {!isCollapsed ? (
           <>
-            <Link
-              href="/sources"
-              className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/sources') ? 'bg-white shadow-sm border border-[#E8E8E6]' : 'hover:bg-black/5'}`}
-            >
+            <Link href="/sources" className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/sources') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}>
               <Database className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Sources</span>
             </Link>
-            <Link
-              href="/settings"
-              className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/settings') ? 'bg-white shadow-sm border border-[#E8E8E6]' : 'hover:bg-black/5'}`}
-            >
+            <Link href="/settings" className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/settings') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}>
               <Settings className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Settings</span>
             </Link>
