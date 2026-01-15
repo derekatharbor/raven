@@ -57,9 +57,9 @@ function SourceCard({ meta, connection, onConnect, onDisconnect, onConfigure }: 
         <div className="flex items-start gap-3">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${meta.color}15` }}
+            style={{ backgroundColor: `${meta.color}15`, color: meta.color }}
           >
-            <Icon className="w-5 h-5" style={{ color: meta.color }} />
+            <Icon className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-medium text-gray-900">{meta.name}</h3>
