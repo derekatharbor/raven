@@ -222,9 +222,9 @@ const SourceMention = forwardRef<SourceMentionRef, SourceMentionProps>(
                 >
                   <div
                     className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${item.sourceMeta.color}15` }}
+                    style={{ backgroundColor: `${item.sourceMeta.color}15`, color: item.sourceMeta.color }}
                   >
-                    <Icon className="w-4 h-4" style={{ color: item.sourceMeta.color }} />
+                    <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-gray-900 truncate">{item.label}</div>
