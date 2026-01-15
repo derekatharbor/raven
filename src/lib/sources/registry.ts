@@ -204,7 +204,7 @@ class SourceRegistry {
   // PERSISTENCE
   // ============================================================================
 
-  toJSON(): Array<{ type: SourceType; config?: Record<string, unknown> }> {
+  toJSON(): Array<{ type: SourceType; config?: unknown }> {
     return Array.from(this.connectedSources.entries()).map(([type, source]) => ({
       type,
       config: source.config,
@@ -212,7 +212,7 @@ class SourceRegistry {
   }
 
   async restoreConnections(
-    saved: Array<{ type: SourceType; config?: Record<string, unknown> }>
+    saved: Array<{ type: SourceType; config?: unknown }>
   ): Promise<void> {
     for (const { type, config } of saved) {
       // Reconstruct the config based on type

@@ -39,7 +39,7 @@ export interface ConnectedSource {
   connectedAt?: string
   lastSyncedAt?: string
   error?: string
-  config?: Record<string, unknown>  // Source-specific config
+  config?: unknown  // Source-specific config
 }
 
 // ============================================================================
