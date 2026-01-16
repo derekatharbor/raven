@@ -365,7 +365,7 @@ function ResearchPanel({ selectedText, onInsert, onClose }: {
         },
         {
           id: '3',
-          text: 'NVIDIA's data center business generated $14.51 billion, a 279% increase from the prior year period.',
+          text: "NVIDIA's data center business generated $14.51 billion, a 279% increase from the prior year period.",
           source: 'Bloomberg',
           citation: 'Bloomberg Terminal, Jan 2025'
         },
