@@ -44,12 +44,12 @@ export default function WorkspacePage() {
         onTabClose={handleCloseTab}
         onNewTab={handleNewTab}
         initialBlocks={[
-          { id: '1', type: 'live', content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>', status: 'verified', sourceName: 'SEC EDGAR' },
-          { id: '2', type: 'static', content: '<h2>Key Findings</h2>', status: 'default' },
-          { id: '3', type: 'live', content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase.</p>', status: 'drifted', sourceName: 'AlphaSense' },
-          { id: '4', type: 'static', content: '<p>The company maintained healthy gross margins of 45.2% despite macroeconomic headwinds.</p>', status: 'default' },
-          { id: '5', type: 'summary', content: '<p>Apple demonstrated strong performance across all major product categories in Q4 2024, with particular strength in Services revenue.</p>', status: 'default' },
-          { id: '6', type: 'static', content: '', status: 'default' },
+          { id: '1', content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>', status: 'synced', sourceName: 'SEC EDGAR' },
+          { id: '2', content: '<h2>Key Findings</h2>', status: 'default' },
+          { id: '3', content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase.</p>', status: 'drifted', sourceName: 'AlphaSense' },
+          { id: '4', content: '<p>The company maintained healthy gross margins of 45.2% despite macroeconomic headwinds.</p>', status: 'default' },
+          { id: '5', content: '<p>Apple demonstrated strong performance across all major product categories in Q4 2024, with particular strength in Services revenue.</p>', status: 'signal' },
+          { id: '6', content: '', status: 'default' },
         ]}
       />
     </div>
