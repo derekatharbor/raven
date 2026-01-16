@@ -115,6 +115,7 @@ const PagedEditor = forwardRef<PagedEditorRef, PagedEditorProps>(({
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const editorWrapperRef = useRef<HTMLDivElement>(null)
+  const contentMeasureRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
@@ -191,8 +192,8 @@ const PagedEditor = forwardRef<PagedEditorRef, PagedEditorProps>(({
   })
 
   const calculatePageCount = useCallback(() => {
-    if (!editorWrapperRef.current) return
-    const h = editorWrapperRef.current.scrollHeight
+    if (!contentMeasureRef.current) return
+    const h = contentMeasureRef.current.scrollHeight
     const pages = Math.max(1, Math.ceil(h / CONTENT_HEIGHT))
     if (pages !== pageCount) setPageCount(pages)
   }, [pageCount])
@@ -203,9 +204,9 @@ const PagedEditor = forwardRef<PagedEditorRef, PagedEditorProps>(({
   }, [calculatePageCount, content])
 
   useEffect(() => {
-    if (!editorWrapperRef.current) return
+    if (!contentMeasureRef.current) return
     const observer = new ResizeObserver(calculatePageCount)
-    observer.observe(editorWrapperRef.current)
+    observer.observe(contentMeasureRef.current)
     return () => observer.disconnect()
   }, [calculatePageCount])
 
@@ -369,11 +370,10 @@ const PagedEditor = forwardRef<PagedEditorRef, PagedEditorProps>(({
               minHeight: pageCount * PAGE_HEIGHT + (pageCount - 1) * PAGE_GAP,
             }}
           >
-            <div style={{ width: CONTENT_WIDTH }}>
+            <div ref={contentMeasureRef} style={{ width: CONTENT_WIDTH, minHeight: CONTENT_HEIGHT }}>
               <EditorContent 
                 editor={editor} 
                 style={{
-                  minHeight: CONTENT_HEIGHT,
                   caretColor: darkMode ? '#60a5fa' : '#3b82f6',
                 }}
               />
