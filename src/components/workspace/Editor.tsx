@@ -283,7 +283,10 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
       return editor?.getJSON() || null
     },
     insertPageBreak: () => {
-      editor?.chain().focus().setPageBreak().run()
+      if (!editor) return
+      // Insert at the end of the document
+      const endPos = editor.state.doc.content.size
+      editor.chain().focus().setTextSelection(endPos).setPageBreak().run()
     },
   }))
 
