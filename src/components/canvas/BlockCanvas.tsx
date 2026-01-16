@@ -13,7 +13,8 @@ import Underline from '@tiptap/extension-underline'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
   X, Bold, Italic, Underline as UnderlineIcon,
-  Atom, FileText, Send, Sparkles
+  Atom, Send, Type, Heading1, Heading2, List, Quote,
+  Eye, EyeOff, Table, BarChart3, Link2, Variable, Radio
 } from 'lucide-react'
 
 // ============================================================================
@@ -257,13 +258,12 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
 }
 
 // ============================================================================
-// AI RESEARCH PANEL - Cursor-style chat interface
+// AI RESEARCH PANEL - Input at top, always accessible
 // ============================================================================
 
-function ResearchPanel({ selectedText, onClose, isOpen }: {
+function ResearchPanel({ selectedText, onClose }: {
   selectedText: string
   onClose: () => void
-  isOpen: boolean
 }) {
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
@@ -272,10 +272,8 @@ function ResearchPanel({ selectedText, onClose, isOpen }: {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (isOpen) {
-      inputRef.current?.focus()
-    }
-  }, [isOpen])
+    inputRef.current?.focus()
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -310,7 +308,7 @@ function ResearchPanel({ selectedText, onClose, isOpen }: {
     }
   }
 
-  const truncate = (text: string, max: number = 40) => 
+  const truncate = (text: string, max: number = 35) => 
     text.length <= max ? text : text.substring(0, max) + '...'
 
   return (
@@ -333,7 +331,7 @@ function ResearchPanel({ selectedText, onClose, isOpen }: {
         justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Atom className="w-4 h-4" style={{ color: '#6B7280' }} />
+          <Atom className="w-4 h-4" style={{ color: '#22C55E' }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>Research</span>
         </div>
         <button
@@ -347,21 +345,91 @@ function ResearchPanel({ selectedText, onClose, isOpen }: {
             borderRadius: 4,
             border: 'none',
             background: 'transparent',
-            color: '#6B7280',
+            color: '#9CA3AF',
             cursor: 'pointer',
           }}
-          className="panel-close-btn"
         >
           <X className="w-4 h-4" />
         </button>
+      </div>
+
+      {/* Input at TOP */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB' }}>
+        <div style={{ 
+          background: 'white', 
+          border: '1px solid #E5E7EB', 
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}>
+          {/* Context badge - pill style, green */}
+          {selectedText && (
+            <div style={{ padding: '10px 12px 0' }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: 6, 
+                padding: '4px 12px', 
+                background: '#DCFCE7',
+                borderRadius: 999,
+                fontSize: 12,
+                color: '#166534',
+                fontWeight: 500,
+              }}>
+                <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
+                <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {truncate(selectedText)}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <div style={{ display: 'flex', alignItems: 'flex-end', padding: '10px 12px', gap: 8 }}>
+            <textarea
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={selectedText ? "Ask about this selection..." : "Search sources, ask questions..."}
+              rows={2}
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: '#111',
+                background: 'transparent',
+              }}
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={!query.trim() && !selectedText}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                border: 'none',
+                background: (query.trim() || selectedText) ? '#111' : '#E5E7EB',
+                color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
+                cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
+                flexShrink: 0,
+              }}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {messages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9CA3AF', fontSize: 13, lineHeight: 1.6 }}>
-            <Sparkles className="w-8 h-8 mx-auto mb-3" style={{ color: '#D1D5DB' }} />
-            Ask about your selection or<br />search connected sources
+            Search your connected sources<br />or ask questions about your document
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -373,15 +441,16 @@ function ResearchPanel({ selectedText, onClose, isOpen }: {
                       display: 'inline-flex', 
                       alignItems: 'center', 
                       gap: 6, 
-                      padding: '4px 8px', 
-                      background: '#F3F4F6', 
-                      borderRadius: 4,
-                      fontSize: 12,
-                      color: '#6B7280',
+                      padding: '4px 10px', 
+                      background: '#DCFCE7',
+                      borderRadius: 999,
+                      fontSize: 11,
+                      color: '#166534',
+                      fontWeight: 500,
                     }}>
-                      <FileText className="w-3 h-3" />
-                      <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {truncate(msg.context, 30)}
+                      <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
+                      <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {truncate(msg.context, 25)}
                       </span>
                     </div>
                   </div>
@@ -422,84 +491,154 @@ function ResearchPanel({ selectedText, onClose, isOpen }: {
           </div>
         )}
       </div>
-
-      {/* Input */}
-      <div style={{ padding: '12px 16px', borderTop: '1px solid #E5E7EB' }}>
-        <div style={{ 
-          background: 'white', 
-          border: '1px solid #E5E7EB', 
-          borderRadius: 8,
-          overflow: 'hidden',
-        }}>
-          {/* Context badge */}
-          {selectedText && messages.length === 0 && (
-            <div style={{ padding: '8px 12px 0' }}>
-              <div style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: 6, 
-                padding: '4px 8px', 
-                background: '#F3F4F6', 
-                borderRadius: 4,
-                fontSize: 12,
-                color: '#374151',
-              }}>
-                <FileText className="w-3 h-3" style={{ color: '#6B7280' }} />
-                <span style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {truncate(selectedText)}
-                </span>
-              </div>
-            </div>
-          )}
-          
-          <div style={{ display: 'flex', alignItems: 'flex-end', padding: '8px 12px', gap: 8 }}>
-            <textarea
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about your selection..."
-              rows={2}
-              style={{
-                flex: 1,
-                border: 'none',
-                outline: 'none',
-                resize: 'none',
-                fontSize: 13,
-                lineHeight: 1.5,
-                color: '#111',
-                background: 'transparent',
-              }}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={!query.trim() && !selectedText}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 32,
-                height: 32,
-                borderRadius: 6,
-                border: 'none',
-                background: (query.trim() || selectedText) ? '#111' : '#E5E7EB',
-                color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
-                cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
-                flexShrink: 0,
-              }}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
 
 // ============================================================================
-// BLOCK EDITOR - Clean, no rails
+// BLOCK SELECTOR MODAL - Notion-style block type picker
 // ============================================================================
+
+function BlockSelectorModal({ position, onSelect, onClose }: {
+  position: { top: number; left: number }
+  onSelect: (type: string) => void
+  onClose: () => void
+}) {
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [onClose])
+
+  const sections = [
+    {
+      title: 'Suggested',
+      items: [
+        { id: 'ai-research', label: 'AI Research', icon: Atom, description: 'Search sources with AI', color: '#22C55E' },
+      ]
+    },
+    {
+      title: 'Basic blocks',
+      items: [
+        { id: 'text', label: 'Text', icon: Type, description: 'Plain text block' },
+        { id: 'h1', label: 'Heading 1', icon: Heading1, description: 'Large section heading' },
+        { id: 'h2', label: 'Heading 2', icon: Heading2, description: 'Medium section heading' },
+        { id: 'list', label: 'Bullet List', icon: List, description: 'Simple bullet list' },
+        { id: 'quote', label: 'Quote', icon: Quote, description: 'Quoted text' },
+        { id: 'table', label: 'Table', icon: Table, description: 'Add a table' },
+      ]
+    },
+    {
+      title: 'Smart blocks',
+      items: [
+        { id: 'exec-summary', label: 'AI Executive Summary', icon: Atom, description: 'Auto-generated from document', color: '#22C55E' },
+        { id: 'citation', label: 'Citation', icon: Link2, description: 'Formatted source reference' },
+        { id: 'data-variable', label: 'Data Variable', icon: Variable, description: 'Live value from source' },
+        { id: 'signal-monitor', label: 'Signal Monitor', icon: Radio, description: 'Track external changes' },
+        { id: 'chart', label: 'Chart', icon: BarChart3, description: 'Visualize data' },
+      ]
+    },
+  ]
+
+  return (
+    <div
+      ref={modalRef}
+      style={{
+        position: 'fixed',
+        top: position.top,
+        left: position.left,
+        width: 320,
+        maxHeight: 400,
+        background: 'white',
+        borderRadius: 12,
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+        overflow: 'hidden',
+        zIndex: 1100,
+      }}
+    >
+      {/* Search input */}
+      <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid #F3F4F6' }}>
+        <input
+          type="text"
+          placeholder="Search blocks..."
+          autoFocus
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            fontSize: 13,
+            border: '1px solid #E5E7EB',
+            borderRadius: 6,
+            outline: 'none',
+            background: '#FAFAFA',
+          }}
+        />
+      </div>
+
+      {/* Block options */}
+      <div style={{ maxHeight: 320, overflow: 'auto', padding: '8px 0' }}>
+        {sections.map((section) => (
+          <div key={section.title}>
+            <div style={{ 
+              padding: '8px 16px 4px', 
+              fontSize: 11, 
+              fontWeight: 600, 
+              color: '#9CA3AF',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>
+              {section.title}
+            </div>
+            {section.items.map((item) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { onSelect(item.id); onClose() }}
+                  className="block-option"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 8,
+                    background: item.color ? `${item.color}15` : '#F3F4F6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Icon className="w-5 h-5" style={{ color: item.color || '#6B7280' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: '#111' }}>{item.label}</div>
+                    <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>{item.description}</div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate, onAddBlockAfter, onFocusPrevious, onSelectionChange }: {
   block: Block
@@ -508,19 +647,26 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
   onUpdate: (content: string) => void
   onDelete: () => void
   onDuplicate: () => void
-  onAddBlockAfter: () => void
+  onAddBlockAfter: (type?: string) => void
   onFocusPrevious: () => void
   onSelectionChange: (visible: boolean, pos: { top: number; left: number } | null, editor: any, text?: string) => void
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showBlockSelector, setShowBlockSelector] = useState(false)
+  const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 })
   const menuRef = useRef<HTMLDivElement>(null)
+  const plusBtnRef = useRef<HTMLButtonElement>(null)
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Underline,
-      Placeholder.configure({ placeholder: isFirst ? 'Start writing...' : '', showOnlyWhenEditable: true, showOnlyCurrent: true }),
+      Placeholder.configure({ 
+        placeholder: "Write, press 'space' for AI, '/' for commands...", 
+        showOnlyWhenEditable: true, 
+        showOnlyCurrent: true 
+      }),
     ],
     content: block.content,
     editorProps: { attributes: { class: 'ghost-block-content' } },
@@ -539,6 +685,19 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
     },
     onBlur: () => setTimeout(() => onSelectionChange(false, null, null, ''), 150),
   })
+
+  const handlePlusClick = () => {
+    if (plusBtnRef.current) {
+      const rect = plusBtnRef.current.getBoundingClientRect()
+      setSelectorPosition({ top: rect.bottom + 8, left: rect.left })
+      setShowBlockSelector(true)
+    }
+  }
+
+  const handleBlockSelect = (type: string) => {
+    onAddBlockAfter(type)
+    setShowBlockSelector(false)
+  }
 
   useEffect(() => {
     if (!editor) return
@@ -581,7 +740,7 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
     >
       {/* Left gutter */}
       <div style={{ width: 52, flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, gap: 2 }}>
-        <button onClick={onAddBlockAfter} className="gutter-btn" style={gutterBtnStyle}>
+        <button ref={plusBtnRef} onClick={handlePlusClick} className="gutter-btn" style={gutterBtnStyle}>
           <Plus className="w-4 h-4" />
         </button>
         <button className="gutter-btn" style={{ ...gutterBtnStyle, cursor: 'grab' }}>
@@ -611,6 +770,15 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
           </div>
         )}
       </div>
+
+      {/* Block Selector Modal */}
+      {showBlockSelector && (
+        <BlockSelectorModal
+          position={selectorPosition}
+          onSelect={handleBlockSelect}
+          onClose={() => setShowBlockSelector(false)}
+        />
+      )}
     </div>
   )
 }
@@ -675,6 +843,9 @@ export default function BlockCanvas({
   // Research panel state
   const [researchOpen, setResearchOpen] = useState(false)
   const [researchText, setResearchText] = useState('')
+  
+  // Audit mode state
+  const [auditMode, setAuditMode] = useState(false)
 
   // Get active tab data
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
@@ -792,9 +963,37 @@ export default function BlockCanvas({
         .toolbar-research-btn:hover { background: rgba(255,255,255,0.2) !important; }
         .menu-item:hover { background: #F5F5F5; }
         .menu-item-danger:hover { background: #FEF2F2; }
-        .panel-close-btn:hover { background: #F3F4F6; }
-        .tab-close-btn:hover { background: rgba(0,0,0,0.08); color: #374151; }
-        .tab-add-btn:hover { background: rgba(0,0,0,0.05); color: #6B7280; }
+        .floating-toolbar-btn:hover { background: #F3F4F6 !important; }
+        .block-option:hover { background: #F5F5F5; }
+        
+        /* Audit Mode - Signal Highlights (Grammarly-style: faint bg + underline) */
+        .signal-blue { 
+          background: rgba(96, 165, 250, 0.12); 
+          border-bottom: 2px solid #3B82F6;
+          transition: background 0.15s ease;
+        }
+        .signal-blue:hover { 
+          background: rgba(96, 165, 250, 0.25); 
+          cursor: pointer;
+        }
+        .signal-amber { 
+          background: rgba(251, 191, 36, 0.12); 
+          border-bottom: 2px solid #F59E0B;
+          transition: background 0.15s ease;
+        }
+        .signal-amber:hover { 
+          background: rgba(251, 191, 36, 0.25); 
+          cursor: pointer;
+        }
+        .signal-red { 
+          background: rgba(248, 113, 113, 0.12); 
+          border-bottom: 2px solid #EF4444;
+          transition: background 0.15s ease;
+        }
+        .signal-red:hover { 
+          background: rgba(248, 113, 113, 0.25); 
+          cursor: pointer;
+        }
         
         @keyframes pulse {
           0%, 100% { opacity: 0.4; }
@@ -857,17 +1056,172 @@ export default function BlockCanvas({
                 />
               ))}
             </div>
+
+            {/* Clickable empty space to add block */}
+            <div 
+              onClick={() => addBlock(blocks[blocks.length - 1]?.id)}
+              style={{ 
+                minHeight: 200, 
+                cursor: 'text',
+                marginLeft: 64,
+              }}
+            />
           </div>
         </div>
 
-        {/* Research Panel */}
-        {researchOpen && (
-          <ResearchPanel
-            selectedText={researchText}
-            onClose={() => setResearchOpen(false)}
-            isOpen={researchOpen}
-          />
-        )}
+        {/* Research Panel - Always visible */}
+        <ResearchPanel
+          selectedText={researchText}
+          onClose={() => {
+            setResearchOpen(false)
+            setResearchText('')
+          }}
+        />
+
+        {/* Floating Dock - Figma style */}
+        <div style={{
+          position: 'absolute',
+          bottom: 24,
+          left: '50%',
+          transform: 'translateX(-60%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0,
+          background: 'white',
+          borderRadius: 12,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)',
+          overflow: 'hidden',
+        }}>
+          {/* Left section - Tools */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
+            <button
+              onClick={() => setResearchOpen(true)}
+              className="floating-toolbar-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: 'none',
+                background: researchOpen ? '#DCFCE7' : 'transparent',
+                color: researchOpen ? '#22C55E' : '#6B7280',
+                cursor: 'pointer',
+              }}
+              title="Research"
+            >
+              <Atom className="w-5 h-5" />
+            </button>
+            
+            <button
+              className="floating-toolbar-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: 'none',
+                background: 'transparent',
+                color: '#6B7280',
+                cursor: 'pointer',
+              }}
+              title="Heading 1"
+            >
+              <Heading1 className="w-5 h-5" />
+            </button>
+            
+            <button
+              className="floating-toolbar-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: 'none',
+                background: 'transparent',
+                color: '#6B7280',
+                cursor: 'pointer',
+              }}
+              title="Heading 2"
+            >
+              <Heading2 className="w-5 h-5" />
+            </button>
+            
+            <button
+              className="floating-toolbar-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: 'none',
+                background: 'transparent',
+                color: '#6B7280',
+                cursor: 'pointer',
+              }}
+              title="List"
+            >
+              <List className="w-5 h-5" />
+            </button>
+            
+            <button
+              className="floating-toolbar-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: 'none',
+                background: 'transparent',
+                color: '#6B7280',
+                cursor: 'pointer',
+              }}
+              title="Table"
+            >
+              <Table className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Right section - Audit Mode toggle */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8,
+            padding: '6px 12px',
+            borderLeft: '1px solid #E5E7EB',
+            background: '#FAFAFA',
+          }}>
+            <button
+              onClick={() => setAuditMode(!auditMode)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 10px',
+                borderRadius: 6,
+                border: 'none',
+                background: auditMode ? '#111' : 'transparent',
+                color: auditMode ? '#fff' : '#6B7280',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 500,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {auditMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              Audit
+            </button>
+          </div>
+        </div>
 
         {/* Selection Toolbar */}
         <SelectionToolbar 
