@@ -355,7 +355,7 @@ const PagedEditor = forwardRef<PagedEditorRef, PagedEditorProps>(({
             ))}
           </div>
 
-          {/* Editor wrapper - positioned on top */}
+          {/* Editor wrapper - must cover all pages for click handling */}
           <div
             ref={editorWrapperRef}
             style={{
@@ -366,6 +366,7 @@ const PagedEditor = forwardRef<PagedEditorRef, PagedEditorProps>(({
               boxSizing: 'border-box',
               zIndex: 1,
               color: darkMode ? '#d1d5db' : '#374151',
+              minHeight: pageCount * PAGE_HEIGHT + (pageCount - 1) * PAGE_GAP,
             }}
           >
             <div style={{ width: CONTENT_WIDTH }}>
