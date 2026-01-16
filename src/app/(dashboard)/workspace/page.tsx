@@ -16,37 +16,95 @@ import EditorCanvas from '@/components/workspace/EditorCanvas'
 import { useSources } from '@/hooks/useSources'
 import { Check, AlertTriangle, X, Clock, ChevronLeft } from 'lucide-react'
 
-// Mock data
-const WORKSPACES: Record<string, { name: string; documents: Array<{ id: string; name: string; alerts: number; updatedAt: string }> }> = {
-  w1: {
-    name: 'Acme Corp DD',
-    documents: [
-      { id: 'd1', name: 'Taiwan Strait Analysis', alerts: 2, updatedAt: 'today' },
-      { id: 'd2', name: 'Supply Chain Risk', alerts: 0, updatedAt: 'today' },
-      { id: 'd3', name: 'Q4 Revenue Model', alerts: 1, updatedAt: 'yesterday' },
-    ],
-  },
-  w2: {
-    name: 'Nordic Telecoms',
-    documents: [
-      { id: 'd4', name: 'Market Entry Memo', alerts: 0, updatedAt: 'today' },
-    ],
-  },
+// Types
+interface Document {
+  id: string
+  name: string
+  content: string
+  alerts: number
+  updatedAt: string
+  wordCount: number
 }
 
-// Types
+interface Workspace {
+  name: string
+  documents: Document[]
+}
+
 interface TrackedClaim {
   id: string
   text: string
   status: 'pending' | 'verified' | 'stale' | 'contradiction'
   source: string
   lastChecked: string
+  documentId: string
 }
 
 interface Tab {
   id: string
   name: string
   hasChanges: boolean
+}
+
+// Initial document content
+const DEFAULT_CONTENT = `<h1>Q4 2024 Investment Memo</h1>
+<p>This document outlines our analysis of NVIDIA Corporation (NVDA) for the Q4 2024 investment committee review.</p>
+<h2>Executive Summary</h2>
+<p>NVIDIA continues to dominate the AI accelerator market with an estimated market share of 80%. The company's data center revenue reached $14.5B in Q3, representing 279% year-over-year growth.</p>
+<h2>Key Metrics</h2>
+<p>Current market capitalization stands at $1.2 trillion, with a forward P/E ratio of 45x. Gross margins have expanded to 74%, driven by strong demand for H100 GPUs.</p>
+<h2>Risk Factors</h2>
+<p>Primary concerns include increasing competition from AMD and Intel, potential supply chain disruptions from TSMC, and regulatory scrutiny in China which accounts for approximately 20% of revenue.</p>
+<h2>Recommendation</h2>
+<p>We maintain our OVERWEIGHT rating with a 12-month price target of $650, implying 25% upside from current levels.</p>`
+
+const NEW_DOC_CONTENT = `<h1>Untitled Document</h1>
+<p>Start writing here...</p>`
+
+// Mock workspace data with actual content
+const INITIAL_WORKSPACES: Record<string, Workspace> = {
+  w1: {
+    name: 'Acme Corp DD',
+    documents: [
+      { 
+        id: 'd1', 
+        name: 'Taiwan Strait Analysis', 
+        content: DEFAULT_CONTENT,
+        alerts: 2, 
+        updatedAt: 'today',
+        wordCount: 847,
+      },
+      { 
+        id: 'd2', 
+        name: 'Supply Chain Risk', 
+        content: `<h1>Supply Chain Risk Assessment</h1><p>Analysis of semiconductor supply chain vulnerabilities...</p>`,
+        alerts: 0, 
+        updatedAt: 'today',
+        wordCount: 234,
+      },
+      { 
+        id: 'd3', 
+        name: 'Q4 Revenue Model', 
+        content: `<h1>Q4 Revenue Projections</h1><p>Based on current pipeline and market conditions...</p>`,
+        alerts: 1, 
+        updatedAt: 'yesterday',
+        wordCount: 512,
+      },
+    ],
+  },
+  w2: {
+    name: 'Nordic Telecoms',
+    documents: [
+      { 
+        id: 'd4', 
+        name: 'Market Entry Memo', 
+        content: `<h1>Nordic Market Entry Strategy</h1><p>Opportunity assessment for telecommunications expansion...</p>`,
+        alerts: 0, 
+        updatedAt: 'today',
+        wordCount: 389,
+      },
+    ],
+  },
 }
 
 // Claim ID generator
@@ -56,29 +114,58 @@ function generateClaimId() {
   return `RAV-${String(claimCounter).padStart(3, '0')}`
 }
 
+// Document ID generator
+let docCounter = 100
+function generateDocId() {
+  docCounter++
+  return `d${docCounter}`
+}
+
 export default function WorkspacePage() {
+  // Workspace & document state
+  const [workspaces, setWorkspaces] = useState(INITIAL_WORKSPACES)
   const [activeWorkspaceId, setActiveWorkspaceId] = useState('w1')
   const [activeDocumentId, setActiveDocumentId] = useState('d1')
   const [openTabs, setOpenTabs] = useState<Tab[]>([
     { id: 'd1', name: 'Taiwan Strait Analysis', hasChanges: false },
   ])
+  
+  // UI state
   const [marginCollapsed, setMarginCollapsed] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [chatContext, setChatContext] = useState<{ text: string } | null>(null)
   const [trackModalOpen, setTrackModalOpen] = useState(false)
   const [pendingTrackText, setPendingTrackText] = useState('')
   const [pendingTrackRange, setPendingTrackRange] = useState<{ from: number; to: number } | null>(null)
+  const [docPaneCollapsed, setDocPaneCollapsed] = useState(false)
+  
+  // Claims state
   const [claims, setClaims] = useState<TrackedClaim[]>([])
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null)
   const [hoveredClaimId, setHoveredClaimId] = useState<string | null>(null)
+  
+  // Editor state
   const [editorMode, setEditorMode] = useState<'write' | 'review' | 'verify'>('write')
-  const [wordCount, setWordCount] = useState(847) // Mock for now - will wire to editor
-  const [darkMode, setDarkMode] = useState(false) // Toggle for dark mode
+  const [darkMode, setDarkMode] = useState(false)
 
   const { connectedSources, connect } = useSources()
   const connectedCount = connectedSources.filter(s => s.status === 'connected').length
 
-  // Auto-connect to SEC EDGAR on mount (no auth required)
+  const editorRef = useRef<EditorRef>(null)
+  
+  // Derived state
+  const workspace = workspaces[activeWorkspaceId]
+  const activeDocument = workspace?.documents.find(d => d.id === activeDocumentId)
+  const documentClaims = claims.filter(c => c.documentId === activeDocumentId)
+  
+  const claimSummary = {
+    verified: documentClaims.filter(c => c.status === 'verified').length,
+    pending: documentClaims.filter(c => c.status === 'pending').length,
+    stale: documentClaims.filter(c => c.status === 'stale').length,
+    contradiction: documentClaims.filter(c => c.status === 'contradiction').length,
+  }
+
+  // Auto-connect to SEC EDGAR on mount
   useEffect(() => {
     const autoConnect = async () => {
       const isSecConnected = connectedSources.some(s => s.type === 'sec-edgar' && s.status === 'connected')
@@ -89,20 +176,10 @@ export default function WorkspacePage() {
     autoConnect()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Calculate claim summary
-  const claimSummary = {
-    verified: claims.filter(c => c.status === 'verified').length,
-    pending: claims.filter(c => c.status === 'pending').length,
-    stale: claims.filter(c => c.status === 'stale').length,
-    contradiction: claims.filter(c => c.status === 'contradiction').length,
-  }
-
-  const editorRef = useRef<EditorRef>(null)
-  const workspace = WORKSPACES[activeWorkspaceId]
-
+  // Handlers
   const handleWorkspaceSelect = (id: string) => {
     setActiveWorkspaceId(id)
-    const ws = WORKSPACES[id]
+    const ws = workspaces[id]
     if (ws?.documents.length) {
       const doc = ws.documents[0]
       setActiveDocumentId(doc.id)
@@ -128,11 +205,64 @@ export default function WorkspacePage() {
     })
   }
 
-  const handleNewDocument = () => {
-    const newId = `d${Date.now()}`
+  const handleNewDocument = useCallback(() => {
+    const newId = generateDocId()
+    const newDoc: Document = {
+      id: newId,
+      name: 'Untitled',
+      content: NEW_DOC_CONTENT,
+      alerts: 0,
+      updatedAt: 'today',
+      wordCount: 3,
+    }
+    
+    // Add to workspace
+    setWorkspaces(prev => ({
+      ...prev,
+      [activeWorkspaceId]: {
+        ...prev[activeWorkspaceId],
+        documents: [newDoc, ...prev[activeWorkspaceId].documents],
+      },
+    }))
+    
+    // Open in tab
     setOpenTabs(prev => [...prev, { id: newId, name: 'Untitled', hasChanges: true }])
     setActiveDocumentId(newId)
-  }
+  }, [activeWorkspaceId])
+
+  const handleDocumentDelete = useCallback((docId: string) => {
+    // Remove from workspace
+    setWorkspaces(prev => ({
+      ...prev,
+      [activeWorkspaceId]: {
+        ...prev[activeWorkspaceId],
+        documents: prev[activeWorkspaceId].documents.filter(d => d.id !== docId),
+      },
+    }))
+    
+    // Close tab if open
+    handleTabClose(docId)
+  }, [activeWorkspaceId])
+
+  const handleContentChange = useCallback((content: string) => {
+    // Update document content
+    setWorkspaces(prev => ({
+      ...prev,
+      [activeWorkspaceId]: {
+        ...prev[activeWorkspaceId],
+        documents: prev[activeWorkspaceId].documents.map(d => 
+          d.id === activeDocumentId 
+            ? { ...d, content, wordCount: content.split(/\s+/).length }
+            : d
+        ),
+      },
+    }))
+    
+    // Mark tab as changed
+    setOpenTabs(prev => prev.map(t => 
+      t.id === activeDocumentId ? { ...t, hasChanges: true } : t
+    ))
+  }, [activeWorkspaceId, activeDocumentId])
 
   const handleTrackSelection = useCallback((text: string, from: number, to: number) => {
     setPendingTrackText(text)
@@ -156,6 +286,7 @@ export default function WorkspacePage() {
       status: 'pending',
       source: config.source,
       lastChecked: 'Just now',
+      documentId: activeDocumentId,
     }, ...prev])
     setTrackModalOpen(false)
     setPendingTrackText('')
@@ -163,10 +294,10 @@ export default function WorkspacePage() {
     setSelectedClaimId(claimId)
     if (marginCollapsed) setMarginCollapsed(false)
     if (chatOpen) setChatOpen(false)
-  }, [pendingTrackText, pendingTrackRange, marginCollapsed, chatOpen])
+  }, [pendingTrackText, pendingTrackRange, marginCollapsed, chatOpen, activeDocumentId])
 
   return (
-    <div className="h-screen flex bg-white">
+    <div className={`h-screen flex ${darkMode ? 'bg-[#1a1a1a]' : 'bg-white'}`}>
       <Sidebar 
         activeWorkspaceId={activeWorkspaceId} 
         onWorkspaceSelect={handleWorkspaceSelect}
@@ -180,7 +311,9 @@ export default function WorkspacePage() {
           activeDocumentId={activeDocumentId}
           onDocumentSelect={handleDocumentSelect}
           onDocumentCreate={handleNewDocument}
-          onDocumentDelete={handleTabClose}
+          onDocumentDelete={handleDocumentDelete}
+          collapsed={docPaneCollapsed}
+          onCollapsedChange={setDocPaneCollapsed}
         />
       )}
 
@@ -197,6 +330,9 @@ export default function WorkspacePage() {
           <EditorCanvas darkMode={darkMode} pageWidth="medium">
             <Editor 
               ref={editorRef}
+              key={activeDocumentId} // Force remount on document change
+              initialContent={activeDocument?.content}
+              onContentChange={handleContentChange}
               onTrackSelection={handleTrackSelection}
               onAddToChat={handleAddToChat}
               onClaimClick={setSelectedClaimId}
@@ -212,27 +348,31 @@ export default function WorkspacePage() {
           ) : (
             <div className={`flex-shrink-0 transition-all duration-200 overflow-hidden ${marginCollapsed ? 'w-10' : 'w-[200px]'}`}>
               {marginCollapsed ? (
-                <div className="h-full flex flex-col bg-[#FBF9F7] border-l border-gray-200">
-                  <button onClick={() => setMarginCollapsed(false)} className="p-2.5 border-b border-gray-200 hover:bg-black/5 cursor-pointer">
-                    <ChevronLeft className="w-4 h-4 text-gray-400" />
+                <div className={`h-full flex flex-col border-l ${darkMode ? 'bg-[#232323] border-[#333]' : 'bg-[#FBF9F7] border-gray-200'}`}>
+                  <button 
+                    onClick={() => setMarginCollapsed(false)} 
+                    className={`p-2.5 border-b cursor-pointer ${darkMode ? 'border-[#333] hover:bg-white/5' : 'border-gray-200 hover:bg-black/5'}`}
+                  >
+                    <ChevronLeft className={`w-4 h-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                   </button>
-                  {claims.length > 0 && (
+                  {documentClaims.length > 0 && (
                     <div className="flex-1 flex flex-col items-center py-3 gap-2">
-                      {claims.some(c => c.status === 'verified') && <div className="w-5 h-5 rounded-full bg-[#5F6AD2] flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
-                      {claims.some(c => c.status === 'pending') && <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center"><Clock className="w-3 h-3 text-gray-600" /></div>}
-                      {claims.some(c => c.status === 'stale') && <div className="w-5 h-5 rounded-full bg-[#F3C94D] flex items-center justify-center"><AlertTriangle className="w-3 h-3 text-white" /></div>}
-                      {claims.some(c => c.status === 'contradiction') && <div className="w-5 h-5 rounded-full bg-[#FD7941] flex items-center justify-center"><X className="w-3 h-3 text-white" /></div>}
+                      {documentClaims.some(c => c.status === 'verified') && <div className="w-5 h-5 rounded-full bg-green-600 flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
+                      {documentClaims.some(c => c.status === 'pending') && <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center"><Clock className="w-3 h-3 text-white" /></div>}
+                      {documentClaims.some(c => c.status === 'stale') && <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center"><AlertTriangle className="w-3 h-3 text-white" /></div>}
+                      {documentClaims.some(c => c.status === 'contradiction') && <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"><X className="w-3 h-3 text-white" /></div>}
                     </div>
                   )}
                 </div>
               ) : (
                 <VerificationMargin
-                  claims={claims}
+                  claims={documentClaims}
                   selectedClaimId={selectedClaimId}
                   hoveredClaimId={hoveredClaimId}
                   onClaimClick={setSelectedClaimId}
                   onClaimHover={setHoveredClaimId}
                   onCollapse={() => setMarginCollapsed(true)}
+                  darkMode={darkMode}
                 />
               )}
             </div>
@@ -241,7 +381,7 @@ export default function WorkspacePage() {
 
         {/* Status Bar */}
         <EditorStatusBar
-          wordCount={wordCount}
+          wordCount={activeDocument?.wordCount || 0}
           claimSummary={claimSummary}
           connectedSources={connectedCount}
           mode={editorMode}

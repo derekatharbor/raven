@@ -151,20 +151,10 @@ function BrandLogo({
   name: string
   size?: number
 }) {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [error, setError] = useState(false)
 
-  useEffect(() => {
-    if (!domain) {
-      setError(true)
-      return
-    }
-
-    // Use Brandfetch CDN for logos
-    // Format: https://cdn.brandfetch.io/{domain}/w/{width}/h/{height}
-    const url = `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}?c=1id_zeNCdYm0R-oPxRT`
-    setLogoUrl(url)
-  }, [domain, size])
+  // Brandfetch CDN format that works: https://cdn.brandfetch.io/domain.com?c=1id1Fyz-h7an5-5KR_y
+  const logoUrl = domain ? `https://cdn.brandfetch.io/${domain}?c=1id1Fyz-h7an5-5KR_y` : null
 
   if (error || !logoUrl) {
     if (FallbackIcon) {

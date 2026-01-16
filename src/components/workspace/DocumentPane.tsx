@@ -3,7 +3,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, Plus, ChevronDown, MoreHorizontal, Trash2, Copy, AlertCircle, Search } from 'lucide-react'
+import { FileText, Plus, ChevronDown, ChevronRight, ChevronLeft, MoreHorizontal, Trash2, Copy, AlertCircle, Search, PanelLeftClose, PanelLeft } from 'lucide-react'
 
 interface Document {
   id: string
@@ -19,9 +19,20 @@ interface DocumentPaneProps {
   onDocumentSelect: (id: string) => void
   onDocumentCreate: () => void
   onDocumentDelete: (id: string) => void
+  collapsed?: boolean
+  onCollapsedChange?: (collapsed: boolean) => void
 }
 
-export default function DocumentPane({ workspaceName, documents, activeDocumentId, onDocumentSelect, onDocumentCreate, onDocumentDelete }: DocumentPaneProps) {
+export default function DocumentPane({ 
+  workspaceName, 
+  documents, 
+  activeDocumentId, 
+  onDocumentSelect, 
+  onDocumentCreate, 
+  onDocumentDelete,
+  collapsed = false,
+  onCollapsedChange,
+}: DocumentPaneProps) {
   const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null)
   const [search, setSearch] = useState('')
 
@@ -29,6 +40,35 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
   const today = filtered.filter(d => d.updatedAt === 'today')
   const yesterday = filtered.filter(d => d.updatedAt === 'yesterday')
   const older = filtered.filter(d => !['today', 'yesterday'].includes(d.updatedAt))
+
+  const alertCount = documents.reduce((sum, d) => sum + d.alerts, 0)
+
+  // Collapsed state - just a thin bar with expand button
+  if (collapsed) {
+    return (
+      <div className="h-full flex flex-col bg-[#FBF9F7] border-r border-gray-200 w-10">
+        <button
+          onClick={() => onCollapsedChange?.(false)}
+          className="h-11 flex items-center justify-center border-b border-gray-200 hover:bg-black/5 cursor-pointer"
+          title="Expand document pane"
+        >
+          <PanelLeft className="w-4 h-4 text-gray-400" />
+        </button>
+        
+        {/* Vertical indicators */}
+        <div className="flex-1 flex flex-col items-center py-3 gap-2">
+          <div className="text-[10px] font-medium text-gray-400 -rotate-90 whitespace-nowrap mt-8">
+            {documents.length} docs
+          </div>
+          {alertCount > 0 && (
+            <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center mt-4">
+              <span className="text-[10px] font-medium text-orange-600">{alertCount}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const DocItem = ({ doc }: { doc: Document }) => (
     <button
@@ -61,14 +101,23 @@ export default function DocumentPane({ workspaceName, documents, activeDocumentI
   return (
     <div className="h-full flex flex-col bg-[#FBF9F7] border-r border-gray-200 w-[200px]" onClick={() => setContextMenu(null)}>
       {/* Header */}
-      <div className="h-11 flex items-center justify-between px-3 border-b border-gray-200">
-        <div className="flex items-center gap-1.5 min-w-0">
+      <div className="h-11 flex items-center justify-between px-2 border-b border-gray-200">
+        <div className="flex items-center gap-1 min-w-0 flex-1">
           <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
           <span className="text-[13px] font-medium text-gray-900 truncate">{workspaceName}</span>
         </div>
-        <button onClick={onDocumentCreate} className="p-1 rounded hover:bg-black/5 cursor-pointer" title="New document">
-          <Plus className="w-4 h-4 text-gray-400" />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <button onClick={onDocumentCreate} className="p-1 rounded hover:bg-black/5 cursor-pointer" title="New document">
+            <Plus className="w-4 h-4 text-gray-400" />
+          </button>
+          <button 
+            onClick={() => onCollapsedChange?.(true)} 
+            className="p-1 rounded hover:bg-black/5 cursor-pointer" 
+            title="Collapse pane"
+          >
+            <PanelLeftClose className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
       </div>
 
       {/* Search */}
