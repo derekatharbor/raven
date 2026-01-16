@@ -166,10 +166,9 @@ export default function WorkspacePage() {
     const newDoc: Document = {
       id: newId,
       name: 'Untitled',
-      content: NEW_DOC_CONTENT,
       alerts: 0,
       updatedAt: 'today',
-      wordCount: 3,
+      wordCount: 0,
     }
     
     // Add to workspace
