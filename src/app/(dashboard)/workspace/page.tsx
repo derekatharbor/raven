@@ -1,6 +1,6 @@
 // src/app/(dashboard)/workspace/page.tsx
 // 
-// Block-based document canvas - Notion-style with intelligent block types
+// Three-pane architecture: Sidebar | Block Canvas | Proof Pane
 
 'use client'
 
@@ -21,15 +21,11 @@ export default function WorkspacePage() {
       
       <BlockCanvas 
         documentId="doc-1"
+        documentTitle="Q4 2024 Investment Analysis"
+        showProofPane={true}
         initialBlocks={[
           { 
             id: '1', 
-            type: 'static', 
-            content: '<h1>Q4 2024 Investment Analysis</h1>', 
-            status: 'default' 
-          },
-          { 
-            id: '2', 
             type: 'live', 
             content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>', 
             status: 'verified',
@@ -37,36 +33,33 @@ export default function WorkspacePage() {
             lastChecked: '2 hours ago',
           },
           { 
-            id: '3', 
-            type: 'delta', 
-            content: '<p>Market Cap</p>', 
-            status: 'default',
-            currentValue: '$3.45T',
-            previousValue: '$3.12T',
-            changePercent: 10.6,
-          },
-          { 
-            id: '4', 
+            id: '2', 
             type: 'static', 
             content: '<h2>Key Findings</h2>', 
             status: 'default' 
           },
           { 
-            id: '5', 
+            id: '3', 
             type: 'live', 
-            content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period.</p>', 
+            content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase that exceeded analyst expectations.</p>', 
             status: 'drifted',
             sourceName: 'AlphaSense',
             lastChecked: '1 day ago',
           },
           { 
-            id: '6', 
-            type: 'summary', 
-            content: '<p>Apple demonstrated strong performance across all major product categories in Q4 2024, with particular strength in Services revenue which grew 14% YoY. The company maintained healthy margins despite inflationary pressures.</p>', 
+            id: '4', 
+            type: 'static', 
+            content: '<p>The company maintained healthy gross margins of 45.2% despite continued macroeconomic headwinds and currency pressures in international markets.</p>', 
             status: 'default' 
           },
           { 
-            id: '7', 
+            id: '5', 
+            type: 'summary', 
+            content: '<p>Apple demonstrated strong performance across all major product categories in Q4 2024, with particular strength in Services revenue. The company maintained healthy margins and continued to return capital to shareholders through dividends and buybacks.</p>', 
+            status: 'default' 
+          },
+          { 
+            id: '6', 
             type: 'static', 
             content: '', 
             status: 'default' 

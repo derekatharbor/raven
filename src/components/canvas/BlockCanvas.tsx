@@ -1,18 +1,22 @@
 // src/components/canvas/BlockCanvas.tsx
 //
-// Notion-style block canvas with intelligent block types
-// Each block is an independent unit with its own behavior and data connections
+// Ghost Block Architecture:
+// - Blocks are invisible — zero margins, continuous flow
+// - Metadata lives in the Integrity Rail (left gutter)
+// - Claims tracking in the right Proof Pane
+// - Premium serif typography for document content
 
 'use client'
 
-import { useState, useCallback, useRef, useEffect, KeyboardEvent } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Underline from '@tiptap/extension-underline'
 import { 
-  GripVertical, Plus, MoreHorizontal, Type, Radio, 
-  GitBranch, Link2, TrendingUp, Sparkles, Trash2,
-  Copy, ArrowRightLeft, Check, AlertTriangle, RefreshCw
+  GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
+  ArrowRightLeft, Type, Radio, Calculator, Link2, 
+  TrendingUp, Sparkles
 } from 'lucide-react'
 
 // ============================================================================
@@ -20,7 +24,6 @@ import {
 // ============================================================================
 
 type BlockType = 'static' | 'live' | 'derived' | 'synced' | 'delta' | 'summary'
-
 type BlockStatus = 'default' | 'verified' | 'drifted' | 'stale'
 
 interface Block {
@@ -28,89 +31,30 @@ interface Block {
   type: BlockType
   content: string
   status: BlockStatus
-  // Live block properties
   sourceId?: string
   sourceName?: string
   lastChecked?: string
-  // Derived block properties
   formula?: string
-  // Delta block properties
-  previousValue?: string
   currentValue?: string
+  previousValue?: string
   changePercent?: number
-  // Synced block properties
-  syncedFrom?: string
 }
 
-interface BlockTypeOption {
-  type: BlockType
-  label: string
-  description: string
-  icon: React.ReactNode
-  color: string
+// Rail colors - muted, professional
+const RAIL_COLORS: Record<BlockType, string> = {
+  static: 'transparent',
+  live: '#3B82F6',
+  derived: '#8B5CF6',
+  synced: '#14B8A6',
+  delta: '#10B981',
+  summary: '#8B5CF6',
 }
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const BLOCK_TYPES: BlockTypeOption[] = [
-  { 
-    type: 'static', 
-    label: 'Static', 
-    description: 'Standard text block',
-    icon: <Type className="w-4 h-4" />,
-    color: 'transparent'
-  },
-  { 
-    type: 'live', 
-    label: 'Live', 
-    description: 'Connected to external data source',
-    icon: <Radio className="w-4 h-4" />,
-    color: '#3B82F6' // blue
-  },
-  { 
-    type: 'derived', 
-    label: 'Derived', 
-    description: 'Calculated from other blocks',
-    icon: <GitBranch className="w-4 h-4" />,
-    color: '#8B5CF6' // purple
-  },
-  { 
-    type: 'synced', 
-    label: 'Synced', 
-    description: 'Linked across documents',
-    icon: <Link2 className="w-4 h-4" />,
-    color: '#14B8A6' // teal
-  },
-  { 
-    type: 'delta', 
-    label: 'Delta', 
-    description: 'Shows value changes',
-    icon: <TrendingUp className="w-4 h-4" />,
-    color: '#10B981' // green (changes based on direction)
-  },
-  { 
-    type: 'summary', 
-    label: 'Summary', 
-    description: 'AI-generated from document',
-    icon: <Sparkles className="w-4 h-4" />,
-    color: 'linear-gradient(135deg, #3B82F6, #8B5CF6)'
-  },
-]
-
-const getBlockColor = (block: Block): string => {
-  if (block.status === 'drifted') return '#F59E0B' // amber
-  if (block.status === 'stale') return '#9CA3AF' // gray
-  
-  if (block.type === 'delta') {
-    if (block.changePercent && block.changePercent > 0) return '#10B981' // green
-    if (block.changePercent && block.changePercent < 0) return '#EF4444' // red
-    return '#9CA3AF'
-  }
-  
-  const blockType = BLOCK_TYPES.find(t => t.type === block.type)
-  return blockType?.color || 'transparent'
+const STATUS_COLORS: Record<BlockStatus, string> = {
+  default: 'transparent',
+  verified: '#10B981',
+  drifted: '#F59E0B',
+  stale: '#9CA3AF',
 }
 
 // ============================================================================
@@ -119,64 +63,64 @@ const getBlockColor = (block: Block): string => {
 
 interface BlockEditorProps {
   block: Block
-  isActive: boolean
-  onActivate: () => void
+  isFirst: boolean
+  isFocused: boolean
+  onFocus: () => void
   onUpdate: (content: string) => void
   onDelete: () => void
   onDuplicate: () => void
   onChangeType: (type: BlockType) => void
   onAddBlockAfter: () => void
+  onOpenBlockPalette: () => void
+  onSelectBlock: () => void
 }
 
 function BlockEditor({ 
   block, 
-  isActive, 
-  onActivate,
+  isFirst,
+  isFocused,
+  onFocus,
   onUpdate, 
   onDelete, 
   onDuplicate,
   onChangeType,
   onAddBlockAfter,
+  onOpenBlockPalette,
+  onSelectBlock,
 }: BlockEditorProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [showTypeSelector, setShowTypeSelector] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const typeSelectorRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      Underline,
       Placeholder.configure({
-        placeholder: block.type === 'static' 
-          ? "Type '/' for commands..." 
-          : `${BLOCK_TYPES.find(t => t.type === block.type)?.label} block...`,
+        placeholder: isFirst ? 'Start writing...' : '',
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: true,
       }),
     ],
     content: block.content,
     editorProps: {
-      attributes: {
-        class: 'block-editor-content',
-      },
+      attributes: { class: 'ghost-block-content' },
     },
-    onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML())
-    },
-    onFocus: () => {
-      onActivate()
-    },
+    onUpdate: ({ editor }) => onUpdate(editor.getHTML()),
+    onFocus: () => onFocus(),
   })
 
-  // Handle "/" command
   useEffect(() => {
     if (!editor) return
     
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === '/' && editor.isEmpty) {
         event.preventDefault()
-        setShowTypeSelector(true)
+        onOpenBlockPalette()
+      }
+      if (event.key === 'Backspace' && editor.isEmpty) {
+        event.preventDefault()
+        onDelete()
       }
       if (event.key === 'Enter' && !event.shiftKey && editor.isEmpty) {
         event.preventDefault()
@@ -187,14 +131,10 @@ function BlockEditor({
     const element = editor.view.dom
     element.addEventListener('keydown', handleKeyDown)
     return () => element.removeEventListener('keydown', handleKeyDown)
-  }, [editor, onAddBlockAfter])
+  }, [editor, onOpenBlockPalette, onDelete, onAddBlockAfter])
 
-  // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (typeSelectorRef.current && !typeSelectorRef.current.contains(e.target as Node)) {
-        setShowTypeSelector(false)
-      }
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false)
       }
@@ -203,309 +143,123 @@ function BlockEditor({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const indicatorColor = getBlockColor(block)
-  const isGradient = indicatorColor.includes('gradient')
+  const railColor = block.status !== 'default' 
+    ? STATUS_COLORS[block.status] 
+    : RAIL_COLORS[block.type]
+  
+  const showRail = block.type !== 'static' || block.status !== 'default'
 
   return (
     <div
-      className="block-wrapper"
+      className="ghost-block"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         position: 'relative',
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: 8,
-        padding: '4px 0',
-        borderRadius: 4,
+        alignItems: 'stretch',
       }}
     >
-      {/* Left controls - drag handle */}
-      <div 
-        style={{
+      {/* Left gutter */}
+      <div style={{
+        width: 48,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-end',
+        paddingRight: 8,
+        paddingTop: 4,
+        gap: 2,
+      }}>
+        <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 4,
+          gap: 2,
           opacity: isHovered ? 1 : 0,
-          transition: 'opacity 0.15s',
-          paddingTop: 4,
-        }}
-      >
-        <button
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            color: '#9CA3AF',
-            cursor: 'grab',
-          }}
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-        
-        <button
-          onClick={() => onAddBlockAfter()}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            color: '#9CA3AF',
-            cursor: 'pointer',
-          }}
-        >
-          <Plus className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Block type indicator */}
-      <div style={{ position: 'relative', paddingTop: 4 }}>
-        <button
-          onClick={() => setShowTypeSelector(!showTypeSelector)}
-          style={{
-            width: 4,
-            height: 24,
-            borderRadius: 2,
-            border: 'none',
-            background: isGradient ? indicatorColor : indicatorColor,
-            cursor: block.type !== 'static' ? 'pointer' : 'default',
-            opacity: block.type === 'static' ? 0.3 : 1,
-            transition: 'all 0.15s',
-          }}
-          title={`${BLOCK_TYPES.find(t => t.type === block.type)?.label} block - click to change`}
-        />
-        
-        {/* Status indicator */}
-        {block.status === 'verified' && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: -2,
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: '#10B981',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <Check className="w-2 h-2 text-white" strokeWidth={3} />
-          </div>
-        )}
-        
-        {block.status === 'drifted' && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: -2,
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: '#F59E0B',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <AlertTriangle className="w-2 h-2 text-white" strokeWidth={3} />
-          </div>
-        )}
-        
-        {block.status === 'stale' && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: -2,
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: '#9CA3AF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <RefreshCw className="w-2 h-2 text-white" strokeWidth={3} />
-          </div>
-        )}
-
-        {/* Type selector dropdown */}
-        {showTypeSelector && (
-          <div
-            ref={typeSelectorRef}
+          transition: 'opacity 0.1s',
+        }}>
+          <button
+            onClick={onAddBlockAfter}
             style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              marginTop: 4,
-              width: 240,
-              background: 'white',
-              borderRadius: 8,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.1)',
-              zIndex: 100,
-              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 18,
+              height: 18,
+              borderRadius: 4,
+              border: 'none',
+              background: 'transparent',
+              color: '#9CA3AF',
+              cursor: 'pointer',
             }}
           >
-            <div style={{ padding: '8px 0' }}>
-              <div style={{ padding: '4px 12px 8px', fontSize: 11, fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase' }}>
-                Block Type
-              </div>
-              {BLOCK_TYPES.map((type) => (
-                <button
-                  key={type.type}
-                  onClick={() => {
-                    onChangeType(type.type)
-                    setShowTypeSelector(false)
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: 'none',
-                    background: block.type === type.type ? '#F3F4F6' : 'transparent',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 6,
-                    background: type.color === 'transparent' ? '#F3F4F6' : type.color.includes('gradient') ? type.color : `${type.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: type.color === 'transparent' ? '#6B7280' : type.color.includes('gradient') ? '#8B5CF6' : type.color,
-                  }}>
-                    {type.icon}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{type.label}</div>
-                    <div style={{ fontSize: 12, color: '#6B7280' }}>{type.description}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 18,
+              height: 18,
+              borderRadius: 4,
+              border: 'none',
+              background: 'transparent',
+              color: '#9CA3AF',
+              cursor: 'grab',
+            }}
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
-      {/* Content area */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Delta block special display */}
-        {block.type === 'delta' && block.currentValue && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: 8,
-            marginBottom: 4,
-          }}>
-            <span style={{ fontSize: 24, fontWeight: 600, color: '#111827' }}>
-              {block.currentValue}
-            </span>
-            {block.changePercent !== undefined && (
-              <span style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: block.changePercent > 0 ? '#10B981' : block.changePercent < 0 ? '#EF4444' : '#6B7280',
-              }}>
-                {block.changePercent > 0 ? '▲' : block.changePercent < 0 ? '▼' : '–'} {Math.abs(block.changePercent)}%
-              </span>
-            )}
-          </div>
-        )}
-        
-        {/* Live block source badge */}
-        {block.type === 'live' && block.sourceName && (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '2px 8px',
-            background: '#EFF6FF',
-            borderRadius: 4,
-            marginBottom: 4,
-            fontSize: 11,
-            color: '#3B82F6',
-            fontWeight: 500,
-          }}>
-            <Radio className="w-3 h-3" />
-            {block.sourceName}
-            {block.lastChecked && (
-              <span style={{ color: '#93C5FD' }}>• {block.lastChecked}</span>
-            )}
-          </div>
-        )}
-        
-        {/* Summary block badge */}
-        {block.type === 'summary' && (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '2px 8px',
-            background: 'linear-gradient(135deg, #EFF6FF, #F3E8FF)',
-            borderRadius: 4,
-            marginBottom: 4,
-            fontSize: 11,
-            color: '#7C3AED',
-            fontWeight: 500,
-          }}>
-            <Sparkles className="w-3 h-3" />
-            AI Summary
-          </div>
-        )}
+      {/* Integrity Rail */}
+      <div 
+        onClick={onSelectBlock}
+        style={{
+          width: 3,
+          flexShrink: 0,
+          marginRight: 12,
+          borderRadius: 2,
+          background: showRail ? railColor : 'transparent',
+          cursor: showRail ? 'pointer' : 'default',
+          transition: 'background 0.15s',
+          minHeight: 24,
+        }}
+        title={showRail ? `${block.type} block${block.sourceName ? ` • ${block.sourceName}` : ''}` : undefined}
+      />
 
-        {/* Editor */}
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
         <EditorContent editor={editor} />
-        
-        {/* Drift indicator - Grammarly style */}
-        {block.status === 'drifted' && (
-          <div style={{
-            marginTop: 4,
-            padding: '6px 10px',
-            background: '#FFFBEB',
-            border: '1px solid #FDE68A',
-            borderRadius: 6,
-            fontSize: 12,
-            color: '#92400E',
-          }}>
-            <strong>Drift detected:</strong> Source value has changed
-          </div>
-        )}
       </div>
 
       {/* Right menu */}
-      <div 
-        style={{
-          opacity: isHovered ? 1 : 0,
-          transition: 'opacity 0.15s',
-          paddingTop: 4,
-          position: 'relative',
-        }}
-      >
+      <div style={{
+        width: 32,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        paddingTop: 4,
+        position: 'relative',
+      }}>
         <button
           onClick={() => setShowMenu(!showMenu)}
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 24,
-            height: 24,
+            width: 20,
+            height: 20,
             borderRadius: 4,
             border: 'none',
             background: 'transparent',
             color: '#9CA3AF',
             cursor: 'pointer',
+            opacity: isHovered ? 1 : 0,
+            transition: 'opacity 0.1s',
           }}
         >
           <MoreHorizontal className="w-4 h-4" />
@@ -516,68 +270,72 @@ function BlockEditor({
             ref={menuRef}
             style={{
               position: 'absolute',
-              top: '100%',
+              top: 24,
               right: 0,
-              marginTop: 4,
               width: 180,
               background: 'white',
               borderRadius: 8,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.1)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
               zIndex: 100,
-              overflow: 'hidden',
               padding: '4px 0',
             }}
           >
             <button
               onClick={() => { onDuplicate(); setShowMenu(false); }}
+              className="menu-item"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 10,
                 width: '100%',
                 padding: '8px 12px',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
-                fontSize: 14,
+                fontSize: 13,
                 color: '#374151',
+                textAlign: 'left',
               }}
             >
-              <Copy className="w-4 h-4" />
+              <Copy className="w-4 h-4 text-gray-400" />
               Duplicate
             </button>
             <button
-              onClick={() => { setShowTypeSelector(true); setShowMenu(false); }}
+              onClick={() => { onOpenBlockPalette(); setShowMenu(false); }}
+              className="menu-item"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 10,
                 width: '100%',
                 padding: '8px 12px',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
-                fontSize: 14,
+                fontSize: 13,
                 color: '#374151',
+                textAlign: 'left',
               }}
             >
-              <ArrowRightLeft className="w-4 h-4" />
+              <ArrowRightLeft className="w-4 h-4 text-gray-400" />
               Change type
             </button>
             <div style={{ height: 1, background: '#E5E7EB', margin: '4px 0' }} />
             <button
               onClick={() => { onDelete(); setShowMenu(false); }}
+              className="menu-item-danger"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 10,
                 width: '100%',
                 padding: '8px 12px',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
-                fontSize: 14,
+                fontSize: 13,
                 color: '#EF4444',
+                textAlign: 'left',
               }}
             >
               <Trash2 className="w-4 h-4" />
@@ -591,49 +349,264 @@ function BlockEditor({
 }
 
 // ============================================================================
-// MAIN CANVAS COMPONENT
+// BLOCK PALETTE
+// ============================================================================
+
+interface BlockPaletteProps {
+  isOpen: boolean
+  onClose: () => void
+  onSelectType: (type: BlockType) => void
+}
+
+const BLOCK_OPTIONS: { type: BlockType; label: string; description: string; icon: React.ReactNode }[] = [
+  { type: 'static', label: 'Text', description: 'Plain text block', icon: <Type className="w-4 h-4" /> },
+  { type: 'live', label: 'Live Data', description: 'Connected to external source', icon: <Radio className="w-4 h-4" /> },
+  { type: 'derived', label: 'Derived', description: 'Calculated from other blocks', icon: <Calculator className="w-4 h-4" /> },
+  { type: 'synced', label: 'Synced', description: 'Linked across documents', icon: <Link2 className="w-4 h-4" /> },
+  { type: 'delta', label: 'Delta', description: 'Shows value changes', icon: <TrendingUp className="w-4 h-4" /> },
+  { type: 'summary', label: 'AI Summary', description: 'Generated from document', icon: <Sparkles className="w-4 h-4" /> },
+]
+
+function BlockPalette({ isOpen, onClose, onSelectType }: BlockPaletteProps) {
+  const paletteRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (paletteRef.current && !paletteRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
+
+  return (
+    <div
+      ref={paletteRef}
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 260,
+        background: '#FAFAFA',
+        borderRight: '1px solid #E5E7EB',
+        zIndex: 200,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{
+        padding: '16px 16px 12px',
+        borderBottom: '1px solid #E5E7EB',
+      }}>
+        <div style={{ 
+          fontSize: 11, 
+          fontWeight: 600, 
+          color: '#6B7280', 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.05em',
+          fontFamily: 'Inter, system-ui, sans-serif',
+        }}>
+          Insert Block
+        </div>
+      </div>
+      
+      <div style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
+        {BLOCK_OPTIONS.map((option) => (
+          <button
+            key={option.type}
+            onClick={() => { onSelectType(option.type); onClose(); }}
+            className="palette-item"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              width: '100%',
+              padding: '10px 16px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <div style={{ color: '#6B7280' }}>
+              {option.icon}
+            </div>
+            <div>
+              <div style={{ 
+                fontSize: 14, 
+                fontWeight: 500, 
+                color: '#111827',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}>
+                {option.label}
+              </div>
+              <div style={{ 
+                fontSize: 12, 
+                color: '#6B7280',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}>
+                {option.description}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// PROOF PANE
+// ============================================================================
+
+interface ProofPaneProps {
+  blocks: Block[]
+}
+
+function ProofPane({ blocks }: ProofPaneProps) {
+  const trackedBlocks = blocks.filter(b => b.type !== 'static')
+  const driftedCount = blocks.filter(b => b.status === 'drifted').length
+
+  return (
+    <div style={{
+      width: 280,
+      flexShrink: 0,
+      borderLeft: '1px solid #E5E7EB',
+      background: '#FAFAFA',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'Inter, system-ui, sans-serif',
+    }}>
+      <div style={{
+        padding: '16px',
+        borderBottom: '1px solid #E5E7EB',
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+          Claims
+        </div>
+        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+          {trackedBlocks.length} tracked{driftedCount > 0 && ` • ${driftedCount} drifted`}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {trackedBlocks.length === 0 ? (
+          <div style={{ padding: 16, fontSize: 13, color: '#9CA3AF', textAlign: 'center' }}>
+            No tracked blocks yet.
+          </div>
+        ) : (
+          trackedBlocks.map((block) => (
+            <div
+              key={block.id}
+              className="proof-item"
+              style={{
+                padding: '12px 16px',
+                borderBottom: '1px solid #E5E7EB',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: block.status === 'drifted' ? '#F59E0B' : 
+                             block.status === 'verified' ? '#10B981' : '#D1D5DB',
+                }} />
+                <span style={{ 
+                  fontSize: 11, 
+                  fontWeight: 500, 
+                  color: '#6B7280', 
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.02em',
+                }}>
+                  {block.type}
+                </span>
+                {block.sourceName && (
+                  <span style={{ fontSize: 11, color: '#9CA3AF' }}>
+                    • {block.sourceName}
+                  </span>
+                )}
+              </div>
+              <div style={{
+                fontSize: 13,
+                color: '#374151',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {block.content.replace(/<[^>]*>/g, '').substring(0, 50) || 'Empty block'}
+              </div>
+              {block.status === 'drifted' && (
+                <div style={{
+                  marginTop: 6,
+                  fontSize: 11,
+                  color: '#F59E0B',
+                  fontWeight: 500,
+                }}>
+                  Source value changed
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// MAIN CANVAS
 // ============================================================================
 
 interface BlockCanvasProps {
   documentId: string
+  documentTitle?: string
   initialBlocks?: Block[]
   onBlocksChange?: (blocks: Block[]) => void
+  showProofPane?: boolean
 }
 
 export default function BlockCanvas({ 
   documentId, 
+  documentTitle = '',
   initialBlocks,
   onBlocksChange,
+  showProofPane = true,
 }: BlockCanvasProps) {
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks || [
     { id: '1', type: 'static', content: '', status: 'default' }
   ])
-  const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
-  const [showNewBlockSelector, setShowNewBlockSelector] = useState(false)
-  const [newBlockPosition, setNewBlockPosition] = useState<{ x: number; y: number } | null>(null)
+  const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null)
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [showPalette, setShowPalette] = useState(false)
+  const [title, setTitle] = useState(documentTitle)
 
   const generateId = () => Math.random().toString(36).substring(2, 9)
 
   const addBlock = useCallback((afterId?: string, type: BlockType = 'static') => {
-    const newBlock: Block = {
-      id: generateId(),
-      type,
-      content: '',
-      status: 'default',
-    }
-
+    const newBlock: Block = { id: generateId(), type, content: '', status: 'default' }
     setBlocks(prev => {
-      if (!afterId) {
-        return [...prev, newBlock]
-      }
+      if (!afterId) return [...prev, newBlock]
       const index = prev.findIndex(b => b.id === afterId)
       const newBlocks = [...prev]
       newBlocks.splice(index + 1, 0, newBlock)
       return newBlocks
     })
-
-    // Focus new block after render
-    setTimeout(() => setActiveBlockId(newBlock.id), 50)
+    setTimeout(() => setFocusedBlockId(newBlock.id), 50)
   }, [])
 
   const updateBlock = useCallback((id: string, content: string) => {
@@ -642,11 +615,11 @@ export default function BlockCanvas({
 
   const deleteBlock = useCallback((id: string) => {
     setBlocks(prev => {
-      if (prev.length === 1) {
-        // Don't delete last block, just clear it
-        return [{ ...prev[0], content: '' }]
-      }
-      return prev.filter(b => b.id !== id)
+      if (prev.length === 1) return [{ ...prev[0], content: '' }]
+      const index = prev.findIndex(b => b.id === id)
+      const newBlocks = prev.filter(b => b.id !== id)
+      if (index > 0) setTimeout(() => setFocusedBlockId(newBlocks[index - 1].id), 50)
+      return newBlocks
     })
   }, [])
 
@@ -654,10 +627,7 @@ export default function BlockCanvas({
     setBlocks(prev => {
       const index = prev.findIndex(b => b.id === id)
       const block = prev[index]
-      const newBlock: Block = {
-        ...block,
-        id: generateId(),
-      }
+      const newBlock: Block = { ...block, id: generateId() }
       const newBlocks = [...prev]
       newBlocks.splice(index + 1, 0, newBlock)
       return newBlocks
@@ -666,154 +636,152 @@ export default function BlockCanvas({
 
   const changeBlockType = useCallback((id: string, type: BlockType) => {
     setBlocks(prev => prev.map(b => b.id === id ? { ...b, type } : b))
+    setShowPalette(false)
   }, [])
 
-  // Notify parent of changes
-  useEffect(() => {
-    onBlocksChange?.(blocks)
-  }, [blocks, onBlocksChange])
+  useEffect(() => { onBlocksChange?.(blocks) }, [blocks, onBlocksChange])
 
   return (
-    <div style={{
-      flex: 1,
-      overflow: 'auto',
-      background: '#FFFFFF',
-    }}>
-      {/* Styles */}
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: 'white' }}>
       <style>{`
-        .block-editor-content {
+        @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap');
+        
+        .ghost-block-content {
           outline: none;
-          font-size: 15px;
-          line-height: 1.6;
-          color: #374151;
+          font-family: 'EB Garamond', Georgia, serif;
+          font-size: 17px;
+          line-height: 1.7;
+          color: #1a1a1a;
         }
         
-        .block-editor-content:focus {
-          outline: none;
-        }
+        .ghost-block-content:focus { outline: none; }
+        .ghost-block-content p { margin: 0; }
         
-        .block-editor-content p {
-          margin: 0;
-        }
-        
-        .block-editor-content h1 {
-          font-size: 28px;
-          font-weight: 700;
-          margin: 0 0 4px 0;
-          color: #111827;
-        }
-        
-        .block-editor-content h2 {
-          font-size: 22px;
+        .ghost-block-content h1 {
+          font-family: 'EB Garamond', Georgia, serif;
+          font-size: 32px;
           font-weight: 600;
-          margin: 0 0 4px 0;
-          color: #1F2937;
+          margin: 0 0 8px 0;
+          line-height: 1.3;
+          color: #111;
         }
         
-        .block-editor-content h3 {
-          font-size: 18px;
+        .ghost-block-content h2 {
+          font-family: 'EB Garamond', Georgia, serif;
+          font-size: 24px;
           font-weight: 600;
-          margin: 0 0 4px 0;
-          color: #374151;
+          margin: 24px 0 8px 0;
+          line-height: 1.35;
+          color: #111;
         }
         
-        .block-editor-content p.is-editor-empty:first-child::before {
+        .ghost-block-content h3 {
+          font-family: 'EB Garamond', Georgia, serif;
+          font-size: 20px;
+          font-weight: 600;
+          margin: 20px 0 6px 0;
+          line-height: 1.4;
+          color: #222;
+        }
+        
+        .ghost-block-content p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
-          color: #9CA3AF;
+          color: #BCBCBC;
           float: left;
           height: 0;
           pointer-events: none;
+          font-style: italic;
         }
         
-        .block-editor-content ul,
-        .block-editor-content ol {
+        .ghost-block-content ul, .ghost-block-content ol {
           margin: 0;
-          padding-left: 24px;
+          padding-left: 28px;
         }
         
-        .block-editor-content li {
-          margin: 2px 0;
-        }
+        .ghost-block-content li { margin: 4px 0; }
         
-        .block-editor-content blockquote {
-          border-left: 3px solid #E5E7EB;
-          margin: 0;
-          padding-left: 16px;
+        .ghost-block-content blockquote {
+          border-left: 2px solid #E5E7EB;
+          margin: 8px 0;
+          padding-left: 20px;
           color: #6B7280;
+          font-style: italic;
         }
         
-        .block-editor-content code {
+        .ghost-block-content strong { font-weight: 600; }
+        .ghost-block-content em { font-style: italic; }
+        
+        .ghost-block-content code {
           background: #F3F4F6;
-          padding: 2px 4px;
-          border-radius: 4px;
-          font-size: 14px;
+          padding: 2px 5px;
+          border-radius: 3px;
+          font-size: 15px;
           font-family: 'SF Mono', Monaco, monospace;
         }
         
-        .block-wrapper:hover {
-          background: #FAFAFA;
-        }
+        .menu-item:hover { background: #F3F4F6; }
+        .menu-item-danger:hover { background: #FEF2F2; }
+        .palette-item:hover { background: #F3F4F6; }
+        .proof-item:hover { background: #F3F4F6; }
       `}</style>
 
-      {/* Canvas content */}
-      <div style={{
-        maxWidth: 800,
-        margin: '0 auto',
-        padding: '48px 64px',
-      }}>
-        {/* Document title placeholder */}
-        <div style={{
-          marginBottom: 32,
-          paddingBottom: 16,
-          borderBottom: '1px solid #E5E7EB',
-        }}>
-          <input
-            type="text"
-            placeholder="Untitled Document"
-            style={{
-              width: '100%',
-              fontSize: 36,
-              fontWeight: 700,
-              color: '#111827',
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-            }}
-          />
-        </div>
+      {/* Block Palette */}
+      <BlockPalette
+        isOpen={showPalette}
+        onClose={() => setShowPalette(false)}
+        onSelectType={(type) => {
+          if (focusedBlockId) changeBlockType(focusedBlockId, type)
+          else addBlock(undefined, type)
+        }}
+      />
 
-        {/* Blocks */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {blocks.map((block) => (
-            <BlockEditor
-              key={block.id}
-              block={block}
-              isActive={activeBlockId === block.id}
-              onActivate={() => setActiveBlockId(block.id)}
-              onUpdate={(content) => updateBlock(block.id, content)}
-              onDelete={() => deleteBlock(block.id)}
-              onDuplicate={() => duplicateBlock(block.id)}
-              onChangeType={(type) => changeBlockType(block.id, type)}
-              onAddBlockAfter={() => addBlock(block.id)}
+      {/* Canvas */}
+      <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px 120px' }}>
+          {/* Title */}
+          <div style={{ marginBottom: 32, paddingLeft: 63 }}>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Untitled"
+              style={{
+                width: '100%',
+                fontSize: 38,
+                fontWeight: 600,
+                fontFamily: "'EB Garamond', Georgia, serif",
+                color: '#111',
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+              }}
             />
-          ))}
-        </div>
+          </div>
 
-        {/* Add block hint at bottom */}
-        <div 
-          style={{
-            marginTop: 16,
-            padding: '8px 0',
-            opacity: 0.5,
-            cursor: 'pointer',
-            fontSize: 14,
-            color: '#9CA3AF',
-          }}
-          onClick={() => addBlock()}
-        >
-          Click to add a block, or press "/" for commands
+          {/* Blocks */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {blocks.map((block, index) => (
+              <BlockEditor
+                key={block.id}
+                block={block}
+                isFirst={index === 0 && !title}
+                isFocused={focusedBlockId === block.id}
+                onFocus={() => setFocusedBlockId(block.id)}
+                onUpdate={(content) => updateBlock(block.id, content)}
+                onDelete={() => deleteBlock(block.id)}
+                onDuplicate={() => duplicateBlock(block.id)}
+                onChangeType={(type) => changeBlockType(block.id, type)}
+                onAddBlockAfter={() => addBlock(block.id)}
+                onOpenBlockPalette={() => { setFocusedBlockId(block.id); setShowPalette(true); }}
+                onSelectBlock={() => setSelectedBlockId(block.id)}
+              />
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Proof Pane */}
+      {showProofPane && <ProofPane blocks={blocks} />}
     </div>
   )
 }
