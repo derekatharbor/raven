@@ -1,7 +1,7 @@
 // src/components/canvas/BlockCanvas.tsx
 //
 // Raven "Quiet" Workspace - Cursor for Documents
-// Clean canvas, hover-triggered integrity rail, no inline clutter
+// Clean canvas, AI-integrated research, no visual clutter
 
 'use client'
 
@@ -10,41 +10,27 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
-import ChatPanel from '@/components/workspace/ChatPanel'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
-  ChevronRight, ChevronLeft,
   X, Bold, Italic, Underline as UnderlineIcon,
-  MessageSquare, Search, Link2
+  Atom, FileText, Send, Sparkles
 } from 'lucide-react'
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-type BlockStatus = 'default' | 'synced' | 'drifted' | 'signal'
-
 interface Block {
   id: string
   content: string
-  status: BlockStatus
-  sourceId?: string
-  sourceName?: string
 }
 
 interface Tab {
   id: string
   name: string
   hasChanges: boolean
-}
-
-// Integrity Rail colors (only visible on hover)
-// Green = synced, Amber = drift, Blue = signal
-const RAIL_COLORS: Record<BlockStatus, string> = {
-  default: 'transparent',
-  synced: '#4B9E7E',   // Green - variable synced with source
-  drifted: '#D4915D',  // Amber - value mismatch
-  signal: '#5C6AC4',   // Blue - narrative signal attached
+  blocks: Block[]
+  title: string
 }
 
 // ============================================================================
@@ -89,7 +75,6 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: {
             maxWidth: 200,
           }}
         >
-          {/* Raven favicon inside each tab */}
           <img 
             src="/images/raven-logo.png" 
             alt="" 
@@ -105,7 +90,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: {
             {tab.name || 'Untitled'}
           </span>
           {tab.hasChanges && (
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#5C6AC4', flexShrink: 0 }} />
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#6B7280', flexShrink: 0 }} />
           )}
           {tabs.length > 1 && (
             <button
@@ -155,30 +140,24 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: {
 }
 
 // ============================================================================
-// SELECTION TOOLBAR - Active Research Flow
+// SELECTION TOOLBAR - Minimal: Format + Research (AI)
 // ============================================================================
 
-function SelectionToolbar({ position, isVisible, editor, selectedText, onResearch, onChat, onConnect }: {
+function SelectionToolbar({ position, isVisible, editor, selectedText, onResearch }: {
   position: { top: number; left: number } | null
   isVisible: boolean
   editor: any
   selectedText: string
   onResearch: (text: string) => void
-  onChat: (text: string) => void
-  onConnect: (text: string) => void
 }) {
-  const toolbarRef = useRef<HTMLDivElement>(null)
-
   if (!isVisible || !position || !editor) return null
 
-  // Prevent toolbar from closing when clicking inside it
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault()
   }
 
   return (
     <div
-      ref={toolbarRef}
       onMouseDown={handleMouseDown}
       style={{
         position: 'fixed',
@@ -191,12 +170,11 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
         gap: 2,
         padding: '4px 6px',
         borderRadius: 8,
-        background: '#FBF9F7',
-        border: '1px solid #E5E7EB',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        background: '#1a1a1a',
+        border: '1px solid #333',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
       }}
     >
-      {/* Format buttons */}
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className="toolbar-btn"
@@ -208,8 +186,8 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
           height: 28,
           borderRadius: 4,
           border: 'none',
-          background: editor.isActive('bold') ? 'rgba(0,0,0,0.08)' : 'transparent',
-          color: editor.isActive('bold') ? '#111' : '#6B7280',
+          background: editor.isActive('bold') ? 'rgba(255,255,255,0.15)' : 'transparent',
+          color: editor.isActive('bold') ? '#fff' : '#999',
           cursor: 'pointer',
         }}
       >
@@ -226,8 +204,8 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
           height: 28,
           borderRadius: 4,
           border: 'none',
-          background: editor.isActive('italic') ? 'rgba(0,0,0,0.08)' : 'transparent',
-          color: editor.isActive('italic') ? '#111' : '#6B7280',
+          background: editor.isActive('italic') ? 'rgba(255,255,255,0.15)' : 'transparent',
+          color: editor.isActive('italic') ? '#fff' : '#999',
           cursor: 'pointer',
         }}
       >
@@ -244,285 +222,283 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
           height: 28,
           borderRadius: 4,
           border: 'none',
-          background: editor.isActive('underline') ? 'rgba(0,0,0,0.08)' : 'transparent',
-          color: editor.isActive('underline') ? '#111' : '#6B7280',
+          background: editor.isActive('underline') ? 'rgba(255,255,255,0.15)' : 'transparent',
+          color: editor.isActive('underline') ? '#fff' : '#999',
           cursor: 'pointer',
         }}
       >
         <UnderlineIcon className="w-4 h-4" />
       </button>
 
-      <div style={{ width: 1, height: 20, background: '#E5E7EB', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 20, background: '#444', margin: '0 6px' }} />
 
-      {/* Research button - Active research flow */}
       <button
         onClick={() => onResearch(selectedText)}
-        className="toolbar-btn"
+        className="toolbar-research-btn"
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 5,
-          padding: '4px 8px',
+          gap: 6,
+          padding: '5px 10px',
           borderRadius: 4,
           border: 'none',
-          background: 'transparent',
-          color: '#6B7280',
+          background: 'rgba(255,255,255,0.1)',
+          color: '#fff',
           cursor: 'pointer',
           fontSize: 13,
           fontWeight: 500,
         }}
       >
-        <Search className="w-3.5 h-3.5" />
+        <Atom className="w-3.5 h-3.5" />
         Research
-      </button>
-
-      <div style={{ width: 1, height: 20, background: '#E5E7EB', margin: '0 4px' }} />
-
-      {/* Chat button */}
-      <button
-        onClick={() => onChat(selectedText)}
-        className="toolbar-btn"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 5,
-          padding: '4px 8px',
-          borderRadius: 4,
-          border: 'none',
-          background: 'transparent',
-          color: '#6B7280',
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: 500,
-        }}
-      >
-        <MessageSquare className="w-3.5 h-3.5" />
-        Chat
-      </button>
-
-      {/* Connect Variable button */}
-      <button
-        onClick={() => onConnect(selectedText)}
-        className="toolbar-track-btn"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 5,
-          padding: '4px 10px',
-          borderRadius: 4,
-          border: 'none',
-          background: '#111',
-          color: 'white',
-          cursor: 'pointer',
-          fontSize: 13,
-          fontWeight: 500,
-        }}
-      >
-        <Link2 className="w-3.5 h-3.5" />
-        Connect
       </button>
     </div>
   )
 }
 
 // ============================================================================
-// RESEARCH PANEL - Search with selection context, insert cited results
+// AI RESEARCH PANEL - Cursor-style chat interface
 // ============================================================================
 
-function ResearchPanel({ selectedText, onInsert, onClose }: {
+function ResearchPanel({ selectedText, onClose, isOpen }: {
   selectedText: string
-  onInsert: (text: string, citation: string) => void
   onClose: () => void
+  isOpen: boolean
 }) {
-  const [query, setQuery] = useState(selectedText)
-  const [isSearching, setIsSearching] = useState(false)
-  const [results, setResults] = useState<Array<{ id: string; text: string; source: string; citation: string }>>([])
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [query, setQuery] = useState('')
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    inputRef.current?.focus()
-    inputRef.current?.select()
-  }, [])
+    if (isOpen) {
+      inputRef.current?.focus()
+    }
+  }, [isOpen])
 
-  const handleSearch = () => {
-    if (!query.trim()) return
-    setIsSearching(true)
-    
-    // Mock search results - would hit actual sources
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSubmit = () => {
+    if (!query.trim() && !selectedText) return
+
+    const userMessage = {
+      role: 'user' as const,
+      content: query || 'Find sources for this claim',
+      context: selectedText || undefined,
+    }
+    setMessages(prev => [...prev, userMessage])
+    setQuery('')
+    setIsLoading(true)
+
+    // Mock AI response
     setTimeout(() => {
-      setResults([
-        {
-          id: '1',
-          text: 'NVIDIA reported data center revenue of $14.51 billion, up 279% year-over-year.',
-          source: 'SEC EDGAR',
-          citation: 'NVDA 10-Q, Q3 2024, p.23'
-        },
-        {
-          id: '2', 
-          text: 'Data center segment revenue reached $14.5B in Q3 FY2025, representing 279% growth.',
-          source: 'AlphaSense',
-          citation: 'NVIDIA Earnings Call Transcript, Nov 2024'
-        },
-        {
-          id: '3',
-          text: "NVIDIA's data center business generated $14.51 billion, a 279% increase from the prior year period.",
-          source: 'Bloomberg',
-          citation: 'Bloomberg Terminal, Jan 2025'
-        },
-      ])
-      setIsSearching(false)
-    }, 800)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Based on my search of connected sources:\n\n**SEC EDGAR (NVDA 10-Q, Q3 2024)**\nNVIDIA reported data center revenue of $14.51 billion, representing a 279% year-over-year increase.\n\n**Bloomberg Terminal**\nConfirms the $14.51B figure with additional context on AI chip demand driving growth.\n\nWould you like me to insert a citation or explore related metrics?`,
+      }])
+      setIsLoading(false)
+    }, 1200)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSearch()
-    }
-    if (e.key === 'Escape') {
-      onClose()
+      handleSubmit()
     }
   }
 
+  const truncate = (text: string, max: number = 40) => 
+    text.length <= max ? text : text.substring(0, max) + '...'
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      bottom: 0,
-      width: 420,
-      background: '#FBF9F7',
-      borderLeft: '1px solid #E5E7EB',
-      display: 'flex',
-      flexDirection: 'column',
-      zIndex: 1000,
-      boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
-    }}>
+    <div 
+      style={{
+        width: 380,
+        flexShrink: 0,
+        borderLeft: '1px solid #E5E7EB',
+        background: '#FAFAFA',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       {/* Header */}
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid #E5E7EB' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>Research</div>
-          <button
-            onClick={onClose}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 24,
-              height: 24,
-              borderRadius: 4,
-              border: 'none',
-              background: 'transparent',
-              color: '#6B7280',
-              cursor: 'pointer',
-            }}
-          >
-            <X className="w-4 h-4" />
-          </button>
+      <div style={{ 
+        padding: '12px 16px', 
+        borderBottom: '1px solid #E5E7EB',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Atom className="w-4 h-4" style={{ color: '#6B7280' }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>Research</span>
         </div>
-        
-        {/* Search input */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <Search className="w-4 h-4" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-            <input
+        <button
+          onClick={onClose}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 24,
+            height: 24,
+            borderRadius: 4,
+            border: 'none',
+            background: 'transparent',
+            color: '#6B7280',
+            cursor: 'pointer',
+          }}
+          className="panel-close-btn"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+        {messages.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9CA3AF', fontSize: 13, lineHeight: 1.6 }}>
+            <Sparkles className="w-8 h-8 mx-auto mb-3" style={{ color: '#D1D5DB' }} />
+            Ask about your selection or<br />search connected sources
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {messages.map((msg, i) => (
+              <div key={i}>
+                {msg.context && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 6, 
+                      padding: '4px 8px', 
+                      background: '#F3F4F6', 
+                      borderRadius: 4,
+                      fontSize: 12,
+                      color: '#6B7280',
+                    }}>
+                      <FileText className="w-3 h-3" />
+                      <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {truncate(msg.context, 30)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div style={{ 
+                  padding: '10px 12px', 
+                  borderRadius: 8,
+                  background: msg.role === 'user' ? '#111' : 'white',
+                  color: msg.role === 'user' ? 'white' : '#111',
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  border: msg.role === 'assistant' ? '1px solid #E5E7EB' : 'none',
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div style={{ 
+                padding: '10px 12px', 
+                borderRadius: 8, 
+                background: 'white', 
+                border: '1px solid #E5E7EB',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <div className="loading-dots" style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite' }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.2s' }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.4s' }} />
+                </div>
+                <span style={{ fontSize: 12, color: '#9CA3AF' }}>Searching sources...</span>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div style={{ padding: '12px 16px', borderTop: '1px solid #E5E7EB' }}>
+        <div style={{ 
+          background: 'white', 
+          border: '1px solid #E5E7EB', 
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}>
+          {/* Context badge */}
+          {selectedText && messages.length === 0 && (
+            <div style={{ padding: '8px 12px 0' }}>
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: 6, 
+                padding: '4px 8px', 
+                background: '#F3F4F6', 
+                borderRadius: 4,
+                fontSize: 12,
+                color: '#374151',
+              }}>
+                <FileText className="w-3 h-3" style={{ color: '#6B7280' }} />
+                <span style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {truncate(selectedText)}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <div style={{ display: 'flex', alignItems: 'flex-end', padding: '8px 12px', gap: 8 }}>
+            <textarea
               ref={inputRef}
-              type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search connected sources..."
+              placeholder="Ask about your selection..."
+              rows={2}
               style={{
-                width: '100%',
-                padding: '8px 12px 8px 34px',
-                fontSize: 13,
-                border: '1px solid #E5E7EB',
-                borderRadius: 6,
-                background: 'white',
+                flex: 1,
+                border: 'none',
                 outline: 'none',
+                resize: 'none',
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: '#111',
+                background: 'transparent',
               }}
             />
+            <button
+              onClick={handleSubmit}
+              disabled={!query.trim() && !selectedText}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                border: 'none',
+                background: (query.trim() || selectedText) ? '#111' : '#E5E7EB',
+                color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
+                cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
+                flexShrink: 0,
+              }}
+            >
+              <Send className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={handleSearch}
-            disabled={isSearching}
-            style={{
-              padding: '8px 16px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'white',
-              background: '#111',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              opacity: isSearching ? 0.6 : 1,
-            }}
-          >
-            {isSearching ? 'Searching...' : 'Search'}
-          </button>
         </div>
-      </div>
-
-      {/* Results */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '12px 20px' }}>
-        {results.length === 0 && !isSearching && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9CA3AF', fontSize: 13 }}>
-            Search your connected sources for verified data
-          </div>
-        )}
-        
-        {isSearching && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6B7280', fontSize: 13 }}>
-            Searching SEC EDGAR, AlphaSense, Bloomberg...
-          </div>
-        )}
-
-        {results.map((result) => (
-          <div
-            key={result.id}
-            style={{
-              padding: '12px 14px',
-              marginBottom: 8,
-              background: 'white',
-              border: '1px solid #E5E7EB',
-              borderRadius: 8,
-            }}
-          >
-            <div style={{ fontSize: 13, color: '#111', lineHeight: 1.5, marginBottom: 8 }}>
-              {result.text}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 11, color: '#6B7280' }}>
-                <span style={{ fontWeight: 500 }}>{result.source}</span>
-                <span style={{ margin: '0 6px' }}>•</span>
-                <span>{result.citation}</span>
-              </div>
-              <button
-                onClick={() => onInsert(result.text, result.citation)}
-                className="research-insert-btn"
-                style={{
-                  padding: '4px 10px',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: '#111',
-                  background: '#F3F4F6',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                }}
-              >
-                Insert
-              </button>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   )
 }
 
 // ============================================================================
-// BLOCK EDITOR - Hover-triggered integrity rail, no inline labels
+// BLOCK EDITOR - Clean, no rails
 // ============================================================================
 
 function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate, onAddBlockAfter, onFocusPrevious, onSelectionChange }: {
@@ -581,8 +557,20 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const railColor = RAIL_COLORS[block.status]
-  const hasRail = block.status !== 'default'
+  const gutterBtnStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    border: 'none',
+    background: 'transparent',
+    color: '#B0B0B0',
+    cursor: 'pointer',
+    opacity: isHovered ? 1 : 0,
+    transition: 'opacity 0.1s',
+  }
 
   return (
     <div 
@@ -591,93 +579,28 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
       onMouseLeave={() => setIsHovered(false)} 
       style={{ position: 'relative', display: 'flex', alignItems: 'stretch' }}
     >
-      {/* Left gutter with hover-triggered buttons */}
+      {/* Left gutter */}
       <div style={{ width: 52, flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', paddingRight: 8, paddingTop: 4, gap: 2 }}>
-        <button 
-          onClick={onAddBlockAfter} 
-          className="gutter-btn" 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            color: '#B0B0B0',
-            cursor: 'pointer',
-            opacity: isHovered ? 1 : 0,
-            transition: 'opacity 0.1s',
-          }}
-        >
+        <button onClick={onAddBlockAfter} className="gutter-btn" style={gutterBtnStyle}>
           <Plus className="w-4 h-4" />
         </button>
-        <button 
-          className="gutter-btn" 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            color: '#B0B0B0',
-            cursor: 'grab',
-            opacity: isHovered ? 1 : 0,
-            transition: 'opacity 0.1s',
-          }}
-        >
+        <button className="gutter-btn" style={{ ...gutterBtnStyle, cursor: 'grab' }}>
           <GripVertical className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Integrity Rail - INVISIBLE by default, visible on hover */}
-      <div 
-        style={{ 
-          width: 3, 
-          flexShrink: 0, 
-          marginRight: 14, 
-          borderRadius: 2, 
-          background: hasRail && isHovered ? railColor : 'transparent',
-          cursor: hasRail ? 'pointer' : 'default', 
-          transition: 'background 0.15s', 
-          minHeight: 24,
-        }} 
-        title={hasRail ? `${block.status}${block.sourceName ? ` • ${block.sourceName}` : ''}` : undefined} 
-      />
-
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, paddingLeft: 12 }}>
         <EditorContent editor={editor} />
       </div>
 
-      {/* Right menu - hover triggered */}
+      {/* Right menu */}
       <div style={{ width: 32, flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4, position: 'relative' }}>
-        <button 
-          onClick={() => setShowMenu(!showMenu)} 
-          className="gutter-btn" 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 20,
-            height: 20,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            color: '#B0B0B0',
-            cursor: 'pointer',
-            opacity: isHovered ? 1 : 0,
-            transition: 'opacity 0.1s',
-          }}
-        >
+        <button onClick={() => setShowMenu(!showMenu)} className="gutter-btn" style={gutterBtnStyle}>
           <MoreHorizontal className="w-4 h-4" />
         </button>
         {showMenu && (
-          <div ref={menuRef} style={{ position: 'absolute', top: 24, right: 0, width: 180, background: 'white', borderRadius: 8, border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 100, padding: '4px 0' }}>
+          <div ref={menuRef} style={{ position: 'absolute', top: 24, right: 0, width: 160, background: 'white', borderRadius: 8, border: '1px solid #E5E7EB', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', zIndex: 100, padding: '4px 0' }}>
             <button onClick={() => { onDuplicate(); setShowMenu(false) }} className="menu-item" style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#374151', textAlign: 'left' }}>
               <Copy className="w-4 h-4" style={{ color: '#9CA3AF' }} />Duplicate
             </button>
@@ -693,103 +616,53 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
 }
 
 // ============================================================================
-// CLAIMS PANE (Right Sidebar - The "Linter")
-// ============================================================================
-
-function ClaimsPane({ blocks, isCollapsed, onToggleCollapse }: { 
-  blocks: Block[]
-  isCollapsed: boolean
-  onToggleCollapse: () => void 
-}) {
-  const trackedBlocks = blocks.filter(b => b.status !== 'default')
-  const driftedCount = blocks.filter(b => b.status === 'drifted').length
-
-  if (isCollapsed) {
-    return (
-      <div style={{ width: 40, flexShrink: 0, borderLeft: '1px solid #E5E7EB', background: '#FAFAFA', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 12 }}>
-        <button onClick={onToggleCollapse} className="pane-toggle-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', color: '#6B7280', cursor: 'pointer' }}>
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        {driftedCount > 0 && (
-          <div style={{ marginTop: 12, width: 20, height: 20, borderRadius: '50%', background: '#D4915D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: 'white' }}>
-            {driftedCount}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ width: 280, flexShrink: 0, borderLeft: '1px solid #E5E7EB', background: '#FAFAFA', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Claims</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>
-            {trackedBlocks.length} tracked{driftedCount > 0 && ` • ${driftedCount} drifted`}
-          </div>
-        </div>
-        <button onClick={onToggleCollapse} className="pane-toggle-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', color: '#6B7280', cursor: 'pointer' }}>
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        {trackedBlocks.length === 0 ? (
-          <div style={{ padding: 20, fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 1.5 }}>
-            No tracked claims.<br />Select text and click Connect.
-          </div>
-        ) : (
-          trackedBlocks.map((block) => (
-            <div key={block.id} className="claim-item" style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: RAIL_COLORS[block.status] }} />
-                <span style={{ fontSize: 11, fontWeight: 500, color: '#6B7280', textTransform: 'capitalize' }}>{block.status}</span>
-                {block.sourceName && <span style={{ fontSize: 11, color: '#9CA3AF' }}>• {block.sourceName}</span>}
-              </div>
-              <div style={{ fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {block.content.replace(/<[^>]*>/g, '').substring(0, 50) || 'Empty'}
-              </div>
-              {block.status === 'drifted' && (
-                <div style={{ marginTop: 6, fontSize: 11, color: '#D4915D', fontWeight: 500 }}>Source value changed</div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ============================================================================
 // MAIN CANVAS
 // ============================================================================
 
 interface BlockCanvasProps {
   documentId: string
   documentTitle?: string
-  initialBlocks?: Block[]
-  tabs?: Tab[]
-  activeTabId?: string
-  onTabSelect?: (id: string) => void
-  onTabClose?: (id: string) => void
-  onNewTab?: () => void
+  initialTabs?: Tab[]
   onBlocksChange?: (blocks: Block[]) => void
 }
+
+const DEFAULT_TABS: Tab[] = [
+  { 
+    id: 'doc-1', 
+    name: 'Q4 2024 Analysis', 
+    hasChanges: false,
+    title: 'Q4 2024 Investment Analysis',
+    blocks: [
+      { id: '1', content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>' },
+      { id: '2', content: '<h2>Key Findings</h2>' },
+      { id: '3', content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase.</p>' },
+      { id: '4', content: '<p>The company maintained healthy gross margins of 45.2% despite macroeconomic headwinds.</p>' },
+      { id: '5', content: '' },
+    ]
+  },
+  { 
+    id: 'doc-2', 
+    name: 'Due Diligence Report', 
+    hasChanges: true,
+    title: 'Series B Due Diligence',
+    blocks: [
+      { id: '1', content: '<h2>Executive Summary</h2>' },
+      { id: '2', content: '<p>This report presents findings from our comprehensive due diligence review of the target company.</p>' },
+      { id: '3', content: '<p>Key areas of focus include financial performance, market position, and technology assessment.</p>' },
+      { id: '4', content: '' },
+    ]
+  },
+]
 
 export default function BlockCanvas({ 
   documentId, 
   documentTitle = '',
-  initialBlocks,
-  tabs = [{ id: 'doc-1', name: 'Q4 2024 Analysis', hasChanges: false }],
-  activeTabId = 'doc-1',
-  onTabSelect,
-  onTabClose,
-  onNewTab,
+  initialTabs,
   onBlocksChange,
 }: BlockCanvasProps) {
-  const [blocks, setBlocks] = useState<Block[]>(initialBlocks || [{ id: '1', content: '', status: 'default' }])
+  const [tabs, setTabs] = useState<Tab[]>(initialTabs || DEFAULT_TABS)
+  const [activeTabId, setActiveTabId] = useState(tabs[0]?.id || 'doc-1')
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null)
-  const [title, setTitle] = useState(documentTitle)
-  const [claimsPaneCollapsed, setClaimsPaneCollapsed] = useState(false)
   
   // Toolbar state
   const [toolbarState, setToolbarState] = useState<{ 
@@ -799,35 +672,76 @@ export default function BlockCanvas({
     selectedText: string
   }>({ visible: false, position: null, editor: null, selectedText: '' })
   
-  // Panel states
+  // Research panel state
   const [researchOpen, setResearchOpen] = useState(false)
   const [researchText, setResearchText] = useState('')
-  const [chatOpen, setChatOpen] = useState(false)
-  const [chatContext, setChatContext] = useState<{ text: string } | null>(null)
-  const [connectOpen, setConnectOpen] = useState(false)
-  const [connectText, setConnectText] = useState('')
+
+  // Get active tab data
+  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
+  const blocks = activeTab?.blocks || []
+  const title = activeTab?.title || ''
 
   const generateId = () => Math.random().toString(36).substring(2, 9)
 
-  const addBlock = useCallback((afterId?: string) => {
-    const newBlock: Block = { id: generateId(), content: '', status: 'default' }
-    setBlocks(prev => {
-      if (!afterId) return [...prev, newBlock]
-      const index = prev.findIndex(b => b.id === afterId)
-      const newBlocks = [...prev]
-      newBlocks.splice(index + 1, 0, newBlock)
-      return newBlocks
-    })
-    setTimeout(() => setFocusedBlockId(newBlock.id), 50)
+  // Tab handlers
+  const handleTabSelect = useCallback((id: string) => {
+    setActiveTabId(id)
+    setResearchOpen(false)
+    setToolbarState({ visible: false, position: null, editor: null, selectedText: '' })
   }, [])
+
+  const handleNewTab = useCallback(() => {
+    const newTab: Tab = {
+      id: `doc-${Date.now()}`,
+      name: 'Untitled',
+      hasChanges: false,
+      title: '',
+      blocks: [{ id: generateId(), content: '' }],
+    }
+    setTabs(prev => [...prev, newTab])
+    setActiveTabId(newTab.id)
+  }, [])
+
+  const handleCloseTab = useCallback((id: string) => {
+    if (tabs.length === 1) return
+    const newTabs = tabs.filter(t => t.id !== id)
+    setTabs(newTabs)
+    if (activeTabId === id) setActiveTabId(newTabs[0].id)
+  }, [tabs, activeTabId])
+
+  // Block handlers
+  const updateBlocks = useCallback((newBlocks: Block[]) => {
+    setTabs(prev => prev.map(t => 
+      t.id === activeTabId ? { ...t, blocks: newBlocks, hasChanges: true } : t
+    ))
+  }, [activeTabId])
+
+  const updateTitle = useCallback((newTitle: string) => {
+    setTabs(prev => prev.map(t => 
+      t.id === activeTabId ? { ...t, title: newTitle, name: newTitle || 'Untitled' } : t
+    ))
+  }, [activeTabId])
+
+  const addBlock = useCallback((afterId?: string) => {
+    const newBlock: Block = { id: generateId(), content: '' }
+    const newBlocks = afterId 
+      ? blocks.flatMap(b => b.id === afterId ? [b, newBlock] : [b])
+      : [...blocks, newBlock]
+    updateBlocks(newBlocks)
+    setTimeout(() => setFocusedBlockId(newBlock.id), 50)
+  }, [blocks, updateBlocks])
 
   const updateBlock = useCallback((id: string, content: string) => {
-    setBlocks(prev => prev.map(b => b.id === id ? { ...b, content } : b))
-  }, [])
+    updateBlocks(blocks.map(b => b.id === id ? { ...b, content } : b))
+  }, [blocks, updateBlocks])
 
   const deleteBlock = useCallback((id: string) => {
-    setBlocks(prev => prev.length === 1 ? [{ ...prev[0], content: '' }] : prev.filter(b => b.id !== id))
-  }, [])
+    if (blocks.length === 1) {
+      updateBlocks([{ ...blocks[0], content: '' }])
+    } else {
+      updateBlocks(blocks.filter(b => b.id !== id))
+    }
+  }, [blocks, updateBlocks])
 
   const focusPreviousBlock = useCallback((currentId: string) => {
     const index = blocks.findIndex(b => b.id === currentId)
@@ -835,37 +749,18 @@ export default function BlockCanvas({
   }, [blocks])
 
   const duplicateBlock = useCallback((id: string) => {
-    setBlocks(prev => {
-      const index = prev.findIndex(b => b.id === id)
-      const newBlocks = [...prev]
-      newBlocks.splice(index + 1, 0, { ...prev[index], id: generateId() })
-      return newBlocks
-    })
-  }, [])
+    const index = blocks.findIndex(b => b.id === id)
+    const newBlock = { ...blocks[index], id: generateId() }
+    const newBlocks = [...blocks]
+    newBlocks.splice(index + 1, 0, newBlock)
+    updateBlocks(newBlocks)
+  }, [blocks, updateBlocks])
 
-  // Toolbar action handlers
+  // Research handler
   const handleResearch = useCallback((text: string) => {
     setResearchText(text)
     setResearchOpen(true)
     setToolbarState(prev => ({ ...prev, visible: false }))
-  }, [])
-
-  const handleChat = useCallback((text: string) => {
-    setChatContext({ text })
-    setChatOpen(true)
-    setToolbarState(prev => ({ ...prev, visible: false }))
-  }, [])
-
-  const handleConnect = useCallback((text: string) => {
-    setConnectText(text)
-    setConnectOpen(true)
-    setToolbarState(prev => ({ ...prev, visible: false }))
-  }, [])
-
-  const handleResearchInsert = useCallback((text: string, citation: string) => {
-    // TODO: Replace selection with cited text in the editor
-    console.log('Insert:', text, citation)
-    setResearchOpen(false)
   }, [])
 
   useEffect(() => { onBlocksChange?.(blocks) }, [blocks, onBlocksChange])
@@ -875,47 +770,49 @@ export default function BlockCanvas({
       <style>{`
         .ghost-block-content { 
           outline: none; 
-          font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; 
-          font-size: 16px; 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+          font-size: 15px; 
           line-height: 1.7; 
           color: #1a1a1a; 
         }
         .ghost-block-content:focus { outline: none; }
         .ghost-block-content p { margin: 0; }
-        .ghost-block-content h1 { font-size: 32px; font-weight: 500; margin: 0 0 12px 0; line-height: 1.3; color: #111; }
-        .ghost-block-content h2 { font-size: 24px; font-weight: 500; margin: 24px 0 8px 0; line-height: 1.35; color: #111; }
-        .ghost-block-content h3 { font-size: 18px; font-weight: 500; margin: 20px 0 6px 0; line-height: 1.4; color: #222; }
+        .ghost-block-content h1 { font-size: 28px; font-weight: 600; margin: 0 0 12px 0; line-height: 1.3; color: #111; }
+        .ghost-block-content h2 { font-size: 20px; font-weight: 600; margin: 20px 0 8px 0; line-height: 1.35; color: #111; }
+        .ghost-block-content h3 { font-size: 16px; font-weight: 600; margin: 16px 0 6px 0; line-height: 1.4; color: #222; }
         .ghost-block-content p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #B0B0B0; float: left; height: 0; pointer-events: none; }
         .ghost-block-content ul, .ghost-block-content ol { margin: 0; padding-left: 24px; }
         .ghost-block-content li { margin: 4px 0; }
         .ghost-block-content blockquote { border-left: 2px solid #E0E0E0; margin: 12px 0; padding-left: 16px; color: #555; font-style: italic; }
         .ghost-block-content strong { font-weight: 600; }
-        .ghost-block-content code { background: #F5F5F5; padding: 2px 5px; border-radius: 3px; font-size: 14px; font-family: 'SF Mono', Monaco, monospace; color: #333; }
+        .ghost-block-content code { background: #F5F5F5; padding: 2px 5px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', Monaco, monospace; color: #333; }
         
         .gutter-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
-        .toolbar-btn:hover { background: rgba(0,0,0,0.08) !important; color: #111 !important; }
-        .toolbar-track-btn:hover { background: #333 !important; }
-        .research-insert-btn:hover { background: #E5E7EB !important; }
+        .toolbar-btn:hover { background: rgba(255,255,255,0.2) !important; color: #fff !important; }
+        .toolbar-research-btn:hover { background: rgba(255,255,255,0.2) !important; }
         .menu-item:hover { background: #F5F5F5; }
         .menu-item-danger:hover { background: #FEF2F2; }
-        .claim-item:hover { background: #F5F5F5; }
-        .pane-toggle-btn:hover { background: rgba(0,0,0,0.05); }
+        .panel-close-btn:hover { background: #F3F4F6; }
         .tab-close-btn:hover { background: rgba(0,0,0,0.08); color: #374151; }
         .tab-add-btn:hover { background: rgba(0,0,0,0.05); color: #6B7280; }
         
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+        
         @media print {
-          .gutter-btn, .pane-toggle-btn, .tab-close-btn, .tab-add-btn { display: none !important; }
+          .gutter-btn, .tab-close-btn, .tab-add-btn { display: none !important; }
           .ghost-block > div:first-child { display: none !important; }
-          .ghost-block > div:nth-child(2) { display: none !important; }
         }
       `}</style>
 
       <EditorTabs 
         tabs={tabs} 
         activeTabId={activeTabId} 
-        onTabSelect={onTabSelect || (() => {})} 
-        onTabClose={onTabClose || (() => {})} 
-        onNewTab={onNewTab || (() => {})} 
+        onTabSelect={handleTabSelect}
+        onTabClose={handleCloseTab}
+        onNewTab={handleNewTab}
       />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
@@ -923,21 +820,22 @@ export default function BlockCanvas({
         <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
           <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px 120px' }}>
             {/* Document title */}
-            <div style={{ marginBottom: 32, paddingLeft: 69 }}>
+            <div style={{ marginBottom: 32, paddingLeft: 64 }}>
               <input 
                 type="text" 
                 value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
+                onChange={(e) => updateTitle(e.target.value)} 
                 placeholder="Untitled" 
                 style={{ 
                   width: '100%', 
-                  fontSize: 36, 
-                  fontWeight: 500, 
-                  fontFamily: "'EB Garamond', Georgia, serif", 
+                  fontSize: 32, 
+                  fontWeight: 600, 
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", 
                   color: '#111', 
                   border: 'none', 
                   outline: 'none', 
                   background: 'transparent',
+                  letterSpacing: '-0.02em',
                 }} 
               />
             </div>
@@ -962,29 +860,12 @@ export default function BlockCanvas({
           </div>
         </div>
 
-        {/* Claims Pane (Right Sidebar - The Linter) */}
-        {!chatOpen && !researchOpen && (
-          <ClaimsPane 
-            blocks={blocks} 
-            isCollapsed={claimsPaneCollapsed} 
-            onToggleCollapse={() => setClaimsPaneCollapsed(!claimsPaneCollapsed)} 
-          />
-        )}
-
         {/* Research Panel */}
         {researchOpen && (
           <ResearchPanel
             selectedText={researchText}
-            onInsert={handleResearchInsert}
             onClose={() => setResearchOpen(false)}
-          />
-        )}
-
-        {/* Chat Panel */}
-        {chatOpen && (
-          <ChatPanel
-            onClose={() => setChatOpen(false)}
-            initialContext={chatContext}
+            isOpen={researchOpen}
           />
         )}
 
@@ -995,8 +876,6 @@ export default function BlockCanvas({
           editor={toolbarState.editor}
           selectedText={toolbarState.selectedText}
           onResearch={handleResearch}
-          onChat={handleChat}
-          onConnect={handleConnect}
         />
       </div>
     </div>
