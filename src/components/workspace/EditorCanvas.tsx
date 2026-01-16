@@ -3,6 +3,7 @@
 'use client'
 
 import { ReactNode, useEffect } from 'react'
+import { Plus } from 'lucide-react'
 
 /**
  * EditorCanvas
@@ -19,6 +20,7 @@ interface EditorCanvasProps {
   darkMode?: boolean
   pageWidth?: 'narrow' | 'medium' | 'wide' | 'full'
   className?: string
+  onInsertPageBreak?: () => void
 }
 
 const PAGE_WIDTHS = {
@@ -33,6 +35,7 @@ export default function EditorCanvas({
   darkMode = false,
   pageWidth = 'medium',
   className = '',
+  onInsertPageBreak,
 }: EditorCanvasProps) {
   // Inject dark mode styles into document head
   useEffect(() => {
@@ -64,7 +67,7 @@ export default function EditorCanvas({
       `}
     >
       {/* Centering container with padding */}
-      <div className="min-h-full flex justify-center py-8 px-6">
+      <div className="min-h-full flex flex-col items-center py-8 px-6">
         {/* The "page" */}
         <div 
           className={`
@@ -88,6 +91,36 @@ export default function EditorCanvas({
             {children}
           </div>
         </div>
+
+        {/* Add page button - subtle + below the document */}
+        {onInsertPageBreak && (
+          <button
+            onClick={onInsertPageBreak}
+            className={`
+              group mt-4 mb-8 w-full ${PAGE_WIDTHS[pageWidth]} flex items-center justify-center
+              transition-all duration-200 cursor-pointer
+            `}
+            title="Add page (⌘+Enter)"
+          >
+            {/* Dashed line with + in center */}
+            <div className="flex-1 flex items-center">
+              <div className={`flex-1 h-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'} opacity-0 group-hover:opacity-100 transition-opacity`} />
+              <div 
+                className={`
+                  mx-4 w-8 h-8 rounded-full flex items-center justify-center
+                  transition-all duration-200
+                  ${darkMode 
+                    ? 'text-gray-600 group-hover:text-gray-400 group-hover:bg-white/5 border border-gray-700 group-hover:border-gray-600' 
+                    : 'text-gray-300 group-hover:text-gray-500 group-hover:bg-white border border-gray-200 group-hover:border-gray-300 group-hover:shadow-sm'
+                  }
+                `}
+              >
+                <Plus className="w-4 h-4" />
+              </div>
+              <div className={`flex-1 h-px ${darkMode ? 'bg-gray-700' : 'bg-gray-300'} opacity-0 group-hover:opacity-100 transition-opacity`} />
+            </div>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -175,6 +208,67 @@ const darkModeStyles = `
     background: rgba(239, 68, 68, 0.2) !important;
     border-bottom: 2px solid #EF4444 !important;
   }
+  
+  /* Page break - dark mode */
+  .ProseMirror .page-break {
+    position: relative;
+    height: 48px;
+    margin: 32px -64px;
+    border: none;
+    pointer-events: none;
+    user-select: none;
+  }
+  
+  .ProseMirror .page-break::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: repeating-linear-gradient(
+      90deg,
+      #4b5563 0px,
+      #4b5563 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+  
+  .ProseMirror .page-break::after {
+    content: 'Page Break';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2px 12px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    background: #232323;
+    border-radius: 4px;
+  }
+  
+  .ProseMirror .page-break.ProseMirror-selectednode {
+    pointer-events: auto;
+  }
+  
+  .ProseMirror .page-break.ProseMirror-selectednode::before {
+    background: repeating-linear-gradient(
+      90deg,
+      #3b82f6 0px,
+      #3b82f6 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+  
+  .ProseMirror .page-break.ProseMirror-selectednode::after {
+    color: #60a5fa;
+    background: #1e3a5f;
+  }
 `
 
 /**
@@ -225,6 +319,67 @@ const lightModeStyles = `
   .ProseMirror .claim-contradiction {
     background: rgba(239, 68, 68, 0.1) !important;
     border-bottom: 2px solid #EF4444 !important;
+  }
+  
+  /* Page break - light mode */
+  .ProseMirror .page-break {
+    position: relative;
+    height: 48px;
+    margin: 32px -64px;
+    border: none;
+    pointer-events: none;
+    user-select: none;
+  }
+  
+  .ProseMirror .page-break::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: repeating-linear-gradient(
+      90deg,
+      #d1d5db 0px,
+      #d1d5db 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+  
+  .ProseMirror .page-break::after {
+    content: 'Page Break';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2px 12px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    background: white;
+    border-radius: 4px;
+  }
+  
+  .ProseMirror .page-break.ProseMirror-selectednode {
+    pointer-events: auto;
+  }
+  
+  .ProseMirror .page-break.ProseMirror-selectednode::before {
+    background: repeating-linear-gradient(
+      90deg,
+      #3b82f6 0px,
+      #3b82f6 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  }
+  
+  .ProseMirror .page-break.ProseMirror-selectednode::after {
+    color: #3b82f6;
+    background: #eff6ff;
   }
 `
 

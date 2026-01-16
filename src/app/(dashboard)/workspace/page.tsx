@@ -262,7 +262,11 @@ export default function WorkspacePage() {
         />
 
         <div className="flex-1 flex overflow-hidden">
-          <EditorCanvas darkMode={darkMode} pageWidth="medium">
+          <EditorCanvas 
+            darkMode={darkMode} 
+            pageWidth="medium" 
+            onInsertPageBreak={() => editorRef.current?.insertPageBreak?.()}
+          >
             <Editor 
               ref={editorRef}
               onTrackSelection={handleTrackSelection}
