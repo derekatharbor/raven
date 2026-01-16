@@ -20,7 +20,6 @@ import { Check, AlertTriangle, X, Clock, ChevronLeft } from 'lucide-react'
 interface Document {
   id: string
   name: string
-  content: string
   alerts: number
   updatedAt: string
   wordCount: number
@@ -46,63 +45,20 @@ interface Tab {
   hasChanges: boolean
 }
 
-// Initial document content
-const DEFAULT_CONTENT = `<h1>Q4 2024 Investment Memo</h1>
-<p>This document outlines our analysis of NVIDIA Corporation (NVDA) for the Q4 2024 investment committee review.</p>
-<h2>Executive Summary</h2>
-<p>NVIDIA continues to dominate the AI accelerator market with an estimated market share of 80%. The company's data center revenue reached $14.5B in Q3, representing 279% year-over-year growth.</p>
-<h2>Key Metrics</h2>
-<p>Current market capitalization stands at $1.2 trillion, with a forward P/E ratio of 45x. Gross margins have expanded to 74%, driven by strong demand for H100 GPUs.</p>
-<h2>Risk Factors</h2>
-<p>Primary concerns include increasing competition from AMD and Intel, potential supply chain disruptions from TSMC, and regulatory scrutiny in China which accounts for approximately 20% of revenue.</p>
-<h2>Recommendation</h2>
-<p>We maintain our OVERWEIGHT rating with a 12-month price target of $650, implying 25% upside from current levels.</p>`
-
-const NEW_DOC_CONTENT = `<h1>Untitled Document</h1>
-<p>Start writing here...</p>`
-
-// Mock workspace data with actual content
+// Mock workspace data
 const INITIAL_WORKSPACES: Record<string, Workspace> = {
   w1: {
     name: 'Acme Corp DD',
     documents: [
-      { 
-        id: 'd1', 
-        name: 'Taiwan Strait Analysis', 
-        content: DEFAULT_CONTENT,
-        alerts: 2, 
-        updatedAt: 'today',
-        wordCount: 847,
-      },
-      { 
-        id: 'd2', 
-        name: 'Supply Chain Risk', 
-        content: `<h1>Supply Chain Risk Assessment</h1><p>Analysis of semiconductor supply chain vulnerabilities...</p>`,
-        alerts: 0, 
-        updatedAt: 'today',
-        wordCount: 234,
-      },
-      { 
-        id: 'd3', 
-        name: 'Q4 Revenue Model', 
-        content: `<h1>Q4 Revenue Projections</h1><p>Based on current pipeline and market conditions...</p>`,
-        alerts: 1, 
-        updatedAt: 'yesterday',
-        wordCount: 512,
-      },
+      { id: 'd1', name: 'Taiwan Strait Analysis', alerts: 2, updatedAt: 'today', wordCount: 847 },
+      { id: 'd2', name: 'Supply Chain Risk', alerts: 0, updatedAt: 'today', wordCount: 234 },
+      { id: 'd3', name: 'Q4 Revenue Model', alerts: 1, updatedAt: 'yesterday', wordCount: 512 },
     ],
   },
   w2: {
     name: 'Nordic Telecoms',
     documents: [
-      { 
-        id: 'd4', 
-        name: 'Market Entry Memo', 
-        content: `<h1>Nordic Market Entry Strategy</h1><p>Opportunity assessment for telecommunications expansion...</p>`,
-        alerts: 0, 
-        updatedAt: 'today',
-        wordCount: 389,
-      },
+      { id: 'd4', name: 'Market Entry Memo', alerts: 0, updatedAt: 'today', wordCount: 389 },
     ],
   },
 }
@@ -244,26 +200,6 @@ export default function WorkspacePage() {
     handleTabClose(docId)
   }, [activeWorkspaceId])
 
-  const handleContentChange = useCallback((content: string) => {
-    // Update document content
-    setWorkspaces(prev => ({
-      ...prev,
-      [activeWorkspaceId]: {
-        ...prev[activeWorkspaceId],
-        documents: prev[activeWorkspaceId].documents.map(d => 
-          d.id === activeDocumentId 
-            ? { ...d, content, wordCount: content.split(/\s+/).length }
-            : d
-        ),
-      },
-    }))
-    
-    // Mark tab as changed
-    setOpenTabs(prev => prev.map(t => 
-      t.id === activeDocumentId ? { ...t, hasChanges: true } : t
-    ))
-  }, [activeWorkspaceId, activeDocumentId])
-
   const handleTrackSelection = useCallback((text: string, from: number, to: number) => {
     setPendingTrackText(text)
     setPendingTrackRange({ from, to })
@@ -330,9 +266,6 @@ export default function WorkspacePage() {
           <EditorCanvas darkMode={darkMode} pageWidth="medium">
             <Editor 
               ref={editorRef}
-              key={activeDocumentId} // Force remount on document change
-              initialContent={activeDocument?.content}
-              onContentChange={handleContentChange}
               onTrackSelection={handleTrackSelection}
               onAddToChat={handleAddToChat}
               onClaimClick={setSelectedClaimId}
