@@ -7,12 +7,11 @@ import Link from 'next/link'
 import Sidebar from '@/components/layout/Sidebar'
 import DocumentPane from '@/components/workspace/DocumentPane'
 import EditorTabs from '@/components/workspace/EditorTabs'
-import Editor, { EditorRef } from '@/components/workspace/Editor'
+import PagedEditor, { PagedEditorRef } from '@/components/workspace/PagedEditor'
 import TrackClaimModal from '@/components/workspace/TrackClaimModal'
 import VerificationMargin from '@/components/workspace/VerificationMargin'
 import ChatPanel from '@/components/workspace/ChatPanel'
 import EditorStatusBar from '@/components/workspace/EditorStatusBar'
-import EditorCanvas from '@/components/workspace/EditorCanvas'
 import { useSources } from '@/hooks/useSources'
 import { Check, AlertTriangle, X, Clock, ChevronLeft } from 'lucide-react'
 
@@ -64,7 +63,7 @@ const DEFAULT_CONTENT = `
 <p>We maintain our OVERWEIGHT rating with a 12-month price target of $650, implying 25% upside from current levels.</p>
 `
 
-const EMPTY_CONTENT = `<h1>Untitled</h1><p></p>`
+const EMPTY_CONTENT = `<p></p>`
 
 // Mock workspace data
 const INITIAL_WORKSPACES: Record<string, Workspace> = {
@@ -128,7 +127,7 @@ export default function WorkspacePage() {
   const { connectedSources, connect } = useSources()
   const connectedCount = connectedSources.filter(s => s.status === 'connected').length
 
-  const editorRef = useRef<EditorRef>(null)
+  const editorRef = useRef<PagedEditorRef>(null)
   
   // Derived state
   const workspace = workspaces[activeWorkspaceId]
@@ -284,21 +283,16 @@ export default function WorkspacePage() {
         />
 
         <div className="flex-1 flex overflow-hidden">
-          <EditorCanvas 
-            darkMode={darkMode} 
-            pageWidth="medium" 
-            onInsertPageBreak={() => editorRef.current?.insertPageBreak()}
-          >
-            <Editor 
-              key={activeDocumentId}
-              ref={editorRef}
-              content={activeDocument?.content}
-              onTrackSelection={handleTrackSelection}
-              onAddToChat={handleAddToChat}
-              onClaimClick={setSelectedClaimId}
-              onClaimHover={setHoveredClaimId}
-            />
-          </EditorCanvas>
+          <PagedEditor 
+            key={activeDocumentId}
+            ref={editorRef}
+            content={activeDocument?.content}
+            darkMode={darkMode}
+            onTrackSelection={handleTrackSelection}
+            onAddToChat={handleAddToChat}
+            onClaimClick={setSelectedClaimId}
+            onClaimHover={setHoveredClaimId}
+          />
 
           {chatOpen ? (
             <ChatPanel 
