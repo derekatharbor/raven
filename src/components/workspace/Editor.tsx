@@ -7,7 +7,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import { Mark, mergeAttributes } from '@tiptap/core'
+import { Mark, Node, mergeAttributes } from '@tiptap/core'
 import { 
   Bold, 
   Italic, 
@@ -77,6 +77,45 @@ const TrackedClaim = Mark.create({
   },
 })
 
+// PageBreak Node Extension - Word-style page breaks
+const PageBreak = Node.create({
+  name: 'pageBreak',
+  group: 'block',
+  
+  parseHTML() {
+    return [
+      { tag: 'div[data-page-break]' },
+      { tag: 'hr.page-break' },
+    ]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(HTMLAttributes, {
+        'data-page-break': '',
+        class: 'page-break',
+      }),
+    ]
+  },
+
+  addCommands() {
+    return {
+      setPageBreak:
+        () =>
+        ({ commands }) => {
+          return commands.insertContent({ type: this.name })
+        },
+    }
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      'Mod-Enter': () => this.editor.commands.setPageBreak(),
+    }
+  },
+})
+
 interface EditorProps {
   content?: string | object
   onTrackSelection?: (text: string, from: number, to: number, context: string) => void
@@ -89,6 +128,7 @@ interface EditorProps {
 export interface EditorRef {
   applyTrackedMark: (from: number, to: number, claimId: string, config?: { source?: string; cadence?: string; category?: string }) => void
   getContent: () => any
+  insertPageBreak: () => void
 }
 
 const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, onAddToChat, onClaimClick, onClaimHover, onContentChange }, ref) => {
@@ -122,6 +162,7 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
         placeholder: 'Start writing your report...',
       }),
       TrackedClaim,
+      PageBreak,
     ],
     content: content || `
       <h1>Q4 2024 Investment Memo</h1>
@@ -241,6 +282,9 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
     getContent: () => {
       return editor?.getJSON() || null
     },
+    insertPageBreak: () => {
+      editor?.chain().focus().setPageBreak().run()
+    },
   }))
 
   const handleTrack = useCallback(() => {
@@ -355,6 +399,81 @@ const Editor = forwardRef<EditorRef, EditorProps>(({ content, onTrackSelection, 
           float: left;
           height: 0;
           pointer-events: none;
+        }
+        
+        /* Page break styles */
+        .ProseMirror .page-break {
+          position: relative;
+          height: 48px;
+          margin: 32px -48px;
+          border: none;
+          pointer-events: none;
+          user-select: none;
+        }
+        
+        .ProseMirror .page-break::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 50%;
+          height: 1px;
+          background: repeating-linear-gradient(
+            90deg,
+            #d1d5db 0px,
+            #d1d5db 4px,
+            transparent 4px,
+            transparent 8px
+          );
+        }
+        
+        .ProseMirror .page-break::after {
+          content: 'Page Break';
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          padding: 2px 12px;
+          font-size: 10px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #9ca3af;
+          background: white;
+          border-radius: 4px;
+        }
+        
+        .ProseMirror .page-break.ProseMirror-selectednode {
+          pointer-events: auto;
+        }
+        
+        .ProseMirror .page-break.ProseMirror-selectednode::before {
+          background: repeating-linear-gradient(
+            90deg,
+            #3b82f6 0px,
+            #3b82f6 4px,
+            transparent 4px,
+            transparent 8px
+          );
+        }
+        
+        .ProseMirror .page-break.ProseMirror-selectednode::after {
+          color: #3b82f6;
+          background: #eff6ff;
+        }
+        
+        @media print {
+          .ProseMirror .page-break {
+            height: 0;
+            margin: 0;
+            page-break-after: always;
+            break-after: page;
+          }
+          
+          .ProseMirror .page-break::before,
+          .ProseMirror .page-break::after {
+            display: none;
+          }
         }
       `}</style>
 
