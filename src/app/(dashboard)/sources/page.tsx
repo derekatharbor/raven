@@ -2,106 +2,220 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Sidebar from '@/components/layout/Sidebar'
 import { useSources } from '@/hooks/useSources'
-import type { SourceType, SourceMeta, ConnectedSource } from '@/lib/sources/types'
+import type { SourceType, ConnectedSource } from '@/lib/sources/types'
 import {
-  Building2,
-  Database,
-  Globe,
-  HardDrive,
-  FileText,
   Check,
   Loader2,
   AlertCircle,
   ArrowRight,
   ExternalLink,
-  Sparkles,
   Lock,
-  Zap,
-  RefreshCw,
-  Settings,
   ChevronRight,
+  Globe,
+  FileText,
+  HardDrive,
 } from 'lucide-react'
 
-// Icon mapping
-const SOURCE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Building2,
-  Database,
-  Globe,
-  HardDrive,
-  FileText,
-}
-
-// Source categories
-const EXTERNAL_SOURCES: SourceMeta[] = [
-  {
-    id: 'sec-edgar',
-    name: 'SEC EDGAR',
-    description: 'Public company filings, 10-K, 10-Q, 8-K, and more',
-    icon: 'Building2',
-    color: '#0A3161',
-    requiresAuth: false,
-  },
-  {
-    id: 'pitchbook' as SourceType,
-    name: 'PitchBook',
-    description: 'Private market data, valuations, and deal flow',
-    icon: 'Database',
-    color: '#1E3A5F',
-    requiresAuth: true,
-    authType: 'api-key',
-  },
-  {
-    id: 'bloomberg' as SourceType,
-    name: 'Bloomberg',
-    description: 'Real-time market data and news',
-    icon: 'Zap',
-    color: '#FF6600',
-    requiresAuth: true,
-    authType: 'api-key',
-  },
-  {
-    id: 'web' as SourceType,
-    name: 'Web Search',
-    description: 'Search the public web for current information',
-    icon: 'Globe',
-    color: '#4285F4',
-    requiresAuth: false,
-  },
-]
-
-const INTERNAL_SOURCES: SourceMeta[] = [
-  {
-    id: 'google-drive' as SourceType,
-    name: 'Google Drive',
-    description: 'Connect your Google Drive folders',
-    icon: 'HardDrive',
-    color: '#34A853',
-    requiresAuth: true,
-    authType: 'oauth',
-  },
-  {
-    id: 'internal' as SourceType,
-    name: 'Internal Documents',
-    description: 'Upload and index your own documents',
-    icon: 'FileText',
-    color: '#6366F1',
-    requiresAuth: false,
-  },
-]
-
-interface SourceCardProps {
-  meta: SourceMeta
-  connection?: ConnectedSource
-  onConnect: () => void
-  onDisconnect: () => void
-  onSettings?: () => void
+/**
+ * Source configuration with Brandfetch logos
+ */
+interface SourceConfig {
+  id: SourceType | string
+  name: string
+  description: string
+  brandDomain?: string  // For Brandfetch API
+  fallbackIcon?: React.ComponentType<{ className?: string }>
+  requiresAuth: boolean
+  authType?: 'api-key' | 'oauth' | 'none'
+  category: 'financial' | 'research' | 'internal'
   comingSoon?: boolean
 }
 
-function SourceCard({ meta, connection, onConnect, onDisconnect, onSettings, comingSoon }: SourceCardProps) {
-  const Icon = SOURCE_ICONS[meta.icon] || Database
+const SOURCES: SourceConfig[] = [
+  // Financial Data
+  {
+    id: 'sec-edgar',
+    name: 'SEC EDGAR',
+    description: 'Public company filings — 10-K, 10-Q, 8-K, proxies',
+    brandDomain: 'sec.gov',
+    requiresAuth: false,
+    category: 'financial',
+  },
+  {
+    id: 'pitchbook',
+    name: 'PitchBook',
+    description: 'Private market data, valuations, deal flow',
+    brandDomain: 'pitchbook.com',
+    requiresAuth: true,
+    authType: 'api-key',
+    category: 'financial',
+    comingSoon: true,
+  },
+  {
+    id: 'bloomberg',
+    name: 'Bloomberg',
+    description: 'Real-time market data and financial news',
+    brandDomain: 'bloomberg.com',
+    requiresAuth: true,
+    authType: 'api-key',
+    category: 'financial',
+    comingSoon: true,
+  },
+  {
+    id: 'factset',
+    name: 'FactSet',
+    description: 'Financial data and analytics platform',
+    brandDomain: 'factset.com',
+    requiresAuth: true,
+    authType: 'api-key',
+    category: 'financial',
+    comingSoon: true,
+  },
+  // Research
+  {
+    id: 'reuters',
+    name: 'Reuters',
+    description: 'Global news and market intelligence',
+    brandDomain: 'reuters.com',
+    requiresAuth: true,
+    authType: 'api-key',
+    category: 'research',
+    comingSoon: true,
+  },
+  {
+    id: 'lexisnexis',
+    name: 'LexisNexis',
+    description: 'Legal research and public records',
+    brandDomain: 'lexisnexis.com',
+    requiresAuth: true,
+    authType: 'api-key',
+    category: 'research',
+    comingSoon: true,
+  },
+  {
+    id: 'web',
+    name: 'Web Search',
+    description: 'Search the public web',
+    fallbackIcon: Globe,
+    requiresAuth: false,
+    category: 'research',
+    comingSoon: true,
+  },
+  // Internal
+  {
+    id: 'google-drive',
+    name: 'Google Drive',
+    description: 'Connect folders from your Drive',
+    brandDomain: 'drive.google.com',
+    requiresAuth: true,
+    authType: 'oauth',
+    category: 'internal',
+    comingSoon: true,
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    description: 'Import from your Notion workspace',
+    brandDomain: 'notion.so',
+    requiresAuth: true,
+    authType: 'oauth',
+    category: 'internal',
+    comingSoon: true,
+  },
+  {
+    id: 'uploads',
+    name: 'Uploaded Documents',
+    description: 'PDFs, Word docs, and other files you upload',
+    fallbackIcon: FileText,
+    requiresAuth: false,
+    category: 'internal',
+    comingSoon: true,
+  },
+]
+
+/**
+ * Brandfetch logo component
+ */
+function BrandLogo({ 
+  domain, 
+  fallbackIcon: FallbackIcon, 
+  name,
+  size = 40,
+}: { 
+  domain?: string
+  fallbackIcon?: React.ComponentType<{ className?: string }>
+  name: string
+  size?: number
+}) {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    if (!domain) {
+      setError(true)
+      return
+    }
+
+    // Use Brandfetch CDN for logos
+    // Format: https://cdn.brandfetch.io/{domain}/w/{width}/h/{height}
+    const url = `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}?c=1id_zeNCdYm0R-oPxRT`
+    setLogoUrl(url)
+  }, [domain, size])
+
+  if (error || !logoUrl) {
+    if (FallbackIcon) {
+      return (
+        <div 
+          className="flex items-center justify-center bg-gray-100 rounded-lg"
+          style={{ width: size, height: size }}
+        >
+          <FallbackIcon className="w-5 h-5 text-gray-400" />
+        </div>
+      )
+    }
+    return (
+      <div 
+        className="flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 font-semibold text-sm"
+        style={{ width: size, height: size }}
+      >
+        {name.charAt(0)}
+      </div>
+    )
+  }
+
+  return (
+    <div 
+      className="flex items-center justify-center bg-white rounded-lg border border-gray-100 overflow-hidden"
+      style={{ width: size, height: size }}
+    >
+      <img
+        src={logoUrl}
+        alt={`${name} logo`}
+        className="w-full h-full object-contain p-1.5"
+        onError={() => setError(true)}
+      />
+    </div>
+  )
+}
+
+/**
+ * Source card component
+ */
+function SourceCard({ 
+  source, 
+  connection, 
+  onConnect, 
+  onDisconnect,
+}: { 
+  source: SourceConfig
+  connection?: ConnectedSource
+  onConnect: () => void
+  onDisconnect: () => void
+}) {
   const isConnected = connection?.status === 'connected'
   const isConnecting = connection?.status === 'connecting'
   const hasError = connection?.status === 'error'
@@ -109,331 +223,278 @@ function SourceCard({ meta, connection, onConnect, onDisconnect, onSettings, com
   return (
     <div 
       className={`
-        relative bg-white rounded-xl border transition-all duration-200
+        group relative bg-white rounded-lg border transition-all duration-150
         ${isConnected 
-          ? 'border-green-200 shadow-sm' 
-          : comingSoon 
-            ? 'border-gray-100 opacity-60' 
+          ? 'border-gray-200 ring-1 ring-green-500/20' 
+          : source.comingSoon 
+            ? 'border-gray-100 opacity-50' 
             : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
         }
       `}
     >
-      {/* Coming soon badge */}
-      {comingSoon && (
-        <div className="absolute -top-2 -right-2 bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-full">
-          Coming Soon
-        </div>
-      )}
-
-      <div className="p-5">
-        <div className="flex items-start gap-4">
-          {/* Icon */}
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: `${meta.color}10`, color: meta.color }}
-          >
-            <Icon className="w-6 h-6" />
-          </div>
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Logo */}
+          <BrandLogo 
+            domain={source.brandDomain} 
+            fallbackIcon={source.fallbackIcon}
+            name={source.name}
+            size={40}
+          />
 
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">{meta.name}</h3>
+              <h3 className="font-medium text-gray-900 text-sm">{source.name}</h3>
               {isConnected && (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                  <Check className="w-3 h-3" />
-                  Connected
-                </span>
+                <Check className="w-4 h-4 text-green-600" />
               )}
               {isConnecting && (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Connecting
-                </span>
+                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
               )}
               {hasError && (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                  <AlertCircle className="w-3 h-3" />
-                  Error
+                <AlertCircle className="w-4 h-4 text-red-500" />
+              )}
+              {source.comingSoon && (
+                <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                  Soon
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500 mt-1">{meta.description}</p>
-
-            {/* Auth type indicator */}
-            {meta.requiresAuth && !isConnected && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
-                <Lock className="w-3 h-3" />
-                <span>Requires {meta.authType === 'oauth' ? 'sign-in' : 'API key'}</span>
-              </div>
-            )}
-
-            {/* Connection info */}
-            {isConnected && connection?.connectedAt && (
-              <p className="text-xs text-gray-400 mt-2">
-                Connected {new Date(connection.connectedAt).toLocaleDateString()}
-              </p>
-            )}
+            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+              {source.description}
+            </p>
 
             {/* Error message */}
             {hasError && connection?.error && (
-              <p className="text-xs text-red-500 mt-2">{connection.error}</p>
+              <p className="text-xs text-red-500 mt-1">{connection.error}</p>
             )}
           </div>
-        </div>
 
-        {/* Actions */}
-        {!comingSoon && (
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-            {isConnected ? (
-              <>
-                {onSettings && (
-                  <button
-                    onClick={onSettings}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </button>
-                )}
+          {/* Action */}
+          {!source.comingSoon && (
+            <div className="flex-shrink-0">
+              {isConnected ? (
                 <button
                   onClick={onDisconnect}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors ml-auto"
+                  className="text-xs text-gray-400 hover:text-red-600 transition-colors"
                 >
                   Disconnect
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={onConnect}
-                disabled={isConnecting}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ml-auto"
-                style={{ backgroundColor: meta.color }}
-              >
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    Connect
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        )}
+              ) : (
+                <button
+                  onClick={onConnect}
+                  disabled={isConnecting}
+                  className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+                >
+                  {source.requiresAuth && <Lock className="w-3 h-3" />}
+                  Connect
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
+/**
+ * Sources Page
+ */
 export default function SourcesPage() {
   const { connectedSources, connect, disconnect } = useSources()
-  const [configuring, setConfiguring] = useState<SourceType | null>(null)
+  const [configuring, setConfiguring] = useState<SourceConfig | null>(null)
 
-  const getConnection = (type: SourceType): ConnectedSource | undefined => {
-    return connectedSources.find(s => s.type === type)
+  const getConnection = (id: string): ConnectedSource | undefined => {
+    return connectedSources.find(s => s.type === id)
   }
 
-  const handleConnect = async (meta: SourceMeta) => {
-    if (!meta.requiresAuth) {
-      await connect({ type: meta.id, config: {} } as any)
+  const handleConnect = async (source: SourceConfig) => {
+    if (!source.requiresAuth) {
+      await connect({ type: source.id as SourceType, config: {} } as any)
     } else {
-      setConfiguring(meta.id)
+      setConfiguring(source)
     }
   }
 
-  const externalConnected = EXTERNAL_SOURCES.filter(s => 
-    connectedSources.some(c => c.type === s.id && c.status === 'connected')
-  ).length
+  const financialSources = SOURCES.filter(s => s.category === 'financial')
+  const researchSources = SOURCES.filter(s => s.category === 'research')
+  const internalSources = SOURCES.filter(s => s.category === 'internal')
+
+  const connectedCount = connectedSources.filter(s => s.status === 'connected').length
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Data Sources</h1>
-              <p className="text-gray-500 mt-1">
-                Connect your data sources to enable @mentions and verification across all documents.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span className="text-sm text-gray-600">
-                <strong>{externalConnected}</strong> sources active
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="h-screen flex bg-[#FAFAF9]">
+      {/* Persistent Sidebar */}
+      <Sidebar connectedSourceCount={connectedCount} />
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
-        {/* How it works */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-blue-600" />
-            How Sources Work
-          </h2>
-          <div className="mt-3 grid grid-cols-3 gap-4">
-            <div className="text-sm">
-              <div className="font-medium text-gray-900">1. Connect once</div>
-              <p className="text-gray-600 mt-0.5">Link your subscriptions and data sources here.</p>
-            </div>
-            <div className="text-sm">
-              <div className="font-medium text-gray-900">2. Available everywhere</div>
-              <p className="text-gray-600 mt-0.5">Sources are accessible in all your documents.</p>
-            </div>
-            <div className="text-sm">
-              <div className="font-medium text-gray-900">3. Use with @</div>
-              <p className="text-gray-600 mt-0.5">Type @SEC or @PitchBook to pull data inline.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* External Sources */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">External Sources</h2>
-              <p className="text-sm text-gray-500">Financial data, filings, and market intelligence</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {EXTERNAL_SOURCES.map(source => (
-              <SourceCard
-                key={source.id}
-                meta={source}
-                connection={getConnection(source.id)}
-                onConnect={() => handleConnect(source)}
-                onDisconnect={() => disconnect(source.id)}
-                comingSoon={source.id !== 'sec-edgar' && source.id !== 'web'}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Internal Sources */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Internal Sources</h2>
-              <p className="text-sm text-gray-500">Your documents, drives, and databases</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {INTERNAL_SOURCES.map(source => (
-              <SourceCard
-                key={source.id}
-                meta={source}
-                connection={getConnection(source.id)}
-                onConnect={() => handleConnect(source)}
-                onDisconnect={() => disconnect(source.id)}
-                comingSoon
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Need more? */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-          <p className="text-gray-600">
-            Need a source we don't support yet?{' '}
-            <a href="mailto:sources@tryraven.io" className="text-blue-600 hover:underline">
-              Let us know →
-            </a>
-          </p>
-        </div>
-      </div>
-
-      {/* Configuration Modal */}
-      {configuring && (
-        <ConfigModal
-          sourceType={configuring}
-          onClose={() => setConfiguring(null)}
-          onConnect={async (config) => {
-            await connect(config)
-            setConfiguring(null)
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-interface ConfigModalProps {
-  sourceType: SourceType
-  onClose: () => void
-  onConnect: (config: any) => Promise<void>
-}
-
-function ConfigModal({ sourceType, onClose, onConnect }: ConfigModalProps) {
-  const [apiKey, setApiKey] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    try {
-      await onConnect({ type: sourceType, config: { apiKey } })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Connect {sourceType}</h3>
-          <p className="text-sm text-gray-500 mt-0.5">Enter your API key to connect</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              API Key
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="Enter your API key"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              autoFocus
-            />
-            <p className="text-xs text-gray-400 mt-1.5">
-              Your API key is encrypted and stored securely.
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-3xl mx-auto px-8 py-10">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-xl font-semibold text-gray-900">Data Sources</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Connect once, reference everywhere with <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">@mentions</code>
             </p>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!apiKey || isLoading}
-              className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'Connect'
-              )}
-            </button>
+          {/* How it works - minimal */}
+          <div className="flex items-center gap-6 mb-8 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-medium">1</span>
+              <span>Connect your sources</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-300" />
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-medium">2</span>
+              <span>Type @ in any document</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-300" />
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-medium">3</span>
+              <span>Pull data inline</span>
+            </div>
           </div>
-        </form>
+
+          {/* Financial Data */}
+          <section className="mb-8">
+            <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+              Financial Data
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {financialSources.map(source => (
+                <SourceCard
+                  key={source.id}
+                  source={source}
+                  connection={getConnection(source.id)}
+                  onConnect={() => handleConnect(source)}
+                  onDisconnect={() => disconnect(source.id as SourceType)}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Research & News */}
+          <section className="mb-8">
+            <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+              Research & News
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {researchSources.map(source => (
+                <SourceCard
+                  key={source.id}
+                  source={source}
+                  connection={getConnection(source.id)}
+                  onConnect={() => handleConnect(source)}
+                  onDisconnect={() => disconnect(source.id as SourceType)}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Internal Sources */}
+          <section className="mb-8">
+            <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+              Internal Sources
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              {internalSources.map(source => (
+                <SourceCard
+                  key={source.id}
+                  source={source}
+                  connection={getConnection(source.id)}
+                  onConnect={() => handleConnect(source)}
+                  onDisconnect={() => disconnect(source.id as SourceType)}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Request source */}
+          <div className="text-center py-6 border-t border-gray-200">
+            <p className="text-sm text-gray-500">
+              Need a source we don't support?{' '}
+              <a 
+                href="mailto:sources@tryraven.io" 
+                className="text-gray-900 hover:underline"
+              >
+                Let us know
+              </a>
+            </p>
+          </div>
+        </div>
       </div>
+
+      {/* API Key Modal */}
+      {configuring && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm">
+            <div className="p-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <BrandLogo 
+                  domain={configuring.brandDomain}
+                  fallbackIcon={configuring.fallbackIcon}
+                  name={configuring.name}
+                  size={32}
+                />
+                <div>
+                  <h3 className="font-medium text-gray-900">Connect {configuring.name}</h3>
+                  <p className="text-xs text-gray-500">
+                    {configuring.authType === 'oauth' ? 'Sign in to connect' : 'Enter your API key'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const formData = new FormData(e.currentTarget)
+                const apiKey = formData.get('apiKey') as string
+                await connect({ 
+                  type: configuring.id as SourceType, 
+                  config: { apiKey } 
+                } as any)
+                setConfiguring(null)
+              }} 
+              className="p-5 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  name="apiKey"
+                  placeholder="Enter your API key"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfiguring(null)}
+                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800"
+                >
+                  Connect
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

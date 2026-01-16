@@ -12,6 +12,7 @@ import TrackClaimModal from '@/components/workspace/TrackClaimModal'
 import VerificationMargin from '@/components/workspace/VerificationMargin'
 import ChatPanel from '@/components/workspace/ChatPanel'
 import EditorStatusBar from '@/components/workspace/EditorStatusBar'
+import EditorCanvas from '@/components/workspace/EditorCanvas'
 import { useSources } from '@/hooks/useSources'
 import { Check, AlertTriangle, X, Clock, ChevronLeft } from 'lucide-react'
 
@@ -72,6 +73,7 @@ export default function WorkspacePage() {
   const [hoveredClaimId, setHoveredClaimId] = useState<string | null>(null)
   const [editorMode, setEditorMode] = useState<'write' | 'review' | 'verify'>('write')
   const [wordCount, setWordCount] = useState(847) // Mock for now - will wire to editor
+  const [darkMode, setDarkMode] = useState(false) // Toggle for dark mode
 
   const { connectedSources, connect } = useSources()
   const connectedCount = connectedSources.filter(s => s.status === 'connected').length
@@ -192,7 +194,7 @@ export default function WorkspacePage() {
         />
 
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 min-w-0 bg-white">
+          <EditorCanvas darkMode={darkMode} pageWidth="medium">
             <Editor 
               ref={editorRef}
               onTrackSelection={handleTrackSelection}
@@ -200,7 +202,7 @@ export default function WorkspacePage() {
               onClaimClick={setSelectedClaimId}
               onClaimHover={setHoveredClaimId}
             />
-          </div>
+          </EditorCanvas>
 
           {chatOpen ? (
             <ChatPanel 
@@ -244,6 +246,8 @@ export default function WorkspacePage() {
           connectedSources={connectedCount}
           mode={editorMode}
           onModeChange={setEditorMode}
+          darkMode={darkMode}
+          onDarkModeToggle={() => setDarkMode(!darkMode)}
           onExport={() => console.log('Export')}
           onShare={() => console.log('Share')}
           onCommandPalette={() => console.log('Command palette')}

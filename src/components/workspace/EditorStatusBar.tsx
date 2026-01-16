@@ -17,6 +17,8 @@ import {
   Shield,
   Database,
   ChevronUp,
+  Moon,
+  Sun,
 } from 'lucide-react'
 
 type EditorMode = 'write' | 'review' | 'verify'
@@ -34,6 +36,8 @@ interface EditorStatusBarProps {
   connectedSources: number
   mode: EditorMode
   onModeChange: (mode: EditorMode) => void
+  darkMode?: boolean
+  onDarkModeToggle?: () => void
   onExport?: () => void
   onShare?: () => void
   onCommandPalette?: () => void
@@ -45,6 +49,8 @@ export default function EditorStatusBar({
   connectedSources,
   mode,
   onModeChange,
+  darkMode = false,
+  onDarkModeToggle,
   onExport,
   onShare,
   onCommandPalette,
@@ -136,6 +142,16 @@ export default function EditorStatusBar({
 
       {/* Right section - Actions */}
       <div className="flex items-center gap-1">
+        {onDarkModeToggle && (
+          <button
+            onClick={onDarkModeToggle}
+            className="flex items-center gap-1.5 px-2 py-1 rounded text-gray-500 hover:text-gray-700 hover:bg-white transition-colors"
+            title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+          </button>
+        )}
+        
         <button
           onClick={onExport}
           className="flex items-center gap-1.5 px-2 py-1 rounded text-gray-500 hover:text-gray-700 hover:bg-white transition-colors"

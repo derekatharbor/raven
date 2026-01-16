@@ -31,7 +31,7 @@ interface SidebarProps {
 
 export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connectedSourceCount = 0 }: SidebarProps) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const [workspacesExpanded, setWorkspacesExpanded] = useState(true)
 
   const isActive = (href: string) => pathname === href
