@@ -26,11 +26,10 @@ const WORKSPACES = [
 interface SidebarProps {
   activeWorkspaceId?: string | null
   onWorkspaceSelect?: (workspaceId: string) => void
-  onSourcesClick?: () => void
   connectedSourceCount?: number
 }
 
-export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, onSourcesClick, connectedSourceCount = 0 }: SidebarProps) {
+export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connectedSourceCount = 0 }: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [workspacesExpanded, setWorkspacesExpanded] = useState(true)
@@ -114,9 +113,9 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, onSource
       <div className="px-2 py-2 space-y-0.5 border-t border-gray-200">
         {!isCollapsed ? (
           <>
-            <button 
-              onClick={onSourcesClick}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors hover:bg-black/5"
+            <Link 
+              href="/sources"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/sources') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
             >
               <Database className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900 flex-1 text-left">Sources</span>
@@ -126,25 +125,25 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, onSource
                   {connectedSourceCount}
                 </span>
               )}
-            </button>
-            <Link href="/settings" className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${isActive('/settings') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}>
+            </Link>
+            <Link href="/settings" className={`flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/settings') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}>
               <Settings className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Settings</span>
             </Link>
           </>
         ) : (
           <>
-            <button 
-              onClick={onSourcesClick}
-              className="relative flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" 
+            <Link 
+              href="/sources"
+              className={`relative flex items-center justify-center p-2 rounded ${isActive('/sources') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
               title="Sources"
             >
               <Database className="w-4 h-4 text-gray-500" />
               {connectedSourceCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border border-[#FBF9F7]" />
               )}
-            </button>
-            <Link href="/settings" className="flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" title="Settings">
+            </Link>
+            <Link href="/settings" className={`flex items-center justify-center p-2 rounded ${isActive('/settings') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`} title="Settings">
               <Settings className="w-4 h-4 text-gray-500" />
             </Link>
           </>

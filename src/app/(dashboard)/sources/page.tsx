@@ -1,1007 +1,439 @@
-// Route: src/app/(dashboard)/sources/page.tsx
+// src/app/(dashboard)/sources/page.tsx
 
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { 
-  Search, 
-  Check, 
-  X, 
-  ChevronRight,
-  ExternalLink,
-  Zap,
-  TrendingUp,
-  Scale,
+import { useState } from 'react'
+import { useSources } from '@/hooks/useSources'
+import type { SourceType, SourceMeta, ConnectedSource } from '@/lib/sources/types'
+import {
+  Building2,
   Database,
+  Globe,
+  HardDrive,
+  FileText,
+  Check,
+  Loader2,
+  AlertCircle,
+  ArrowRight,
+  ExternalLink,
   Sparkles,
-  Bell,
-  Key,
-  Link2,
+  Lock,
+  Zap,
+  RefreshCw,
+  Settings,
+  ChevronRight,
 } from 'lucide-react'
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
-interface Source {
-  id: string
-  name: string
-  description: string
-  domain: string
-  connected: boolean
-  free?: boolean
-  autoEnabled?: boolean
-  requiresKey?: boolean
-  oauth?: boolean
-  comingSoon?: boolean
-  category: 'essentials' | 'market' | 'legal' | 'systems' | 'comingSoon'
-  overview: string
-  verifies: string[]
-  useCases: string[]
+// Icon mapping
+const SOURCE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Building2,
+  Database,
+  Globe,
+  HardDrive,
+  FileText,
 }
 
-interface SourcesData {
-  essentials: Source[]
-  market: Source[]
-  legal: Source[]
-  systems: Source[]
-  comingSoon: Source[]
-}
-
-// =============================================================================
-// SMALL SHIELD STATUS ICON
-// =============================================================================
-
-function ShieldStatus({ connected, size = 14 }: { connected: boolean; size?: number }) {
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none"
-      className="flex-shrink-0"
-    >
-      <path 
-        d="M12 2L4 6v6c0 5.25 3.4 10.15 8 11.25 4.6-1.1 8-6 8-11.25V6l-8-4z" 
-        fill={connected ? '#22c55e' : '#d1d5db'}
-        stroke={connected ? '#22c55e' : '#d1d5db'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path 
-        d="M9 12l2 2 4-4" 
-        stroke="#fff"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-// =============================================================================
-// CATEGORY METADATA
-// =============================================================================
-
-const categories = [
-  { 
-    id: 'essentials', 
-    label: 'Public Data', 
-    description: 'Free, auto-enabled government and public sources',
-    icon: Zap,
+// Source categories
+const EXTERNAL_SOURCES: SourceMeta[] = [
+  {
+    id: 'sec-edgar',
+    name: 'SEC EDGAR',
+    description: 'Public company filings, 10-K, 10-Q, 8-K, and more',
+    icon: 'Building2',
+    color: '#0A3161',
+    requiresAuth: false,
   },
-  { 
-    id: 'market', 
-    label: 'Market Intelligence', 
-    description: 'Connect your existing subscriptions via API key',
-    icon: TrendingUp,
+  {
+    id: 'pitchbook' as SourceType,
+    name: 'PitchBook',
+    description: 'Private market data, valuations, and deal flow',
+    icon: 'Database',
+    color: '#1E3A5F',
+    requiresAuth: true,
+    authType: 'api-key',
   },
-  { 
-    id: 'legal', 
-    label: 'Legal & Regulatory', 
-    description: 'Case law, litigation analytics, and court records',
-    icon: Scale,
+  {
+    id: 'bloomberg' as SourceType,
+    name: 'Bloomberg',
+    description: 'Real-time market data and news',
+    icon: 'Zap',
+    color: '#FF6600',
+    requiresAuth: true,
+    authType: 'api-key',
   },
-  { 
-    id: 'systems', 
-    label: 'Your Systems', 
-    description: 'Connect via OAuth to verify against internal data',
-    icon: Database,
-  },
-  { 
-    id: 'comingSoon', 
-    label: 'Coming Soon', 
-    description: 'More integrations on the way',
-    icon: Sparkles,
+  {
+    id: 'web' as SourceType,
+    name: 'Web Search',
+    description: 'Search the public web for current information',
+    icon: 'Globe',
+    color: '#4285F4',
+    requiresAuth: false,
   },
 ]
 
-// =============================================================================
-// SOURCE DATA
-// =============================================================================
+const INTERNAL_SOURCES: SourceMeta[] = [
+  {
+    id: 'google-drive' as SourceType,
+    name: 'Google Drive',
+    description: 'Connect your Google Drive folders',
+    icon: 'HardDrive',
+    color: '#34A853',
+    requiresAuth: true,
+    authType: 'oauth',
+  },
+  {
+    id: 'internal' as SourceType,
+    name: 'Internal Documents',
+    description: 'Upload and index your own documents',
+    icon: 'FileText',
+    color: '#6366F1',
+    requiresAuth: false,
+  },
+]
 
-const sourcesData: SourcesData = {
-  essentials: [
-    {
-      id: 'sec-edgar',
-      name: 'SEC EDGAR',
-      description: 'Public company filings including 10-Ks, 10-Qs, 8-Ks, and proxy statements',
-      domain: 'sec.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'The SEC EDGAR database provides free public access to corporate filings including 10-Ks, 10-Qs, 8-Ks, proxy statements, and more. Harbor continuously monitors these filings to verify claims about public companies.',
-      verifies: ['Revenue figures', 'Executive compensation', 'Risk factors', 'Material events', 'Shareholder information'],
-      useCases: ['Financial due diligence', 'Competitive analysis', 'Investment research', 'Regulatory compliance'],
-    },
-    {
-      id: 'fda',
-      name: 'FDA',
-      description: 'Drug approvals, clinical trials, and medical device databases',
-      domain: 'fda.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'The FDA provides public access to drug approval databases, medical device registrations, warning letters, and regulatory actions. Essential for healthcare and life sciences verification.',
-      verifies: ['Drug approval status', 'Clinical trial phases', 'Warning letters', 'Device classifications', 'Regulatory actions'],
-      useCases: ['Pharma due diligence', 'Medical device research', 'Regulatory compliance', 'Healthcare investment'],
-    },
-    {
-      id: 'uspto',
-      name: 'USPTO',
-      description: 'Patent grants, applications, and intellectual property records',
-      domain: 'uspto.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'The United States Patent and Trademark Office database contains all U.S. patents and patent applications. Harbor uses this to verify intellectual property claims and track competitive innovation.',
-      verifies: ['Patent ownership', 'Filing dates', 'Claims scope', 'Prior art', 'Patent status'],
-      useCases: ['IP due diligence', 'Competitive intelligence', 'Freedom to operate', 'Technology scouting'],
-    },
-    {
-      id: 'bls',
-      name: 'BLS',
-      description: 'Labor statistics, employment data, and economic indicators',
-      domain: 'bls.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'The Bureau of Labor Statistics provides authoritative data on employment, wages, inflation, productivity, and economic conditions across industries and regions.',
-      verifies: ['Employment figures', 'Wage data', 'Industry statistics', 'Inflation rates', 'Productivity metrics'],
-      useCases: ['Market sizing', 'Compensation benchmarking', 'Economic analysis', 'Industry research'],
-    },
-    {
-      id: 'opencorporates',
-      name: 'OpenCorporates',
-      description: 'Global company registry data from 140+ jurisdictions',
-      domain: 'opencorporates.com',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'OpenCorporates is the largest open database of companies in the world, with data from over 140 jurisdictions. Harbor uses this to verify corporate structure and registration claims.',
-      verifies: ['Company registration', 'Incorporation date', 'Registered address', 'Officer names', 'Company status'],
-      useCases: ['KYC verification', 'Vendor due diligence', 'Corporate structure analysis', 'Entity verification'],
-    },
-    {
-      id: 'clinicaltrials',
-      name: 'ClinicalTrials.gov',
-      description: 'Clinical study registrations and results database',
-      domain: 'clinicaltrials.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'ClinicalTrials.gov is the NIH database of privately and publicly funded clinical studies. Essential for verifying claims about drug development pipelines and trial status.',
-      verifies: ['Trial status', 'Phase information', 'Enrollment numbers', 'Study results', 'Sponsor information'],
-      useCases: ['Biotech due diligence', 'Pipeline analysis', 'Competitive intelligence', 'Healthcare investment'],
-    },
-    {
-      id: 'federal-register',
-      name: 'Federal Register',
-      description: 'Daily journal of the U.S. Government with rules and notices',
-      domain: 'federalregister.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'The Federal Register is the official daily publication for rules, proposed rules, and notices of Federal agencies. Harbor monitors regulatory changes that could impact your business.',
-      verifies: ['Regulatory requirements', 'Proposed rules', 'Agency notices', 'Executive orders'],
-      useCases: ['Regulatory monitoring', 'Compliance tracking', 'Policy analysis', 'Government affairs'],
-    },
-    {
-      id: 'web-search',
-      name: 'Web Search',
-      description: 'Real-time news, press releases, and web content monitoring',
-      domain: 'google.com',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'essentials',
-      overview: 'Harbor continuously monitors web content and news sources to verify claims and detect contradictions in real-time. This includes press releases, news articles, and company announcements.',
-      verifies: ['News accuracy', 'Press releases', 'Company announcements', 'Executive statements', 'Market events'],
-      useCases: ['Media monitoring', 'Reputation tracking', 'Event detection', 'Fact checking'],
-    },
-  ],
-  market: [
-    {
-      id: 'alphasense',
-      name: 'AlphaSense',
-      description: 'AI-powered market intelligence and search platform',
-      domain: 'alpha-sense.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'AlphaSense provides AI-powered search across financial documents, transcripts, news, and research. Connect your existing subscription to verify claims against expert calls and broker research.',
-      verifies: ['Expert transcripts', 'Broker research', 'Earnings calls', 'News sentiment', 'Competitive mentions'],
-      useCases: ['Investment research', 'Competitive intelligence', 'Expert network verification', 'Sentiment analysis'],
-    },
-    {
-      id: 'crunchbase',
-      name: 'Crunchbase',
-      description: 'Startup and company data, funding rounds, and acquisitions',
-      domain: 'crunchbase.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'Crunchbase provides data on startups, investments, and acquisitions. Track funding announcements, company growth, and market trends.',
-      verifies: ['Funding history', 'Investor relationships', 'Acquisition data', 'Company growth', 'Leadership changes'],
-      useCases: ['Startup research', 'Investment tracking', 'Competitive analysis', 'Market mapping'],
-    },
-    {
-      id: 'pitchbook',
-      name: 'PitchBook',
-      description: 'Private market data, VC, PE, and M&A intelligence',
-      domain: 'pitchbook.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'PitchBook provides comprehensive data on the private capital markets, including venture capital, private equity, and M&A transactions.',
-      verifies: ['Funding rounds', 'Valuations', 'Investor details', 'Deal terms', 'Company profiles'],
-      useCases: ['Deal sourcing', 'Competitive intelligence', 'Market sizing', 'LP reporting'],
-    },
-    {
-      id: 'statista',
-      name: 'Statista',
-      description: 'Statistics, market data, and consumer insights',
-      domain: 'statista.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'Statista aggregates statistics from over 22,500 sources, providing market data, consumer insights, and industry reports across hundreds of sectors.',
-      verifies: ['Market statistics', 'Consumer data', 'Industry trends', 'Regional data', 'Forecasts'],
-      useCases: ['Market research', 'Presentation data', 'Trend analysis', 'Benchmarking'],
-    },
-    {
-      id: 'morningstar',
-      name: 'Morningstar',
-      description: 'Investment research, fund ratings, and portfolio tools',
-      domain: 'morningstar.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'Morningstar provides independent investment research including fund ratings, analyst reports, and portfolio analysis tools. Many advisory firms have existing licenses.',
-      verifies: ['Fund ratings', 'Expense ratios', 'Holdings data', 'Performance metrics', 'Risk scores'],
-      useCases: ['Fund selection', 'Portfolio construction', 'Client reporting', 'Due diligence'],
-    },
-    {
-      id: 'factset',
-      name: 'FactSet',
-      description: 'Financial data and analytics for investment professionals',
-      domain: 'factset.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'FactSet delivers integrated financial information and analytical applications. Your firm may already have a FactSet license. Connect to verify financial data at scale.',
-      verifies: ['Company financials', 'Estimates', 'Ownership data', 'Supply chain', 'Geographic revenue'],
-      useCases: ['Equity research', 'Portfolio analytics', 'Risk management', 'M&A analysis'],
-    },
-    {
-      id: 'sp-capital-iq',
-      name: 'S&P Capital IQ',
-      description: 'Financial intelligence and analytics platform',
-      domain: 'spglobal.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'S&P Capital IQ provides financial data, analytics, and research on public and private companies, with deep coverage of financials, transactions, and credit ratings.',
-      verifies: ['Credit ratings', 'Financial statements', 'Transaction data', 'Ownership', 'Debt profiles'],
-      useCases: ['Credit analysis', 'Financial modeling', 'Transaction research', 'Risk assessment'],
-    },
-    {
-      id: 'gartner',
-      name: 'Gartner',
-      description: 'Technology research, market analysis, and Magic Quadrants',
-      domain: 'gartner.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'Gartner provides technology research, market analysis, and advisory services. Verify claims about vendor positioning, market forecasts, and technology trends.',
-      verifies: ['Magic Quadrant positions', 'Market forecasts', 'Vendor assessments', 'Technology trends', 'Hype cycles'],
-      useCases: ['Vendor selection', 'Technology strategy', 'Market positioning', 'Competitive analysis'],
-    },
-    {
-      id: 'ibisworld',
-      name: 'IBISWorld',
-      description: 'Industry research reports and market analysis',
-      domain: 'ibisworld.com',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'IBISWorld provides comprehensive industry research reports covering market size, growth trends, competitive landscape, and key success factors for thousands of industries.',
-      verifies: ['Industry size', 'Growth rates', 'Market share', 'Industry structure', 'Key success factors'],
-      useCases: ['Industry analysis', 'Business planning', 'Market entry strategy', 'Competitive positioning'],
-    },
-    {
-      id: 'newsapi',
-      name: 'News API',
-      description: 'Global news aggregation from 80,000+ sources',
-      domain: 'newsapi.org',
-      connected: false,
-      requiresKey: true,
-      category: 'market',
-      overview: 'News API provides access to headlines and articles from news sources and blogs across the web in real-time.',
-      verifies: ['Breaking news', 'Press coverage', 'Media mentions', 'Sentiment'],
-      useCases: ['Media monitoring', 'Reputation tracking', 'Event detection', 'Trend analysis'],
-    },
-  ],
-  legal: [
-    {
-      id: 'lexisnexis',
-      name: 'LexisNexis',
-      description: 'Case law, statutes, regulations, and legal analytics',
-      domain: 'lexisnexis.com',
-      connected: false,
-      requiresKey: true,
-      category: 'legal',
-      overview: 'LexisNexis provides comprehensive legal research including case law, statutes, regulations, and legal news from jurisdictions worldwide. Connect your existing subscription to verify legal claims.',
-      verifies: ['Case citations', 'Statutory status', 'Regulatory text', 'Legal precedents', 'Court decisions'],
-      useCases: ['Legal research', 'Compliance verification', 'Litigation support', 'Regulatory analysis'],
-    },
-    {
-      id: 'westlaw',
-      name: 'Westlaw',
-      description: 'Legal research, court documents, and practice tools',
-      domain: 'thomsonreuters.com',
-      connected: false,
-      requiresKey: true,
-      category: 'legal',
-      overview: 'Westlaw delivers legal research including cases, statutes, regulations, secondary sources, and practice tools. Many law firms and legal departments have existing access.',
-      verifies: ['Case law', 'Regulatory status', 'Legal treatises', 'Court filings', 'Docket information'],
-      useCases: ['Legal due diligence', 'Regulatory research', 'Case analysis', 'Contract review'],
-    },
-    {
-      id: 'lex-machina',
-      name: 'Lex Machina',
-      description: 'Litigation analytics, case outcomes, and judge data',
-      domain: 'lexmachina.com',
-      connected: false,
-      requiresKey: true,
-      category: 'legal',
-      overview: 'Lex Machina provides legal analytics including case outcomes, judge behavior, attorney performance, and damages data. Essential for litigation strategy and risk assessment.',
-      verifies: ['Litigation outcomes', 'Judge statistics', 'Damages awarded', 'Case timelines', 'Attorney records'],
-      useCases: ['Litigation strategy', 'Case assessment', 'Settlement analysis', 'Risk evaluation'],
-    },
-    {
-      id: 'pacer',
-      name: 'PACER',
-      description: 'Federal court records, filings, and docket information',
-      domain: 'uscourts.gov',
-      connected: true,
-      free: true,
-      autoEnabled: true,
-      category: 'legal',
-      overview: 'Public Access to Court Electronic Records (PACER) provides access to federal court documents. Harbor monitors case filings and docket entries relevant to your tracked entities.',
-      verifies: ['Case filings', 'Docket entries', 'Court orders', 'Judgment status', 'Party information'],
-      useCases: ['Litigation monitoring', 'Bankruptcy tracking', 'Due diligence', 'Competitive intelligence'],
-    },
-  ],
-  systems: [
-    {
-      id: 'google-sheets',
-      name: 'Google Sheets',
-      description: 'Verify claims against your own spreadsheet data',
-      domain: 'sheets.google.com',
-      connected: false,
-      oauth: true,
-      category: 'systems',
-      overview: 'Connect your Google Sheets to verify claims against your own data. Harbor can cross-reference AI-generated content with your internal metrics, KPIs, and tracking data.',
-      verifies: ['Internal metrics', 'KPIs', 'Custom data', 'Historical records', 'Team data'],
-      useCases: ['Internal fact-checking', 'Data validation', 'Report verification', 'Custom tracking'],
-    },
-    {
-      id: 'salesforce',
-      name: 'Salesforce',
-      description: 'CRM data, customer records, and pipeline metrics',
-      domain: 'salesforce.com',
-      connected: false,
-      oauth: true,
-      category: 'systems',
-      overview: 'Salesforce integration allows Harbor to verify claims against your CRM data, including customer information, deal status, and pipeline metrics.',
-      verifies: ['Customer data', 'Deal status', 'Pipeline metrics', 'Account information', 'Contact details'],
-      useCases: ['Sales verification', 'Customer references', 'Pipeline accuracy', 'Revenue validation'],
-    },
-    {
-      id: 'hubspot',
-      name: 'HubSpot',
-      description: 'Marketing automation and sales platform data',
-      domain: 'hubspot.com',
-      connected: false,
-      oauth: true,
-      category: 'systems',
-      overview: 'HubSpot integration connects your marketing automation, CRM, and sales data for comprehensive verification of customer and campaign claims.',
-      verifies: ['Contact data', 'Campaign metrics', 'Deal information', 'Marketing performance', 'Lead data'],
-      useCases: ['Marketing verification', 'Lead validation', 'Campaign analysis', 'Sales tracking'],
-    },
-    {
-      id: 'notion',
-      name: 'Notion',
-      description: 'Sync your Notion workspace and knowledge base',
-      domain: 'notion.so',
-      connected: false,
-      oauth: true,
-      category: 'systems',
-      overview: 'Connect Notion to verify claims against your team\'s knowledge base, documentation, and project data. Harbor respects your workspace permissions.',
-      verifies: ['Documentation', 'Project details', 'Team wiki', 'Meeting notes', 'Process documentation'],
-      useCases: ['Knowledge verification', 'Documentation sync', 'Project tracking', 'Internal references'],
-    },
-    {
-      id: 'airtable',
-      name: 'Airtable',
-      description: 'Connect your Airtable bases for verification',
-      domain: 'airtable.com',
-      connected: false,
-      oauth: true,
-      category: 'systems',
-      overview: 'Airtable integration allows Harbor to verify claims against your structured data. Perfect for teams using Airtable for CRM, project tracking, or content management.',
-      verifies: ['Project status', 'Client data', 'Content records', 'Team information', 'Custom fields'],
-      useCases: ['Project verification', 'CRM validation', 'Content fact-checking', 'Workflow automation'],
-    },
-    {
-      id: 'monday',
-      name: 'Monday.com',
-      description: 'Work management and project tracking platform',
-      domain: 'monday.com',
-      connected: false,
-      oauth: true,
-      category: 'systems',
-      overview: 'Monday.com integration enables Harbor to verify claims against your project data, timelines, and team workflows.',
-      verifies: ['Project status', 'Timeline data', 'Task completion', 'Team assignments', 'Workflow stages'],
-      useCases: ['Project verification', 'Status tracking', 'Timeline validation', 'Resource planning'],
-    },
-  ],
-  comingSoon: [
-    {
-      id: 'bloomberg',
-      name: 'Bloomberg Terminal',
-      description: 'Financial data, market analytics, and real-time pricing',
-      domain: 'bloomberg.com',
-      connected: false,
-      comingSoon: true,
-      category: 'comingSoon',
-      overview: 'Bloomberg provides comprehensive financial data, analytics, and news. Integration pending due to terminal licensing requirements.',
-      verifies: ['Stock prices', 'Financial metrics', 'Analyst ratings', 'Market cap', 'Trading volumes'],
-      useCases: ['Investment research', 'Market analysis', 'Portfolio monitoring', 'Trading decisions'],
-    },
-    {
-      id: 'refinitiv',
-      name: 'Refinitiv Eikon',
-      description: 'Financial markets data and trading infrastructure',
-      domain: 'refinitiv.com',
-      connected: false,
-      comingSoon: true,
-      category: 'comingSoon',
-      overview: 'Refinitiv Eikon (now part of LSEG) provides financial markets data, trading infrastructure, and analytics. Integration in development.',
-      verifies: ['Market prices', 'Trading data', 'ESG scores', 'News', 'Estimates'],
-      useCases: ['Trading research', 'Market analysis', 'ESG analysis', 'Price verification'],
-    },
-    {
-      id: 'snowflake',
-      name: 'Snowflake',
-      description: 'Cloud data warehouse for enterprise analytics',
-      domain: 'snowflake.com',
-      connected: false,
-      comingSoon: true,
-      category: 'comingSoon',
-      overview: 'Snowflake integration will allow Harbor to query your data warehouse directly, enabling verification against your complete analytical dataset.',
-      verifies: ['Business metrics', 'Custom analytics', 'Historical data', 'Cross-system data', 'KPIs'],
-      useCases: ['Enterprise verification', 'Data validation', 'Custom queries', 'Advanced analytics'],
-    },
-    {
-      id: 'postgresql',
-      name: 'PostgreSQL',
-      description: 'Connect directly to your PostgreSQL databases',
-      domain: 'postgresql.org',
-      connected: false,
-      comingSoon: true,
-      category: 'comingSoon',
-      overview: 'Direct PostgreSQL connections will allow Harbor to verify claims against your internal databases with secure, read-only access.',
-      verifies: ['Custom tables', 'Internal metrics', 'Transaction data', 'User data', 'Business records'],
-      useCases: ['Internal verification', 'Custom queries', 'Data validation', 'Business intelligence'],
-    },
-    {
-      id: 'sap',
-      name: 'SAP',
-      description: 'Enterprise resource planning and business data',
-      domain: 'sap.com',
-      connected: false,
-      comingSoon: true,
-      category: 'comingSoon',
-      overview: 'SAP integration will enable Harbor to verify claims against your ERP data, including financials, supply chain, and operational metrics.',
-      verifies: ['Financial data', 'Supply chain', 'Inventory', 'Procurement', 'HR metrics'],
-      useCases: ['Enterprise verification', 'Supply chain validation', 'Financial accuracy', 'Operational data'],
-    },
-  ],
+interface SourceCardProps {
+  meta: SourceMeta
+  connection?: ConnectedSource
+  onConnect: () => void
+  onDisconnect: () => void
+  onSettings?: () => void
+  comingSoon?: boolean
 }
 
-// =============================================================================
-// SOURCE DETAIL MODAL
-// =============================================================================
-
-interface SourceDetailModalProps {
-  source: Source
-  onClose: () => void
-  onConnect: (sourceId: string, apiKey?: string) => void
-}
-
-function SourceDetailModal({ source, onClose, onConnect }: SourceDetailModalProps) {
-  const [apiKey, setApiKey] = useState('')
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [showApiInput, setShowApiInput] = useState(false)
-
-  const handleConnect = async () => {
-    setIsConnecting(true)
-    await new Promise(resolve => setTimeout(resolve, 1200))
-    onConnect(source.id, apiKey || undefined)
-    setIsConnecting(false)
-    onClose()
-  }
-
-  const handleOAuthConnect = async () => {
-    setIsConnecting(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    onConnect(source.id)
-    setIsConnecting(false)
-    onClose()
-  }
+function SourceCard({ meta, connection, onConnect, onDisconnect, onSettings, comingSoon }: SourceCardProps) {
+  const Icon = SOURCE_ICONS[meta.icon] || Database
+  const isConnected = connection?.status === 'connected'
+  const isConnecting = connection?.status === 'connecting'
+  const hasError = connection?.status === 'error'
 
   return (
     <div 
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={onClose}
+      className={`
+        relative bg-white rounded-xl border transition-all duration-200
+        ${isConnected 
+          ? 'border-green-200 shadow-sm' 
+          : comingSoon 
+            ? 'border-gray-100 opacity-60' 
+            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+        }
+      `}
     >
-      <div 
-        className="bg-white border border-gray-200 rounded-xl w-full max-w-lg overflow-hidden"
-        style={{ boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-200">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-                <img
-                  src={`https://cdn.brandfetch.io/${source.domain}?c=1id1Fyz-h7an5-5KR_y`}
-                  alt={source.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none'
-                  }}
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-gray-900 font-semibold text-lg">
-                    {source.name}
-                  </h2>
-                  <ShieldStatus connected={source.connected} size={16} />
-                </div>
-                <p className="text-gray-500 text-sm">{source.domain}</p>
-              </div>
-            </div>
-            <button 
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-          </div>
+      {/* Coming soon badge */}
+      {comingSoon && (
+        <div className="absolute -top-2 -right-2 bg-gray-100 text-gray-500 text-[10px] font-medium px-2 py-0.5 rounded-full">
+          Coming Soon
         </div>
+      )}
 
-        {/* Content */}
-        <div className="px-6 py-5 space-y-5 max-h-[60vh] overflow-y-auto">
-          {/* Overview */}
-          <div>
-            <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">Overview</h3>
-            <p className="text-gray-700 text-sm leading-relaxed">{source.overview}</p>
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          {/* Icon */}
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: `${meta.color}10`, color: meta.color }}
+          >
+            <Icon className="w-6 h-6" />
           </div>
 
-          {/* What we verify */}
-          <div>
-            <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">What Harbor Verifies</h3>
-            <div className="flex flex-wrap gap-2">
-              {source.verifies.map((item, idx) => (
-                <span 
-                  key={idx}
-                  className="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded text-gray-700 text-xs"
-                >
-                  {item}
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{meta.name}</h3>
+              {isConnected && (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  <Check className="w-3 h-3" />
+                  Connected
                 </span>
-              ))}
+              )}
+              {isConnecting && (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Connecting
+                </span>
+              )}
+              {hasError && (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                  <AlertCircle className="w-3 h-3" />
+                  Error
+                </span>
+              )}
             </div>
-          </div>
+            <p className="text-sm text-gray-500 mt-1">{meta.description}</p>
 
-          {/* Use Cases */}
-          <div>
-            <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2">Use Cases</h3>
-            <ul className="space-y-1.5">
-              {source.useCases.map((useCase, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-gray-700 text-sm">
-                  <ChevronRight size={12} className="text-gray-400" />
-                  {useCase}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* API Key Input */}
-          {source.requiresKey && !source.connected && showApiInput && (
-            <div className="pt-2">
-              <label className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-2 block">
-                API Key
-              </label>
-              <div className="relative">
-                <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your API key"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-4 py-2.5 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-colors"
-                />
+            {/* Auth type indicator */}
+            {meta.requiresAuth && !isConnected && (
+              <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+                <Lock className="w-3 h-3" />
+                <span>Requires {meta.authType === 'oauth' ? 'sign-in' : 'API key'}</span>
               </div>
-              <p className="text-gray-400 text-xs mt-2">
-                Your API key is encrypted and stored securely.
+            )}
+
+            {/* Connection info */}
+            {isConnected && connection?.connectedAt && (
+              <p className="text-xs text-gray-400 mt-2">
+                Connected {new Date(connection.connectedAt).toLocaleDateString()}
               </p>
-            </div>
-          )}
+            )}
+
+            {/* Error message */}
+            {hasError && connection?.error && (
+              <p className="text-xs text-red-500 mt-2">{connection.error}</p>
+            )}
+          </div>
         </div>
 
-        {/* Footer */}
-        <div 
-          className="px-6 py-4 border-t border-gray-200"
-          style={{ backgroundColor: '#FBF9F7' }}
-        >
-          {source.comingSoon ? (
-            <button
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              <Bell size={14} />
-              Notify me when available
-            </button>
-          ) : source.connected ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-emerald-600 text-sm">
-                <ShieldStatus connected={true} size={14} />
-                <span>{source.free ? 'Active' : 'Connected'}</span>
-              </div>
-              {!source.free && (
-                <button className="text-gray-500 text-sm hover:text-gray-700 transition-colors cursor-pointer">
+        {/* Actions */}
+        {!comingSoon && (
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+            {isConnected ? (
+              <>
+                {onSettings && (
+                  <button
+                    onClick={onSettings}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                )}
+                <button
+                  onClick={onDisconnect}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors ml-auto"
+                >
                   Disconnect
                 </button>
-              )}
-            </div>
-          ) : source.oauth ? (
-            <button
-              onClick={handleOAuthConnect}
-              disabled={isConnecting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              {isConnecting ? (
-                <span className="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Link2 size={14} />
-                  Connect with OAuth
-                </>
-              )}
-            </button>
-          ) : source.requiresKey ? (
-            showApiInput ? (
+              </>
+            ) : (
               <button
-                onClick={handleConnect}
-                disabled={isConnecting || !apiKey}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 cursor-pointer"
+                onClick={onConnect}
+                disabled={isConnecting}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ml-auto"
+                style={{ backgroundColor: meta.color }}
               >
                 {isConnecting ? (
-                  <span className="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Connecting...
+                  </>
                 ) : (
                   <>
-                    <Check size={14} />
-                    Connect Source
+                    Connect
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
-            ) : (
-              <button
-                onClick={() => setShowApiInput(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer"
-              >
-                <Key size={14} />
-                Add API Key
-              </button>
-            )
-          ) : null}
-          
-          {/* External link */}
-          <a 
-            href={`https://${source.domain}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 text-gray-400 text-xs mt-3 hover:text-gray-600 transition-colors"
-          >
-            Visit {source.domain}
-            <ExternalLink size={10} />
-          </a>
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-// =============================================================================
-// SOURCE CARD COMPONENT (Linear-style)
-// =============================================================================
+export default function SourcesPage() {
+  const { connectedSources, connect, disconnect } = useSources()
+  const [configuring, setConfiguring] = useState<SourceType | null>(null)
 
-interface SourceCardProps {
-  source: Source
-  onClick: () => void
-}
+  const getConnection = (type: SourceType): ConnectedSource | undefined => {
+    return connectedSources.find(s => s.type === type)
+  }
 
-function SourceCard({ source, onClick }: SourceCardProps) {
+  const handleConnect = async (meta: SourceMeta) => {
+    if (!meta.requiresAuth) {
+      await connect({ type: meta.id, config: {} } as any)
+    } else {
+      setConfiguring(meta.id)
+    }
+  }
+
+  const externalConnected = EXTERNAL_SOURCES.filter(s => 
+    connectedSources.some(c => c.type === s.id && c.status === 'connected')
+  ).length
+
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 hover:shadow-md transition-all cursor-pointer"
-      style={{ boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}
-    >
-      {/* Logo + Name Row */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-          <img
-            src={`https://cdn.brandfetch.io/${source.domain}?c=1id1Fyz-h7an5-5KR_y`}
-            alt={source.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-900 text-sm font-medium truncate">{source.name}</span>
-            <ShieldStatus connected={source.connected} size={14} />
+    <div className="min-h-screen bg-[#FAFAF9]">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Data Sources</h1>
+              <p className="text-gray-500 mt-1">
+                Connect your data sources to enable @mentions and verification across all documents.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span className="text-sm text-gray-600">
+                <strong>{externalConnected}</strong> sources active
+              </span>
+            </div>
           </div>
-          <span className="text-gray-400 text-xs">{source.domain}</span>
         </div>
       </div>
 
-      {/* Description */}
-      <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
-        {source.description}
-      </p>
-    </button>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
+        {/* How it works */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-600" />
+            How Sources Work
+          </h2>
+          <div className="mt-3 grid grid-cols-3 gap-4">
+            <div className="text-sm">
+              <div className="font-medium text-gray-900">1. Connect once</div>
+              <p className="text-gray-600 mt-0.5">Link your subscriptions and data sources here.</p>
+            </div>
+            <div className="text-sm">
+              <div className="font-medium text-gray-900">2. Available everywhere</div>
+              <p className="text-gray-600 mt-0.5">Sources are accessible in all your documents.</p>
+            </div>
+            <div className="text-sm">
+              <div className="font-medium text-gray-900">3. Use with @</div>
+              <p className="text-gray-600 mt-0.5">Type @SEC or @PitchBook to pull data inline.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* External Sources */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">External Sources</h2>
+              <p className="text-sm text-gray-500">Financial data, filings, and market intelligence</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {EXTERNAL_SOURCES.map(source => (
+              <SourceCard
+                key={source.id}
+                meta={source}
+                connection={getConnection(source.id)}
+                onConnect={() => handleConnect(source)}
+                onDisconnect={() => disconnect(source.id)}
+                comingSoon={source.id !== 'sec-edgar' && source.id !== 'web'}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Internal Sources */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Internal Sources</h2>
+              <p className="text-sm text-gray-500">Your documents, drives, and databases</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {INTERNAL_SOURCES.map(source => (
+              <SourceCard
+                key={source.id}
+                meta={source}
+                connection={getConnection(source.id)}
+                onConnect={() => handleConnect(source)}
+                onDisconnect={() => disconnect(source.id)}
+                comingSoon
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Need more? */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
+          <p className="text-gray-600">
+            Need a source we don't support yet?{' '}
+            <a href="mailto:sources@tryraven.io" className="text-blue-600 hover:underline">
+              Let us know →
+            </a>
+          </p>
+        </div>
+      </div>
+
+      {/* Configuration Modal */}
+      {configuring && (
+        <ConfigModal
+          sourceType={configuring}
+          onClose={() => setConfiguring(null)}
+          onConnect={async (config) => {
+            await connect(config)
+            setConfiguring(null)
+          }}
+        />
+      )}
+    </div>
   )
 }
 
-// =============================================================================
-// MAIN SOURCES PAGE
-// =============================================================================
+interface ConfigModalProps {
+  sourceType: SourceType
+  onClose: () => void
+  onConnect: (config: any) => Promise<void>
+}
 
-export default function SourcesPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedSource, setSelectedSource] = useState<Source | null>(null)
-  const [sources, setSources] = useState<SourcesData>(sourcesData)
-  const [activeCategory, setActiveCategory] = useState('essentials')
-  
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
-  const mainContentRef = useRef<HTMLDivElement>(null)
+function ConfigModal({ sourceType, onClose, onConnect }: ConfigModalProps) {
+  const [apiKey, setApiKey] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Scroll spy effect
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!mainContentRef.current) return
-      
-      const container = mainContentRef.current
-      const scrollTop = container.scrollTop
-      const scrollHeight = container.scrollHeight
-      const clientHeight = container.clientHeight
-      
-      // If we're near the bottom, activate the last visible category
-      if (scrollTop + clientHeight >= scrollHeight - 100) {
-        for (let i = categories.length - 1; i >= 0; i--) {
-          const category = categories[i]
-          const categorySources = sources[category.id as keyof SourcesData] || []
-          if (categorySources.length > 0) {
-            setActiveCategory(category.id)
-            return
-          }
-        }
-      }
-
-      // Otherwise, find which section we're in
-      for (const category of categories) {
-        const section = sectionRefs.current[category.id]
-        if (section) {
-          const sectionTop = section.offsetTop - 100
-          const sectionBottom = sectionTop + section.offsetHeight
-          
-          if (scrollTop >= sectionTop && scrollTop < sectionBottom) {
-            setActiveCategory(category.id)
-            break
-          }
-        }
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      await onConnect({ type: sourceType, config: { apiKey } })
+    } finally {
+      setIsLoading(false)
     }
-
-    const mainContent = mainContentRef.current
-    mainContent?.addEventListener('scroll', handleScroll)
-    return () => mainContent?.removeEventListener('scroll', handleScroll)
-  }, [sources])
-
-  // Scroll to section
-  const scrollToSection = (categoryId: string) => {
-    const section = sectionRefs.current[categoryId]
-    if (section && mainContentRef.current) {
-      mainContentRef.current.scrollTo({
-        top: section.offsetTop - 24,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  // Handle source connection
-  const handleConnect = (sourceId: string, apiKey?: string) => {
-    setSources(prev => {
-      const newSources = { ...prev }
-      for (const category of Object.keys(newSources) as (keyof SourcesData)[]) {
-        newSources[category] = newSources[category].map(s => 
-          s.id === sourceId ? { ...s, connected: true } : s
-        )
-      }
-      return newSources
-    })
-  }
-
-  // Count connected sources per category
-  const getConnectedCount = (categoryId: string) => {
-    const categorySources = sources[categoryId as keyof SourcesData] || []
-    return categorySources.filter(s => s.connected).length
-  }
-
-  // Total connected count
-  const totalConnected = Object.values(sources).flat().filter(s => s.connected).length
-
-  // Filter sources by search
-  const filterSources = (categorySources: Source[]) => {
-    if (!searchQuery) return categorySources
-    const query = searchQuery.toLowerCase()
-    return categorySources.filter(s => 
-      s.name.toLowerCase().includes(query) || 
-      s.description.toLowerCase().includes(query) ||
-      s.domain.toLowerCase().includes(query)
-    )
   }
 
   return (
-    <div className="h-full flex">
-      {/* Left Sidebar - Category Navigation */}
-      <div className="w-56 flex-shrink-0 border-r border-gray-200 p-4 flex flex-col">
-        {/* Title */}
-        <div className="mb-6">
-          <h1 className="text-gray-900 text-xl font-semibold mb-1">
-            Sources
-          </h1>
-          <p className="text-gray-500 text-sm">
-            {totalConnected} sources active
-          </p>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="font-semibold text-gray-900">Connect {sourceType}</h3>
+          <p className="text-sm text-gray-500 mt-0.5">Enter your API key to connect</p>
         </div>
 
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sources..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-gray-300 transition-colors"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              API Key
+            </label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="Enter your API key"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              autoFocus
+            />
+            <p className="text-xs text-gray-400 mt-1.5">
+              Your API key is encrypted and stored securely.
+            </p>
+          </div>
 
-        {/* Category Navigation */}
-        <nav className="space-y-1 flex-1">
-          {categories.map(category => {
-            const Icon = category.icon
-            const connectedCount = getConnectedCount(category.id)
-            const isActive = activeCategory === category.id
-            
-            return (
-              <button
-                key={category.id}
-                onClick={() => scrollToSection(category.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer ${
-                  isActive 
-                    ? 'bg-gray-100 text-gray-900' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon size={14} className={isActive ? 'text-gray-700' : 'text-gray-400'} strokeWidth={1.5} />
-                <span className="text-sm flex-1">{category.label}</span>
-                {connectedCount > 0 && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${
-                    isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {connectedCount}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div 
-        ref={mainContentRef}
-        className="flex-1 overflow-y-auto p-8"
-      >
-        {categories.map(category => {
-          const categorySources = filterSources(sources[category.id as keyof SourcesData] || [])
-          if (categorySources.length === 0 && searchQuery) return null
-
-          return (
-            <div
-              key={category.id}
-              ref={el => { sectionRefs.current[category.id] = el }}
-              className="mb-10"
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg transition-colors"
             >
-              {/* Section Header */}
-              <div className="mb-4">
-                <h2 className="text-gray-900 text-lg font-semibold mb-1">
-                  {category.label}
-                </h2>
-                <p className="text-gray-500 text-sm">{category.description}</p>
-              </div>
-
-              {/* Card Grid - 3 columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {categorySources.map(source => (
-                  <SourceCard
-                    key={source.id}
-                    source={source}
-                    onClick={() => setSelectedSource(source)}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })}
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!apiKey || isLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Connect'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-
-      {/* Source Detail Modal */}
-      {selectedSource && (
-        <SourceDetailModal
-          source={selectedSource}
-          onClose={() => setSelectedSource(null)}
-          onConnect={handleConnect}
-        />
-      )}
     </div>
   )
 }

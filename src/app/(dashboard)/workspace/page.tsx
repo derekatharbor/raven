@@ -3,6 +3,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import Sidebar from '@/components/layout/Sidebar'
 import DocumentPane from '@/components/workspace/DocumentPane'
 import EditorTabs from '@/components/workspace/EditorTabs'
@@ -10,7 +11,7 @@ import Editor, { EditorRef } from '@/components/workspace/Editor'
 import TrackClaimModal from '@/components/workspace/TrackClaimModal'
 import VerificationMargin from '@/components/workspace/VerificationMargin'
 import ChatPanel from '@/components/workspace/ChatPanel'
-import SourceManager from '@/components/settings/SourceManager'
+import EditorStatusBar from '@/components/workspace/EditorStatusBar'
 import { useSources } from '@/hooks/useSources'
 import { Check, AlertTriangle, X, Clock, ChevronLeft } from 'lucide-react'
 
@@ -69,7 +70,8 @@ export default function WorkspacePage() {
   const [claims, setClaims] = useState<TrackedClaim[]>([])
   const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null)
   const [hoveredClaimId, setHoveredClaimId] = useState<string | null>(null)
-  const [sourcePanelOpen, setSourcePanelOpen] = useState(false)
+  const [editorMode, setEditorMode] = useState<'write' | 'review' | 'verify'>('write')
+  const [wordCount, setWordCount] = useState(847) // Mock for now - will wire to editor
 
   const { connectedSources, connect } = useSources()
   const connectedCount = connectedSources.filter(s => s.status === 'connected').length
@@ -84,6 +86,14 @@ export default function WorkspacePage() {
     }
     autoConnect()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Calculate claim summary
+  const claimSummary = {
+    verified: claims.filter(c => c.status === 'verified').length,
+    pending: claims.filter(c => c.status === 'pending').length,
+    stale: claims.filter(c => c.status === 'stale').length,
+    contradiction: claims.filter(c => c.status === 'contradiction').length,
+  }
 
   const editorRef = useRef<EditorRef>(null)
   const workspace = WORKSPACES[activeWorkspaceId]
@@ -158,18 +168,10 @@ export default function WorkspacePage() {
       <Sidebar 
         activeWorkspaceId={activeWorkspaceId} 
         onWorkspaceSelect={handleWorkspaceSelect}
-        onSourcesClick={() => setSourcePanelOpen(true)}
         connectedSourceCount={connectedCount}
       />
       
-      {/* Source Manager Panel - slides over DocumentPane */}
-      {sourcePanelOpen && (
-        <div className="w-[300px] flex-shrink-0 border-r border-gray-200 z-10">
-          <SourceManager onClose={() => setSourcePanelOpen(false)} />
-        </div>
-      )}
-      
-      {workspace && !sourcePanelOpen && (
+      {workspace && (
         <DocumentPane
           workspaceName={workspace.name}
           documents={workspace.documents}
@@ -234,6 +236,18 @@ export default function WorkspacePage() {
             </div>
           )}
         </div>
+
+        {/* Status Bar */}
+        <EditorStatusBar
+          wordCount={wordCount}
+          claimSummary={claimSummary}
+          connectedSources={connectedCount}
+          mode={editorMode}
+          onModeChange={setEditorMode}
+          onExport={() => console.log('Export')}
+          onShare={() => console.log('Share')}
+          onCommandPalette={() => console.log('Command palette')}
+        />
       </div>
 
       {trackModalOpen && (
