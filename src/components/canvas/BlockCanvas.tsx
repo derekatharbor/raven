@@ -68,8 +68,6 @@ function Tooltip({ children, label }: { children: React.ReactNode; label: string
     </div>
   )
 }
-  )
-}
 
 // ============================================================================
 // TYPES
@@ -556,76 +554,6 @@ function ResearchPanel({ selectedText, onClose }: {
             {mode === 'agent' && 'Deploy an agent to research across sources'}
             {mode === 'plan' && 'Create a verification plan for your claims'}
             {mode === 'verify' && 'Verify specific claims against sources'}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {messages.map((msg, i) => (
-              <div key={i}>
-                {msg.context && (
-                  <div style={{ marginBottom: 8 }}>
-                    <div style={{ 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      gap: 6, 
-                      padding: '4px 10px', 
-                      background: '#DCFCE7',
-                      borderRadius: 999,
-                      fontSize: 11,
-                      color: '#166534',
-                      fontWeight: 500,
-                    }}>
-                      <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
-                      <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {truncate(msg.context, 25)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <div style={{ 
-                  padding: '10px 12px', 
-                  borderRadius: 8,
-                  background: msg.role === 'user' ? '#111' : 'white',
-                  color: msg.role === 'user' ? 'white' : '#111',
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  border: msg.role === 'assistant' ? '1px solid #E5E7EB' : 'none',
-                  whiteSpace: 'pre-wrap',
-                }}>
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div style={{ 
-                padding: '10px 12px', 
-                borderRadius: 8, 
-                background: 'white', 
-                border: '1px solid #E5E7EB',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}>
-                <div className="loading-dots" style={{ display: 'flex', gap: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite' }} />
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.2s' }} />
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.4s' }} />
-                </div>
-                <span style={{ fontSize: 12, color: '#9CA3AF' }}>Searching sources...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-      {/* Messages */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9CA3AF', fontSize: 13, lineHeight: 1.6 }}>
-            Search your connected sources<br />or ask questions about your document
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
