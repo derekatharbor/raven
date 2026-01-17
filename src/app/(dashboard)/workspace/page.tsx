@@ -23,12 +23,19 @@ export default function WorkspacePage() {
     }
   }, [user, authLoading, router])
 
-  // Set active doc to first document or create one
+  // Set active doc to first document or create one if none exist
   useEffect(() => {
-    if (!docsLoading && documents.length > 0 && !activeDocId) {
-      setActiveDocId(documents[0].id)
+    if (!docsLoading && user) {
+      if (documents.length > 0 && !activeDocId) {
+        setActiveDocId(documents[0].id)
+      } else if (documents.length === 0 && !activeDocId) {
+        // Auto-create first document
+        createDocument('Untitled').then(doc => {
+          if (doc) setActiveDocId(doc.id)
+        })
+      }
     }
-  }, [documents, docsLoading, activeDocId])
+  }, [documents, docsLoading, activeDocId, user, createDocument])
 
   // Handle creating new document
   const handleNewDocument = useCallback(async () => {
@@ -38,8 +45,8 @@ export default function WorkspacePage() {
     }
   }, [createDocument])
 
-  // Loading state
-  if (authLoading || docsLoading) {
+  // Loading state - wait for doc creation
+  if (authLoading || docsLoading || !activeDocId) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="flex items-center gap-3 text-gray-400">
@@ -64,7 +71,7 @@ export default function WorkspacePage() {
       />
       
       <BlockCanvas 
-        documentId={activeDocId || 'new'} 
+        documentId={activeDocId} 
         documents={documents}
         onDocumentSelect={setActiveDocId}
         onNewDocument={handleNewDocument}

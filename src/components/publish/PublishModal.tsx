@@ -1,4 +1,5 @@
 // Path: src/components/publish/PublishModal.tsx
+// Path: src/components/publish/PublishModal.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -40,6 +41,8 @@ export default function PublishModal({
   const [loading, setLoading] = useState(true)
   const [publishing, setPublishing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error'>('error')
   const [publishState, setPublishState] = useState<PublishState | null>(null)
   const [inviteEmail, setInviteEmail] = useState('')
   const [accessLevel, setAccessLevel] = useState<'private' | 'link' | 'public'>('link')
@@ -86,7 +89,15 @@ export default function PublishModal({
   }
 
   const handlePublish = async () => {
+    // Can't publish unsaved documents
+    if (!documentId || documentId === 'new') {
+      setMessage('Please save the document first')
+      setMessageType('error')
+      return
+    }
+
     setPublishing(true)
+    setMessage('')
     try {
       const res = await fetch('/api/publish', {
         method: 'POST',
@@ -103,6 +114,13 @@ export default function PublishModal({
       
       const data = await res.json()
       
+      if (!res.ok) {
+        console.error('Publish error:', data)
+        setMessage(data.error || 'Failed to publish')
+        setMessageType('error')
+        return
+      }
+      
       if (data.success) {
         setPublishState({
           published: true,
@@ -113,9 +131,15 @@ export default function PublishModal({
           notifyOnView,
           stats: publishState?.stats,
         })
+        setMessage('')
+      } else {
+        setMessage(data.error || 'Failed to publish')
+        setMessageType('error')
       }
     } catch (err) {
       console.error('Publish failed:', err)
+      setMessage('Network error - please try again')
+      setMessageType('error')
     } finally {
       setPublishing(false)
     }
@@ -338,6 +362,13 @@ export default function PublishModal({
                       </>
                     )}
                   </button>
+                )}
+                
+                {/* Error/Success Message */}
+                {message && (
+                  <p className={`text-sm text-center mt-3 ${messageType === 'error' ? 'text-red-400' : 'text-green-400'}`}>
+                    {message}
+                  </p>
                 )}
               </div>
             </>
