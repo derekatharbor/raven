@@ -1,351 +1,266 @@
+// Path: src/app/demo/analytics/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { 
-  Eye, Users, Clock, TrendingUp, 
-  BarChart3, RefreshCw, ExternalLink,
-  Copy, Check, Mail, ArrowLeft
+  AlertTriangle, Info, Clock, Eye,
+  GitCommit, ChevronDown, FileText, RotateCcw
 } from 'lucide-react'
-import Link from 'next/link'
 
-// Mock data for demo
-const mockData = {
-  published: true,
-  url: 'https://raven.app/d/abc123xy',
-  slug: 'abc123xy',
-  current_version: {
-    version_number: 3,
-    published_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+// Mock document blocks
+const mockBlocks = [
+  { id: 'b1', type: 'heading1', content: 'Q3 2024 Investment Analysis', metrics: { dwell: 3200, bounceRate: 0, views: 47 } },
+  { id: 'b2', type: 'paragraph', content: 'Executive Summary: This quarter showed exceptional growth driven by AI infrastructure demand. Revenue exceeded expectations by 12% while maintaining healthy margins across all segments.', metrics: { dwell: 8500, bounceRate: 4, views: 47 } },
+  { id: 'b3', type: 'heading2', content: 'Market Conditions', metrics: { dwell: 1200, bounceRate: 0, views: 45 } },
+  { id: 'b4', type: 'paragraph', content: 'Market conditions remained favorable despite macroeconomic headwinds. The semiconductor sector benefited from sustained demand in data center and automotive applications.', metrics: { dwell: 12400, bounceRate: 2, views: 45 } },
+  { id: 'b5', type: 'heading2', content: 'Revenue Analysis', metrics: { dwell: 1100, bounceRate: 0, views: 44 } },
+  { id: 'b6', type: 'paragraph', content: 'Data center revenue reached $14.51 billion, representing a 279% year-over-year increase. Gaming revenue declined 8% due to inventory normalization.', metrics: { dwell: 18200, bounceRate: 0, views: 44, hasSource: true } },
+  { id: 'b7', type: 'heading2', content: 'Risk Factors', metrics: { dwell: 2100, bounceRate: 32, views: 44 } },
+  { id: 'b8', type: 'paragraph', content: 'Key risks include supply chain constraints, geopolitical tensions affecting chip manufacturing, and potential demand softening in consumer segments.', metrics: { dwell: 4800, bounceRate: 28, views: 41 } },
+  { id: 'b9', type: 'heading2', content: 'Competitive Landscape', metrics: { dwell: 6100, bounceRate: 8, views: 38 } },
+  { id: 'b10', type: 'paragraph', content: 'AMD continues to gain market share in data center GPUs. Intel\'s re-entry into discrete graphics adds competitive pressure. However, NVIDIA maintains technological leadership in AI training workloads.', metrics: { dwell: 9800, bounceRate: 5, views: 38 } },
+  { id: 'b11', type: 'heading2', content: 'Recommendation', metrics: { dwell: 2400, bounceRate: 0, views: 36 } },
+  { id: 'b12', type: 'paragraph', content: 'Strong Buy. Price target of $950 based on 35x forward earnings. The AI infrastructure cycle is still in early innings with significant runway for growth.', metrics: { dwell: 11200, bounceRate: 0, views: 36 } },
+]
+
+// Suggestions
+const suggestions = [
+  {
+    id: 's1',
+    type: 'warning' as const,
+    blockId: 'b7',
+    blockIndex: 6,
+    blockTitle: 'Risk Factors',
+    diagnosis: '32% bounce rate on this section',
+    data: 'Avg. dwell: 2.1s (expected: 8s+)',
+    resolution: 'Rewrite for Clarity',
+    action: 'rewrite',
   },
-  stats: {
-    total_views: 47,
-    unique_viewers: 23,
-    avg_completion: 0.72,
-    avg_read_time_ms: 245000,
+  {
+    id: 's2',
+    type: 'warning' as const,
+    blockId: 'b8',
+    blockIndex: 7,
+    blockTitle: 'Risk Factors (cont.)',
+    diagnosis: '28% of readers dropped off here',
+    data: 'Only 4.8s avg read time',
+    resolution: 'Simplify or Split',
+    action: 'simplify',
   },
-  block_metrics: [
-    { block_id: 'b1', block_index: 0, block_preview: 'Q3 2024 Investment Analysis', avg_dwell_ms: 3200, enter_count: 47, reread_count: 2, drop_off_count: 0, engagement_score: 65 },
-    { block_id: 'b2', block_index: 1, block_preview: 'Executive Summary: This quarter showed exceptional growth...', avg_dwell_ms: 8500, enter_count: 47, reread_count: 8, drop_off_count: 2, engagement_score: 89 },
-    { block_id: 'b3', block_index: 2, block_preview: 'Market conditions remained favorable despite headwinds...', avg_dwell_ms: 12400, enter_count: 45, reread_count: 15, drop_off_count: 1, engagement_score: 95 },
-    { block_id: 'b4', block_index: 3, block_preview: 'Revenue breakdown by segment shows data center leading...', avg_dwell_ms: 18200, enter_count: 44, reread_count: 22, drop_off_count: 0, engagement_score: 98 },
-    { block_id: 'b5', block_index: 4, block_preview: 'Key risks include supply chain constraints and...', avg_dwell_ms: 6100, enter_count: 44, reread_count: 5, drop_off_count: 3, engagement_score: 72 },
-    { block_id: 'b6', block_index: 5, block_preview: 'Competitive landscape analysis indicates strong moat...', avg_dwell_ms: 9800, enter_count: 41, reread_count: 11, drop_off_count: 2, engagement_score: 85 },
-    { block_id: 'b7', block_index: 6, block_preview: 'Financial projections for Q4 and FY2025...', avg_dwell_ms: 14500, enter_count: 39, reread_count: 18, drop_off_count: 1, engagement_score: 92 },
-    { block_id: 'b8', block_index: 7, block_preview: 'Recommendation: Strong Buy with price target of...', avg_dwell_ms: 11200, enter_count: 38, reread_count: 24, drop_off_count: 4, engagement_score: 88 },
-    { block_id: 'b9', block_index: 8, block_preview: 'Appendix A: Detailed financial statements...', avg_dwell_ms: 2100, enter_count: 34, reread_count: 1, drop_off_count: 8, engagement_score: 35 },
-    { block_id: 'b10', block_index: 9, block_preview: 'Appendix B: Methodology and data sources...', avg_dwell_ms: 1400, enter_count: 26, reread_count: 0, drop_off_count: 12, engagement_score: 22 },
-  ],
-  recent_sessions: [
-    { id: 's1', viewer_email: 'sarah.chen@sequoia.com', device_type: 'desktop', browser: 'Chrome', country: 'US', started_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(), completion_rate: 1.0, total_dwell_ms: 384000 },
-    { id: 's2', viewer_email: 'mike.ross@goldmansachs.com', device_type: 'desktop', browser: 'Safari', country: 'US', started_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), completion_rate: 0.9, total_dwell_ms: 312000 },
-    { id: 's3', viewer_email: null, device_type: 'mobile', browser: 'Safari', country: 'UK', started_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), completion_rate: 0.4, total_dwell_ms: 95000 },
-    { id: 's4', viewer_email: 'jennifer.liu@a]6z.com', device_type: 'desktop', browser: 'Chrome', country: 'US', started_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), completion_rate: 1.0, total_dwell_ms: 425000 },
-    { id: 's5', viewer_email: 'david.park@bridgewater.com', device_type: 'tablet', browser: 'Safari', country: 'US', started_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), completion_rate: 0.8, total_dwell_ms: 278000 },
-    { id: 's6', viewer_email: null, device_type: 'desktop', browser: 'Firefox', country: 'DE', started_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(), completion_rate: 0.3, total_dwell_ms: 67000 },
-    { id: 's7', viewer_email: 'amanda.wright@tiger.com', device_type: 'desktop', browser: 'Chrome', country: 'US', started_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), completion_rate: 1.0, total_dwell_ms: 398000 },
-  ],
-}
+  {
+    id: 's3',
+    type: 'info' as const,
+    blockId: 'b6',
+    blockIndex: 5,
+    blockTitle: 'Revenue Analysis',
+    diagnosis: 'Unverified claim detected',
+    data: '"279% YoY" lacks source receipt',
+    resolution: 'Add Source Receipt',
+    action: 'add-source',
+  },
+]
 
-export default function AnalyticsDemoPage() {
-  const [copied, setCopied] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'blocks' | 'viewers'>('overview')
+// Version history
+const versionHistory = [
+  { version: 3, hash: 'a3f2c1d', date: '2h ago', message: 'Added source for revenue claim', changes: ['+1 source'] },
+  { version: 2, hash: 'b8e4a2f', date: '1d ago', message: 'Rewrote executive summary', changes: ['-12% bounce'] },
+  { version: 1, hash: 'c1d3e5g', date: '3d ago', message: 'Initial publish', changes: ['12 blocks'] },
+]
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(mockData.url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+export default function EngagementLinterDemo() {
+  const [hoveredSuggestion, setHoveredSuggestion] = useState<string | null>(null)
+  const [focusedBlock, setFocusedBlock] = useState<string | null>(null)
+  const [showHistory, setShowHistory] = useState(true)
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return '<1s'
-    if (ms < 60000) return `${Math.round(ms / 1000)}s`
-    return `${Math.round(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`
-  }
+  // Scroll to block on hover
+  useEffect(() => {
+    if (hoveredSuggestion) {
+      const suggestion = suggestions.find(s => s.id === hoveredSuggestion)
+      if (suggestion) {
+        const blockEl = blockRefs.current.get(suggestion.blockId)
+        if (blockEl) {
+          blockEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          setFocusedBlock(suggestion.blockId)
+        }
+      }
+    } else {
+      setFocusedBlock(null)
+    }
+  }, [hoveredSuggestion])
 
-  const formatDate = (date: string) => {
-    const d = new Date(date)
-    const now = new Date()
-    const diffMs = now.getTime() - d.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
+  const getBlockHighlight = (blockId: string, bounceRate: number) => {
+    const isFocused = focusedBlock === blockId
+    const hasProblem = bounceRate > 20
     
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (isFocused) {
+      return {
+        borderLeft: '3px solid #F59E0B',
+        background: 'rgba(245, 158, 11, 0.06)',
+      }
+    }
+    if (hasProblem) {
+      return {
+        borderLeft: '3px solid rgba(245, 158, 11, 0.4)',
+        background: 'transparent',
+      }
+    }
+    return {
+      borderLeft: '3px solid transparent',
+      background: 'transparent',
+    }
   }
-
-  const hotspots = mockData.block_metrics.filter(b => b.engagement_score > 85).slice(0, 3)
-  const dropOffs = mockData.block_metrics.filter(b => b.drop_off_count > 3).slice(0, 3)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-500" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">Q3 2024 Investment Analysis</h1>
-              <p className="text-sm text-gray-500">Document Analytics</p>
-            </div>
+    <div className="h-screen bg-[#FAFAFA] flex overflow-hidden">
+      {/* Main Document Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-12 bg-white border-b border-gray-200 flex items-center px-5 justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-900">Q3 2024 Investment Analysis</span>
+            <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-mono">v3</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
-              v{mockData.current_version.version_number}
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <Eye className="w-3.5 h-3.5" />
+              47 views
             </span>
-            <span className="text-xs text-gray-400">
-              Published {formatDate(mockData.current_version.published_at)}
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              4m avg
             </span>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Link bar */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg">
-            <span className="text-sm text-gray-600 font-mono">{mockData.url}</span>
+        {/* Document Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-[620px] mx-auto py-10 px-6">
+            {mockBlocks.map((block) => (
+              <div
+                key={block.id}
+                ref={el => { if (el) blockRefs.current.set(block.id, el) }}
+                className="relative -ml-3 pl-3 rounded-r transition-all duration-200"
+                style={getBlockHighlight(block.id, block.metrics.bounceRate)}
+              >
+                {block.type === 'heading1' && (
+                  <h1 className="text-xl font-semibold text-gray-900 mb-5 pt-1">{block.content}</h1>
+                )}
+                {block.type === 'heading2' && (
+                  <h2 className="text-sm font-semibold text-gray-900 mb-2 mt-7 uppercase tracking-wide">{block.content}</h2>
+                )}
+                {block.type === 'paragraph' && (
+                  <p className="text-[14px] text-gray-600 leading-relaxed mb-4">{block.content}</p>
+                )}
+              </div>
+            ))}
           </div>
-          <button 
-            onClick={copyLink}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-          >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copied' : 'Copy Link'}
-          </button>
-          <a 
-            href={mockData.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            View
-          </a>
+        </div>
+      </div>
+
+      {/* Right Sidebar: Linter */}
+      <div className="w-72 border-l border-gray-200 bg-white flex flex-col flex-shrink-0">
+        {/* Header */}
+        <div className="h-12 border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Linter</span>
+          <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px] font-semibold">
+            {suggestions.length}
+          </span>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <StatCard
-            icon={Eye}
-            label="Total Views"
-            value={mockData.stats.total_views}
-            trend="+12 this week"
-            trendUp
-          />
-          <StatCard
-            icon={Users}
-            label="Unique Viewers"
-            value={mockData.stats.unique_viewers}
-            trend="+5 this week"
-            trendUp
-          />
-          <StatCard
-            icon={TrendingUp}
-            label="Avg. Completion"
-            value={`${Math.round(mockData.stats.avg_completion * 100)}%`}
-            trend="+8% vs last version"
-            trendUp
-          />
-          <StatCard
-            icon={Clock}
-            label="Avg. Read Time"
-            value={formatDuration(mockData.stats.avg_read_time_ms)}
-            trend="4m 5s"
-            trendUp={false}
-            trendLabel="vs expected"
-          />
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Left: Engagement Heatmap & Insights */}
-          <div className="col-span-2 space-y-6">
-            {/* Engagement Heatmap */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Engagement Heatmap</h3>
-              <div className="space-y-2">
-                {mockData.block_metrics.map((block, i) => {
-                  const intensity = block.engagement_score / 100
-                  return (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="w-6 text-xs text-gray-400 text-right">{i + 1}</span>
-                      <div className="flex-1 h-8 rounded-lg overflow-hidden bg-gray-100 relative">
-                        <div 
-                          className="absolute inset-y-0 left-0 rounded-lg"
-                          style={{
-                            width: `${block.engagement_score}%`,
-                            backgroundColor: `rgba(16, 185, 129, ${0.3 + intensity * 0.7})`,
-                          }}
-                        />
-                        <span className="absolute inset-0 flex items-center px-3 text-xs text-gray-700 truncate">
-                          {block.block_preview}
-                        </span>
-                      </div>
-                      <span className="w-12 text-xs text-right font-medium" style={{
-                        color: block.engagement_score > 80 ? '#059669' : 
-                               block.engagement_score > 50 ? '#D97706' : '#DC2626'
-                      }}>
-                        {block.engagement_score}%
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Insights Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Hotspots */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="text-lg">🔥</span> Hotspots
-                </h4>
-                <p className="text-xs text-gray-500 mb-4">Sections with highest engagement</p>
-                <div className="space-y-3">
-                  {hotspots.map((block, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="w-7 h-7 bg-emerald-100 text-emerald-700 rounded-lg flex items-center justify-center text-xs font-semibold">
-                        {block.block_index + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900 truncate">{block.block_preview.slice(0, 35)}...</p>
-                        <p className="text-xs text-gray-500">{block.reread_count} re-reads • {formatDuration(block.avg_dwell_ms)} avg</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Drop-offs */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="text-lg">📉</span> Drop-off Points
-                </h4>
-                <p className="text-xs text-gray-500 mb-4">Where readers stopped</p>
-                <div className="space-y-3">
-                  {dropOffs.map((block, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="w-7 h-7 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center text-xs font-semibold">
-                        {block.block_index + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900 truncate">{block.block_preview.slice(0, 35)}...</p>
-                        <p className="text-xs text-gray-500">{block.drop_off_count} viewers left here</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Viewers */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Viewers</h3>
-            <div className="space-y-3">
-              {mockData.recent_sessions.map((session, i) => (
-                <div key={i} className="p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {session.viewer_email ? (
-                        <>
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
-                            {session.viewer_email[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {session.viewer_email.split('@')[0]}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              @{session.viewer_email.split('@')[1]}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
-                            <Users className="w-3.5 h-3.5 text-gray-500" />
-                          </div>
-                          <span className="text-sm text-gray-500">Anonymous</span>
-                        </>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-400">{formatDate(session.started_at)}</span>
+        {/* Suggestion Feed */}
+        <div className="flex-1 overflow-auto p-2 space-y-1.5">
+          {suggestions.map(suggestion => (
+            <div
+              key={suggestion.id}
+              className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                hoveredSuggestion === suggestion.id
+                  ? 'bg-amber-50/80 border-amber-200'
+                  : 'bg-white border-gray-150 hover:border-gray-250'
+              }`}
+              style={{ borderColor: hoveredSuggestion === suggestion.id ? undefined : 'rgba(0,0,0,0.08)' }}
+              onMouseEnter={() => setHoveredSuggestion(suggestion.id)}
+              onMouseLeave={() => setHoveredSuggestion(null)}
+            >
+              {/* Type indicator + Title */}
+              <div className="flex items-start gap-2 mb-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                  suggestion.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] text-gray-400 mb-0.5">
+                    Section {suggestion.blockIndex + 1}: '{suggestion.blockTitle}'
                   </div>
-                  
-                  <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-                    <span className="capitalize">{session.device_type}</span>
-                    <span>•</span>
-                    <span>{session.browser}</span>
-                    {session.country && (
-                      <>
-                        <span>•</span>
-                        <span>{session.country}</span>
-                      </>
+                  <div className="text-xs font-medium text-gray-900 leading-snug">
+                    {suggestion.diagnosis}
+                  </div>
+                </div>
+              </div>
+
+              {/* Data */}
+              <div className="text-[10px] text-gray-500 mb-2.5 ml-3.5 font-mono">
+                {suggestion.data}
+              </div>
+
+              {/* Resolution Button */}
+              <button className="ml-3.5 flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-900 text-white rounded text-[11px] font-medium hover:bg-gray-800 transition-colors">
+                {suggestion.action === 'rewrite' && <RotateCcw className="w-3 h-3" />}
+                {suggestion.action === 'simplify' && <RotateCcw className="w-3 h-3" />}
+                {suggestion.action === 'add-source' && <FileText className="w-3 h-3" />}
+                {suggestion.resolution}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Version History */}
+        <div className="border-t border-gray-200 flex-shrink-0">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className="w-full px-4 py-2.5 flex items-center justify-between text-[11px] font-semibold text-gray-500 uppercase tracking-wider hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <GitCommit className="w-3.5 h-3.5" />
+              History
+            </span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showHistory && (
+            <div className="px-3 pb-3 space-y-0.5">
+              {versionHistory.map((v, i) => (
+                <div 
+                  key={v.version}
+                  className="flex items-start gap-2.5 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                >
+                  {/* Commit dot + line */}
+                  <div className="flex flex-col items-center">
+                    <div className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                    {i < versionHistory.length - 1 && (
+                      <div className="w-px h-8 bg-gray-200 mt-1" />
                     )}
                   </div>
-
-                  {/* Completion bar */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full rounded-full transition-all"
-                        style={{ 
-                          width: `${session.completion_rate * 100}%`,
-                          backgroundColor: session.completion_rate === 1 ? '#10B981' : 
-                                          session.completion_rate > 0.7 ? '#F59E0B' : '#EF4444'
-                        }}
-                      />
+                  
+                  <div className="flex-1 min-w-0 -mt-0.5">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[10px] font-mono text-gray-400">{v.hash}</span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400">{v.date}</span>
                     </div>
-                    <span className="text-xs font-medium" style={{
-                      color: session.completion_rate === 1 ? '#10B981' : 
-                             session.completion_rate > 0.7 ? '#F59E0B' : '#EF4444'
-                    }}>
-                      {Math.round(session.completion_rate * 100)}%
-                    </span>
+                    <div className="text-[11px] text-gray-700 leading-snug mb-1">{v.message}</div>
+                    <div className="flex gap-1">
+                      {v.changes.map((c, j) => (
+                        <span key={j} className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
-      </div>
-    </div>
-  )
-}
-
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  trend,
-  trendUp,
-  trendLabel = 'vs last week'
-}: { 
-  icon: typeof Eye
-  label: string
-  value: string | number
-  trend: string
-  trendUp?: boolean
-  trendLabel?: string
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-gray-600" />
-        </div>
-        <span className="text-sm text-gray-500">{label}</span>
-      </div>
-      <div className="text-2xl font-semibold text-gray-900 mb-1">{value}</div>
-      <div className="text-xs text-gray-500">
-        <span className={trendUp ? 'text-emerald-600' : 'text-gray-500'}>
-          {trend}
-        </span>
-        {' '}{trendLabel}
       </div>
     </div>
   )
