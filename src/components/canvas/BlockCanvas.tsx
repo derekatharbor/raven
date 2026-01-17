@@ -343,7 +343,7 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
   ]
 
   const modes = {
-    ask: { label: 'Ask', color: '#22C55E', desc: 'Search sources' },
+    ask: { label: 'Ask', color: '#10B981', desc: 'Research' },
     agent: { label: 'Agent', color: '#8B5CF6', desc: 'Deploy agent' },
     verify: { label: 'Verify', color: '#F59E0B', desc: 'Check claims' },
   }
@@ -398,75 +398,22 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
     }, 1000)
   }
 
-  // Collapsed state - just show icon strip
-  if (isCollapsed) {
-    return (
-      <div style={{
-        width: 48,
-        flexShrink: 0,
-        borderLeft: '1px solid #E5E7EB',
-        background: '#FAFAFA',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: 8,
-        gap: 4,
-      }}>
-        {tabs.map(tab => {
-          const Icon = tab.icon
-          const isActive = activeTab === tab.id
-          return (
-            <Tooltip key={tab.id} label={tab.label}>
-              <button
-                onClick={() => { setActiveTab(tab.id); onToggleCollapse(); }}
-                className="side-tab-btn"
-                style={{
-                  width: 36, height: 36, borderRadius: 8, border: 'none',
-                  background: isActive ? 'white' : 'transparent',
-                  color: isActive ? '#111' : '#6B7280',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                }}
-              >
-                <Icon className="w-[18px] h-[18px]" />
-              </button>
-            </Tooltip>
-          )
-        })}
-        
-        {/* Expand button at bottom */}
-        <div style={{ flex: 1 }} />
-        <Tooltip label="Expand Panel">
-          <button
-            onClick={onToggleCollapse}
-            className="side-tab-btn"
-            style={{
-              width: 36, height: 36, borderRadius: 8, border: 'none',
-              background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <PanelRight className="w-[18px] h-[18px]" />
-          </button>
-        </Tooltip>
-      </div>
-    )
-  }
-
+  // Single container with animated width
   return (
     <div style={{
-      width: 340,
+      width: isCollapsed ? 48 : 340,
       flexShrink: 0,
       borderLeft: '1px solid #E5E7EB',
       background: 'white',
       display: 'flex',
+      transition: 'width 0.2s ease',
+      overflow: 'hidden',
     }}>
-      {/* Vertical Icon Strip */}
+      {/* Vertical Icon Strip - always visible */}
       <div style={{
         width: 48,
-        borderRight: '1px solid #F3F4F6',
+        minWidth: 48,
+        borderRight: isCollapsed ? 'none' : '1px solid #F3F4F6',
         background: '#FAFAFA',
         display: 'flex',
         flexDirection: 'column',
@@ -478,45 +425,49 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
           const Icon = tab.icon
           const isActive = activeTab === tab.id
           return (
-            <Tooltip key={tab.id} label={tab.label}>
-              <button
-                onClick={() => setActiveTab(tab.id)}
-                className="side-tab-btn"
-                style={{
-                  width: 36, height: 36, borderRadius: 8, border: 'none',
-                  background: isActive ? 'white' : 'transparent',
-                  color: isActive ? '#111' : '#6B7280',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                }}
-              >
-                <Icon className="w-[18px] h-[18px]" />
-              </button>
-            </Tooltip>
+            <button
+              key={tab.id}
+              onClick={() => isCollapsed ? onToggleCollapse() : setActiveTab(tab.id)}
+              className="side-tab-btn"
+              style={{
+                width: 36, height: 36, borderRadius: 8, border: 'none',
+                background: isActive ? 'white' : 'transparent',
+                color: isActive ? '#111' : '#6B7280',
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
+            >
+              <Icon className="w-[18px] h-[18px]" />
+            </button>
           )
         })}
         
-        {/* Collapse button at bottom */}
+        {/* Collapse/Expand button at bottom */}
         <div style={{ flex: 1 }} />
-        <Tooltip label="Collapse Panel">
-          <button
-            onClick={onToggleCollapse}
-            className="side-tab-btn"
-            style={{
-              width: 36, height: 36, borderRadius: 8, border: 'none',
-              background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <PanelRightClose className="w-[18px] h-[18px]" />
-          </button>
-        </Tooltip>
+        <button
+          onClick={onToggleCollapse}
+          className="side-tab-btn"
+          style={{
+            width: 36, height: 36, borderRadius: 8, border: 'none',
+            background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 8,
+          }}
+        >
+          {isCollapsed ? <PanelRight className="w-[18px] h-[18px]" /> : <PanelRightClose className="w-[18px] h-[18px]" />}
+        </button>
       </div>
 
-      {/* Tab Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Tab Content - hidden when collapsed */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden',
+        opacity: isCollapsed ? 0 : 1,
+        transition: 'opacity 0.15s ease',
+      }}>
         
         {/* RESEARCH TAB - AI Chat */}
         {activeTab === 'research' && (
@@ -552,7 +503,7 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-                  placeholder="Ask about your sources..."
+                  placeholder="Research anything..."
                   rows={2}
                   style={{
                     width: '100%', border: 'none', outline: 'none', resize: 'none',
@@ -647,7 +598,7 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
             <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
               {messages.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9CA3AF', fontSize: 13 }}>
-                  Search sources or ask questions
+                  Research the web or your connected sources
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
