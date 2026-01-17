@@ -15,7 +15,7 @@ import {
   X, Bold, Italic, Underline as UnderlineIcon,
   Atom, Send, Type, Heading1, Heading2, List, Quote,
   Eye, Table, BarChart3, Link2, Variable, Radio,
-  Search, PenLine, Radar
+  Search, PenLine, Radar, ChevronDown
 } from 'lucide-react'
 
 // ============================================================================
@@ -323,7 +323,7 @@ function ResearchPanel({ selectedText, onClose }: {
         flexDirection: 'column',
       }}
     >
-      {/* Header */}
+      {/* Header with Sources Dropdown */}
       <div style={{ 
         padding: '12px 16px', 
         borderBottom: '1px solid #E5E7EB',
@@ -334,9 +334,29 @@ function ResearchPanel({ selectedText, onClose }: {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Atom className="w-4 h-4" style={{ color: '#22C55E' }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>Research</span>
+          <button
+            className="sources-dropdown-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '2px 8px',
+              borderRadius: 4,
+              border: '1px solid #E5E7EB',
+              background: 'white',
+              color: '#6B7280',
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 500,
+            }}
+          >
+            3 sources
+            <ChevronDown className="w-3 h-3" />
+          </button>
         </div>
         <button
           onClick={onClose}
+          className="panel-close-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -1006,6 +1026,9 @@ export default function BlockCanvas({
         .menu-item-danger:hover { background: #FEF2F2; }
         .floating-toolbar-btn:hover { background: #F3F4F6 !important; }
         .block-option:hover { background: #F5F5F5; }
+        .panel-close-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
+        .sources-dropdown-btn:hover { background: #F3F4F6 !important; border-color: #D1D5DB !important; }
+        .send-btn:hover { opacity: 0.9; }
         
         /* Audit Mode - Signal Highlights (Grammarly-style: faint bg + underline) */
         .signal-blue { 
