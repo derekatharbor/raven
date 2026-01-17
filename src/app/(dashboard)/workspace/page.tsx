@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import BlockCanvas from '@/components/canvas/BlockCanvas'
@@ -15,6 +15,7 @@ export default function WorkspacePage() {
   const { user, loading: authLoading } = useAuth()
   const { documents, loading: docsLoading, createDocument } = useDocuments()
   const [activeDocId, setActiveDocId] = useState<string | null>(null)
+  const creatingDocRef = useRef(false)
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -25,21 +26,29 @@ export default function WorkspacePage() {
 
   // Set active doc to first document or create one if none exist
   useEffect(() => {
-    if (!docsLoading && user) {
-      if (documents.length > 0 && !activeDocId) {
-        setActiveDocId(documents[0].id)
-      } else if (documents.length === 0 && !activeDocId) {
-        // Auto-create first document
-        createDocument('Untitled').then(doc => {
-          if (doc) setActiveDocId(doc.id)
-        })
-      }
+    if (docsLoading || !user || creatingDocRef.current) return
+    
+    if (documents.length > 0) {
+      // Use existing document - set first one if no active doc
+      setActiveDocId(prev => {
+        if (!prev || !documents.find(d => d.id === prev)) {
+          return documents[0].id
+        }
+        return prev
+      })
+    } else {
+      // No documents - create first one (only once)
+      creatingDocRef.current = true
+      createDocument('').then(doc => {
+        if (doc) setActiveDocId(doc.id)
+        // Don't reset ref - we only want to create once per session
+      })
     }
-  }, [documents, docsLoading, activeDocId, user, createDocument])
+  }, [documents, docsLoading, user]) // Removed activeDocId and createDocument
 
   // Handle creating new document
   const handleNewDocument = useCallback(async () => {
-    const doc = await createDocument('Untitled')
+    const doc = await createDocument('')
     if (doc) {
       setActiveDocId(doc.id)
     }

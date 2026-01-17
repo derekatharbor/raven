@@ -1,3 +1,4 @@
+// Path: src/lib/hooks/useDocument.ts
 // Route: src/lib/hooks/useDocument.ts
 
 'use client'
@@ -314,23 +315,21 @@ export function useDocuments() {
   const createDocument = useCallback(async (title?: string) => {
     if (!user) return null
 
+    // Use empty string if not provided, not "Untitled"
+    const docTitle = title ?? ''
+
     try {
       const { data, error } = await supabase
         .from('documents')
         .insert({
           user_id: user.id,
-          title: title || 'Untitled',
+          title: docTitle,
           content: {
             type: 'doc',
             content: [
               {
-                type: 'heading',
-                attrs: { level: 1 },
-                content: [{ type: 'text', text: title || 'Untitled' }]
-              },
-              {
                 type: 'paragraph',
-                content: [{ type: 'text', text: 'Start writing...' }]
+                content: []
               }
             ]
           }

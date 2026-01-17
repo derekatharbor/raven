@@ -86,10 +86,11 @@ interface Block {
 
 interface Tab {
   id: string
-  name: string
+  name: string // Display name (can be custom or inherited from title)
+  hasCustomName?: boolean // True if user manually renamed the tab
   hasChanges: boolean
   blocks: Block[]
-  title: string
+  title: string // Document title (saved to DB)
 }
 
 // ============================================================================
@@ -199,8 +200,14 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
               autoFocus
             />
           ) : (
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {tab.name || 'Untitled'}
+            <span style={{ 
+              overflow: 'hidden', 
+              textOverflow: 'ellipsis', 
+              whiteSpace: 'nowrap',
+              color: (tab.name || tab.title) ? undefined : '#9CA3AF', // Faded grey for untitled
+              fontStyle: (tab.name || tab.title) ? undefined : 'italic',
+            }}>
+              {tab.name || tab.title || 'Untitled'}
             </span>
           )}
           {tab.hasChanges && editingTabId !== tab.id && (
@@ -1170,9 +1177,10 @@ export default function BlockCanvas({
     if (documents.length > 0) {
       const newTabs: Tab[] = documents.map(doc => ({
         id: doc.id,
-        name: doc.title,
+        name: '', // Empty - will inherit from title
+        hasCustomName: false,
         hasChanges: false,
-        title: doc.title,
+        title: doc.title || '',
         blocks: contentToBlocks(doc.content),
       }))
       setTabs(newTabs)
@@ -1183,9 +1191,10 @@ export default function BlockCanvas({
       // No documents - show empty state
       setTabs([{
         id: 'new',
-        name: 'Untitled',
+        name: '',
+        hasCustomName: false,
         hasChanges: false,
-        title: 'Untitled',
+        title: '',
         blocks: DEFAULT_BLOCKS,
       }])
       setActiveTabId('new')
@@ -1348,7 +1357,8 @@ export default function BlockCanvas({
   const handleNewTab = useCallback(() => {
     const newTab: Tab = {
       id: `doc-${Date.now()}`,
-      name: 'Untitled',
+      name: '',
+      hasCustomName: false,
       hasChanges: false,
       title: '',
       blocks: [{ id: generateId(), content: '' }],
@@ -1367,7 +1377,7 @@ export default function BlockCanvas({
   const handleTabRename = useCallback((id: string, newName: string) => {
     // Only update the tab name (display name), NOT the document title
     setTabs(prev => prev.map(t => 
-      t.id === id ? { ...t, name: newName } : t
+      t.id === id ? { ...t, name: newName, hasCustomName: true } : t
     ))
     // Tab name is just local UI - don't save to DB
   }, [])
@@ -1490,6 +1500,7 @@ export default function BlockCanvas({
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'white' }}>
       <style>{`
+        .doc-title-input::placeholder { color: #C0C0C0; font-style: normal; }
         .ghost-block-content { 
           outline: none; 
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -1604,12 +1615,13 @@ export default function BlockCanvas({
                 value={title} 
                 onChange={(e) => handleTitleUpdate(e.target.value)} 
                 placeholder="Untitled" 
+                className="doc-title-input"
                 style={{ 
                   width: '100%', 
                   fontSize: 32, 
                   fontWeight: 600, 
                   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", 
-                  color: '#111', 
+                  color: title ? '#111' : '#9CA3AF', 
                   border: 'none', 
                   outline: 'none', 
                   background: 'transparent',
