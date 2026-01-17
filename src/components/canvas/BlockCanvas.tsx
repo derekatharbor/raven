@@ -1,3 +1,4 @@
+// Path: src/components/canvas/BlockCanvas.tsx
 // src/components/canvas/BlockCanvas.tsx
 //
 // Raven "Quiet" Workspace - Cursor for Documents
@@ -1065,50 +1066,183 @@ function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, o
 // MAIN CANVAS
 // ============================================================================
 
+import { useDocument, useDocuments, Document } from '@/lib/hooks/useDocument'
+import { useAuth } from '@/lib/hooks/useAuth'
+
 interface BlockCanvasProps {
   documentId: string
-  documentTitle?: string
-  initialTabs?: Tab[]
-  onBlocksChange?: (blocks: Block[]) => void
+  documents?: Document[]
+  onDocumentSelect?: (id: string) => void
+  onNewDocument?: () => void
 }
 
-const DEFAULT_TABS: Tab[] = [
-  { 
-    id: 'doc-1', 
-    name: 'Q4 2024 Analysis', 
-    hasChanges: false,
-    title: 'Q4 2024 Investment Analysis',
-    blocks: [
-      { id: 'd1-1', content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>' },
-      { id: 'd1-2', content: '<h2>Key Findings</h2>' },
-      { id: 'd1-3', content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase.</p>' },
-      { id: 'd1-4', content: '<p>The company maintained healthy gross margins of 45.2% despite macroeconomic headwinds.</p>' },
-      { id: 'd1-5', content: '' },
-    ]
-  },
-  { 
-    id: 'doc-2', 
-    name: 'Due Diligence Report', 
-    hasChanges: true,
-    title: 'Series B Due Diligence',
-    blocks: [
-      { id: 'd2-1', content: '<h2>Executive Summary</h2>' },
-      { id: 'd2-2', content: '<p>This report presents findings from our comprehensive due diligence review of the target company.</p>' },
-      { id: 'd2-3', content: '<p>Key areas of focus include financial performance, market position, and technology assessment.</p>' },
-      { id: 'd2-4', content: '' },
-    ]
-  },
+// Default blocks for new documents
+const DEFAULT_BLOCKS: Block[] = [
+  { id: 'new-1', content: '' },
 ]
 
 export default function BlockCanvas({ 
   documentId, 
-  documentTitle = '',
-  initialTabs,
-  onBlocksChange,
+  documents = [],
+  onDocumentSelect,
+  onNewDocument,
 }: BlockCanvasProps) {
-  const [tabs, setTabs] = useState<Tab[]>(initialTabs || DEFAULT_TABS)
-  const [activeTabId, setActiveTabId] = useState(tabs[0]?.id || 'doc-1')
+  // Auth
+  const { user } = useAuth()
+  
+  // Document data from DB
+  const { 
+    document: currentDoc, 
+    loading: docLoading,
+    saving,
+    updateContent, 
+    updateTitle 
+  } = useDocument(documentId !== 'new' ? documentId : null)
+  
+  // Local state for tabs (combines DB docs with local edits)
+  const [tabs, setTabs] = useState<Tab[]>([])
+  const [activeTabId, setActiveTabId] = useState<string>(documentId)
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Sync documents from props to tabs
+  useEffect(() => {
+    if (documents.length > 0) {
+      const newTabs: Tab[] = documents.map(doc => ({
+        id: doc.id,
+        name: doc.title,
+        hasChanges: false,
+        title: doc.title,
+        blocks: contentToBlocks(doc.content),
+      }))
+      setTabs(newTabs)
+      if (!activeTabId || !documents.find(d => d.id === activeTabId)) {
+        setActiveTabId(documents[0].id)
+      }
+    } else {
+      // No documents - show empty state
+      setTabs([{
+        id: 'new',
+        name: 'Untitled',
+        hasChanges: false,
+        title: 'Untitled',
+        blocks: DEFAULT_BLOCKS,
+      }])
+      setActiveTabId('new')
+    }
+  }, [documents])
+
+  // Update tab when currentDoc loads
+  useEffect(() => {
+    if (currentDoc && !docLoading) {
+      setTabs(prev => prev.map(tab => 
+        tab.id === currentDoc.id 
+          ? {
+              ...tab,
+              name: currentDoc.title,
+              title: currentDoc.title,
+              blocks: contentToBlocks(currentDoc.content),
+            }
+          : tab
+      ))
+    }
+  }, [currentDoc, docLoading])
+
+  // Convert DB content (TipTap JSON) to our block format
+  function contentToBlocks(content: any): Block[] {
+    if (!content || !content.content) {
+      return DEFAULT_BLOCKS
+    }
+    
+    return content.content.map((node: any, index: number) => {
+      let html = ''
+      if (node.type === 'heading') {
+        const level = node.attrs?.level || 1
+        const text = node.content?.map((c: any) => c.text || '').join('') || ''
+        html = `<h${level}>${text}</h${level}>`
+      } else if (node.type === 'paragraph') {
+        const text = node.content?.map((c: any) => c.text || '').join('') || ''
+        html = `<p>${text}</p>`
+      } else {
+        html = ''
+      }
+      
+      return {
+        id: `block-${index}`,
+        content: html,
+      }
+    })
+  }
+
+  // Convert our blocks back to TipTap JSON for saving
+  function blocksToContent(blocks: Block[]): any {
+    const content = blocks.map(block => {
+      // Parse the HTML to extract type and text
+      const h1Match = block.content.match(/<h1>(.*?)<\/h1>/i)
+      const h2Match = block.content.match(/<h2>(.*?)<\/h2>/i)
+      const pMatch = block.content.match(/<p>(.*?)<\/p>/i)
+      
+      if (h1Match) {
+        return {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: h1Match[1] }]
+        }
+      } else if (h2Match) {
+        return {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: h2Match[1] }]
+        }
+      } else {
+        // Default to paragraph
+        const text = pMatch ? pMatch[1] : block.content.replace(/<[^>]*>/g, '')
+        return {
+          type: 'paragraph',
+          content: text ? [{ type: 'text', text }] : []
+        }
+      }
+    }).filter(node => node.content && node.content.length > 0)
+
+    return {
+      type: 'doc',
+      content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }]
+    }
+  }
+
+  // Auto-save with debounce
+  const triggerSave = useCallback((blocks: Block[], title: string) => {
+    if (!user || documentId === 'new') return
+    
+    setHasUnsavedChanges(true)
+    
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    
+    // Set new timeout for save
+    saveTimeoutRef.current = setTimeout(async () => {
+      const content = blocksToContent(blocks)
+      await updateContent(content)
+      setHasUnsavedChanges(false)
+      
+      // Update tab to show saved
+      setTabs(prev => prev.map(tab => 
+        tab.id === documentId ? { ...tab, hasChanges: false } : tab
+      ))
+    }, 1500) // 1.5 second debounce
+  }, [user, documentId, updateContent])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
   
   // Toolbar state
   const [toolbarState, setToolbarState] = useState<{ 
@@ -1143,6 +1277,7 @@ export default function BlockCanvas({
   // Tab handlers
   const handleTabSelect = useCallback((id: string) => {
     setActiveTabId(id)
+    onDocumentSelect?.(id)
     setToolbarState({ visible: false, position: null, editor: null, selectedText: '' })
   }, [])
 
@@ -1170,13 +1305,22 @@ export default function BlockCanvas({
     setTabs(prev => prev.map(t => 
       t.id === activeTabId ? { ...t, blocks: newBlocks, hasChanges: true } : t
     ))
-  }, [activeTabId])
+    // Trigger auto-save
+    const currentTab = tabs.find(t => t.id === activeTabId)
+    if (currentTab) {
+      triggerSave(newBlocks, currentTab.title)
+    }
+  }, [activeTabId, tabs, triggerSave])
 
-  const updateTitle = useCallback((newTitle: string) => {
+  const handleTitleUpdate = useCallback((newTitle: string) => {
     setTabs(prev => prev.map(t => 
-      t.id === activeTabId ? { ...t, title: newTitle, name: newTitle || 'Untitled' } : t
+      t.id === activeTabId ? { ...t, title: newTitle, name: newTitle || 'Untitled', hasChanges: true } : t
     ))
-  }, [activeTabId])
+    // Trigger title save
+    if (user && documentId !== 'new') {
+      updateTitle(newTitle)
+    }
+  }, [activeTabId, user, documentId, updateTitle])
 
   const addBlock = useCallback((afterId?: string, blockType?: string) => {
     // TODO: Handle different block types
@@ -1230,8 +1374,6 @@ export default function BlockCanvas({
     setResearchText(text)
     setToolbarState(prev => ({ ...prev, visible: false }))
   }, [])
-
-  useEffect(() => { onBlocksChange?.(blocks) }, [blocks, onBlocksChange])
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'white' }}>
@@ -1486,6 +1628,25 @@ export default function BlockCanvas({
             <span style={{ color: '#111', fontWeight: 500 }}>
               {title || 'Untitled'}
             </span>
+            {/* Save indicator */}
+            {saving && (
+              <span style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 4, 
+                color: '#9CA3AF',
+                fontSize: 11,
+              }}>
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                Saving...
+              </span>
+            )}
+            {!saving && hasUnsavedChanges && (
+              <span style={{ color: '#F59E0B', fontSize: 11 }}>Unsaved</span>
+            )}
+            {!saving && !hasUnsavedChanges && activeTab?.hasChanges === false && documentId !== 'new' && (
+              <Check className="w-3 h-3" style={{ color: '#22C55E' }} />
+            )}
           </div>
           
           {/* Separator */}
