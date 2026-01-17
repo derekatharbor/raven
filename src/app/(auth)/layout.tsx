@@ -20,21 +20,11 @@ export default function AuthLayout({
       </div>
       
       {/* Right side - Image (hidden on mobile) */}
-      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ 
-            backgroundImage: `url(/images/${isLogin ? 'auth-login' : 'auth-signup'}.png)`,
-            background: '#1a1a1a',
-          }}
-        />
-        {/* Fallback gradient if no image */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-            zIndex: -1,
-          }}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden" style={{ background: '#1a1a1a' }}>
+        <img 
+          src={`/images/${isLogin ? 'auth-login' : 'auth-signup'}.png`}
+          alt=""
+          className="absolute inset-0 w-full h-full object-contain"
         />
       </div>
     </div>

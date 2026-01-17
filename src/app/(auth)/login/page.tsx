@@ -102,8 +102,8 @@ export default function LoginPage() {
       {/* Header */}
       <div>
         <Link href="/" className="flex items-center gap-2">
-          <img src="/images/raven-logo.png" alt="Raven" className="w-8 h-8" />
-          <span style={{ color: '#fff', fontSize: 18, fontWeight: 600 }}>RAVEN</span>
+          <img src="/images/raven-logo-white.png" alt="Raven" className="w-7 h-7" />
+          <span style={{ color: '#fff', fontSize: 16, fontWeight: 600, letterSpacing: '0.5px' }}>RAVEN</span>
         </Link>
       </div>
 
@@ -136,17 +136,6 @@ export default function LoginPage() {
                     <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
                   </svg>
                   Continue with Google
-                </button>
-
-                <button
-                  style={buttonStyle}
-                  className="auth-btn"
-                  disabled
-                >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="#fff">
-                    <path d="M14.94 5.19A4.38 4.38 0 0 0 11.5 4c-1.8 0-3.26 1.12-3.87 2.71-.13.35-.21.73-.21 1.13 0 .4.08.78.21 1.13.61 1.59 2.07 2.71 3.87 2.71a3.87 3.87 0 0 0 2.54-.93c.79-.64 1.32-1.57 1.49-2.68h-4.03V6.1h6.02c.07.38.11.78.11 1.18 0 1.85-.66 3.42-1.81 4.48-1.01.95-2.38 1.51-4.13 1.51-2.48 0-4.62-1.42-5.66-3.49A6.26 6.26 0 0 1 5.36 7c0-.99.23-1.93.67-2.78C7.07 2.15 9.21.73 11.69.73c1.63 0 3.08.54 4.22 1.57l-1.97 1.89z"/>
-                  </svg>
-                  Continue with Apple
                 </button>
               </div>
 
