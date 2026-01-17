@@ -17,6 +17,59 @@ import {
   Eye, Table, BarChart3, Link2, Variable, Radio,
   Search, PenLine, Radar, ChevronDown, MessageSquare, Sparkles, Bug
 } from 'lucide-react'
+import { createPortal } from 'react-dom'
+
+// ============================================================================
+// TOOLTIP COMPONENT - renders via portal to escape overflow:hidden
+// ============================================================================
+
+function Tooltip({ children, label }: { children: React.ReactNode; label: string }) {
+  const [show, setShow] = useState(false)
+  const [position, setPosition] = useState({ top: 0, left: 0 })
+  const triggerRef = useRef<HTMLDivElement>(null)
+
+  const handleMouseEnter = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setPosition({ top: rect.top - 36, left: rect.left + rect.width / 2 })
+      setShow(true)
+    }
+  }
+
+  return (
+    <div 
+      ref={triggerRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setShow(false)}
+      style={{ display: 'inline-flex' }}
+    >
+      {children}
+      {show && typeof document !== 'undefined' && createPortal(
+        <div style={{
+          position: 'fixed',
+          top: position.top,
+          left: position.left,
+          transform: 'translateX(-50%)',
+          padding: '6px 10px',
+          background: '#1a1a1a',
+          color: 'white',
+          fontSize: 11,
+          fontWeight: 500,
+          borderRadius: 6,
+          whiteSpace: 'nowrap',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}>
+          {label}
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+  )
+}
 
 // ============================================================================
 // TYPES
@@ -270,38 +323,21 @@ function ResearchPanel({ selectedText, onClose }: {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'ask' | 'agent' | 'plan' | 'verify'>('ask')
-  const [showModeDropdown, setShowModeDropdown] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const modeDropdownRef = useRef<HTMLDivElement>(null)
 
   const modes = {
-    ask: { label: 'Ask', icon: MessageSquare, color: '#22C55E', desc: 'Ask questions about sources' },
-    agent: { label: 'Agent', icon: Sparkles, color: '#8B5CF6', desc: 'Deploy research agent' },
-    plan: { label: 'Plan', icon: List, color: '#3B82F6', desc: 'Plan verification steps' },
-    verify: { label: 'Verify', icon: Bug, color: '#F59E0B', desc: 'Verify claims against sources' },
+    ask: { label: 'Ask', icon: MessageSquare, color: '#22C55E', desc: 'Ask questions' },
+    agent: { label: 'Agent', icon: Sparkles, color: '#8B5CF6', desc: 'Deploy agent' },
+    plan: { label: 'Plan', icon: List, color: '#3B82F6', desc: 'Plan steps' },
+    verify: { label: 'Verify', icon: Bug, color: '#F59E0B', desc: 'Check claims' },
   }
 
   const currentMode = modes[mode]
-  const ModeIcon = currentMode.icon
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
-        setShowModeDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleSubmit = () => {
     if (!query.trim() && !selectedText) return
@@ -315,7 +351,6 @@ function ResearchPanel({ selectedText, onClose }: {
     setQuery('')
     setIsLoading(true)
 
-    // Mock AI response based on mode
     const responses: Record<string, string> = {
       ask: `Based on my search of connected sources:\n\n**SEC EDGAR (NVDA 10-Q, Q3 2024)**\nNVIDIA reported data center revenue of $14.51 billion, representing a 279% year-over-year increase.\n\n**Bloomberg Terminal**\nConfirms the $14.51B figure with additional context on AI chip demand driving growth.`,
       agent: `**Agent deployed** - searching 3 connected sources...\n\n✓ SEC EDGAR - Found 2 relevant filings\n✓ Bloomberg - 4 matching articles\n✓ Internal docs - 1 related memo\n\nCompiling findings into a structured summary...`,
@@ -345,7 +380,7 @@ function ResearchPanel({ selectedText, onClose }: {
   return (
     <div 
       style={{
-        width: 380,
+        width: 340,
         flexShrink: 0,
         borderLeft: '1px solid #E5E7EB',
         background: '#FAFAFA',
@@ -353,214 +388,238 @@ function ResearchPanel({ selectedText, onClose }: {
         flexDirection: 'column',
       }}
     >
-      {/* Header with Sources Dropdown */}
+      {/* Mode Tabs - Figma style */}
       <div style={{ 
-        padding: '12px 16px', 
-        borderBottom: '1px solid #E5E7EB',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        borderBottom: '1px solid #E5E7EB',
+        background: 'white',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Atom className="w-4 h-4" style={{ color: '#22C55E' }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>Research</span>
-          <button
-            className="sources-dropdown-btn"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '2px 8px',
-              borderRadius: 4,
-              border: '1px solid #E5E7EB',
-              background: 'white',
-              color: '#6B7280',
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 500,
-            }}
-          >
-            3 sources
-            <ChevronDown className="w-3 h-3" />
-          </button>
-        </div>
-        <button
-          onClick={onClose}
-          className="panel-close-btn"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 24,
-            height: 24,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            color: '#9CA3AF',
-            cursor: 'pointer',
-          }}
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Input at TOP */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB' }}>
-        <div style={{ 
-          background: 'white', 
-          border: '1px solid #E5E7EB', 
-          borderRadius: 8,
-          overflow: 'hidden',
-        }}>
-          {/* Context badge - pill style, green */}
-          {selectedText && (
-            <div style={{ padding: '10px 12px 0' }}>
-              <div style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: 6, 
-                padding: '4px 12px', 
-                background: '#DCFCE7',
-                borderRadius: 999,
-                fontSize: 12,
-                color: '#166534',
-                fontWeight: 500,
-              }}>
-                <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
-                <span style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {truncate(selectedText)}
-                </span>
-              </div>
-            </div>
-          )}
-          
-          <div style={{ display: 'flex', alignItems: 'flex-end', padding: '10px 12px', gap: 8 }}>
-            <textarea
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={selectedText ? "Ask about this selection..." : "Search sources, ask questions..."}
-              rows={2}
+        {Object.entries(modes).map(([key, m]) => {
+          const Icon = m.icon
+          const isActive = mode === key
+          return (
+            <button
+              key={key}
+              onClick={() => setMode(key as typeof mode)}
+              className="mode-tab-btn"
               style={{
                 flex: 1,
-                border: 'none',
-                outline: 'none',
-                resize: 'none',
-                fontSize: 13,
-                lineHeight: 1.5,
-                color: '#111',
-                background: 'transparent',
-              }}
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={!query.trim() && !selectedText}
-              className="send-btn"
-              style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 32,
-                height: 32,
-                borderRadius: 6,
+                gap: 6,
+                padding: '12px 8px',
                 border: 'none',
-                background: (query.trim() || selectedText) ? currentMode.color : '#E5E7EB',
-                color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
-                cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
-                flexShrink: 0,
+                background: 'transparent',
+                color: isActive ? m.color : '#9CA3AF',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500,
+                borderBottom: isActive ? `2px solid ${m.color}` : '2px solid transparent',
+                marginBottom: -1,
                 transition: 'all 0.15s ease',
               }}
             >
-              <ArrowUp className="w-4 h-4" />
+              <Icon className="w-4 h-4" />
+              {m.label}
             </button>
-          </div>
+          )
+        })}
+      </div>
 
-          {/* Mode selector row */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            padding: '8px 12px', 
-            borderTop: '1px solid #F3F4F6',
-            background: '#FAFAFA',
-          }}>
-            <div style={{ position: 'relative' }} ref={modeDropdownRef}>
-              <button
-                onClick={() => setShowModeDropdown(!showModeDropdown)}
-                className="mode-selector-btn"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 8px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#6B7280',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 500,
-                }}
-              >
-                <ModeIcon className="w-4 h-4" style={{ color: currentMode.color }} />
-                {currentMode.label}
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {/* Mode dropdown */}
-              {showModeDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '100%',
-                  left: 0,
-                  marginBottom: 4,
-                  background: 'white',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: 8,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  overflow: 'hidden',
-                  minWidth: 200,
-                  zIndex: 100,
-                }}>
-                  {Object.entries(modes).map(([key, m]) => {
-                    const Icon = m.icon
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => { setMode(key as typeof mode); setShowModeDropdown(false) }}
-                        className="mode-option"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: 'none',
-                          background: mode === key ? '#F5F5F5' : 'transparent',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                        }}
-                      >
-                        <Icon className="w-4 h-4" style={{ color: m.color }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>{m.label}</div>
-                          <div style={{ fontSize: 11, color: '#6B7280' }}>{m.desc}</div>
-                        </div>
-                        {mode === key && (
-                          <span style={{ color: m.color, fontSize: 14 }}>✓</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
+      {/* Sources section */}
+      <div style={{ 
+        padding: '12px 16px', 
+        borderBottom: '1px solid #E5E7EB',
+        background: 'white',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Connected Sources
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {['SEC EDGAR', 'Bloomberg Terminal', 'Internal Docs'].map((source, i) => (
+            <div key={i} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8,
+              padding: '6px 8px',
+              background: '#F5F5F5',
+              borderRadius: 6,
+              fontSize: 12,
+              color: '#374151',
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
+              {source}
             </div>
-            
-            <span style={{ fontSize: 11, color: '#9CA3AF' }}>↵ to send</span>
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* Input area */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB' }}>
+        {/* Context badge */}
+        {selectedText && (
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              padding: '4px 10px', 
+              background: '#DCFCE7',
+              borderRadius: 999,
+              fontSize: 11,
+              color: '#166534',
+              fontWeight: 500,
+            }}>
+              <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
+              <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {truncate(selectedText, 30)}
+              </span>
+              <button
+                onClick={onClose}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  width: 14, 
+                  height: 14, 
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'rgba(0,0,0,0.1)',
+                  color: '#166534',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          </div>
+        )}
+        
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'flex-end', 
+          gap: 8,
+          background: 'white',
+          border: '1px solid #E5E7EB',
+          borderRadius: 8,
+          padding: '10px 12px',
+        }}>
+          <textarea
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={`${currentMode.desc}...`}
+            rows={2}
+            style={{
+              flex: 1,
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: '#111',
+              background: 'transparent',
+            }}
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={!query.trim() && !selectedText}
+            className="send-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 32,
+              height: 32,
+              borderRadius: 6,
+              border: 'none',
+              background: (query.trim() || selectedText) ? currentMode.color : '#E5E7EB',
+              color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
+              cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
+              flexShrink: 0,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Messages / History */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+        {messages.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9CA3AF', fontSize: 13, lineHeight: 1.6 }}>
+            {mode === 'ask' && 'Ask questions about your connected sources'}
+            {mode === 'agent' && 'Deploy an agent to research across sources'}
+            {mode === 'plan' && 'Create a verification plan for your claims'}
+            {mode === 'verify' && 'Verify specific claims against sources'}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {messages.map((msg, i) => (
+              <div key={i}>
+                {msg.context && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: 6, 
+                      padding: '4px 10px', 
+                      background: '#DCFCE7',
+                      borderRadius: 999,
+                      fontSize: 11,
+                      color: '#166534',
+                      fontWeight: 500,
+                    }}>
+                      <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
+                      <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {truncate(msg.context, 25)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div style={{ 
+                  padding: '10px 12px', 
+                  borderRadius: 8,
+                  background: msg.role === 'user' ? '#111' : 'white',
+                  color: msg.role === 'user' ? 'white' : '#111',
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  border: msg.role === 'assistant' ? '1px solid #E5E7EB' : 'none',
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div style={{ 
+                padding: '10px 12px', 
+                borderRadius: 8, 
+                background: 'white', 
+                border: '1px solid #E5E7EB',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <div className="loading-dots" style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite' }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.2s' }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.4s' }} />
+                </div>
+                <span style={{ fontSize: 12, color: '#9CA3AF' }}>Searching sources...</span>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
       {/* Messages */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
@@ -711,10 +770,11 @@ function BlockSelectorModal({ position, onSelect, onClose }: {
             width: '100%',
             padding: '8px 12px',
             fontSize: 13,
+            color: '#111',
             border: '1px solid #E5E7EB',
             borderRadius: 6,
             outline: 'none',
-            background: '#FAFAFA',
+            background: 'white',
           }}
         />
       </div>
@@ -1003,7 +1063,6 @@ export default function BlockCanvas({
   }>({ visible: false, position: null, editor: null, selectedText: '' })
   
   // Research panel state
-  const [researchOpen, setResearchOpen] = useState(false)
   const [researchText, setResearchText] = useState('')
   
   // Audit mode state
@@ -1022,7 +1081,6 @@ export default function BlockCanvas({
   // Tab handlers
   const handleTabSelect = useCallback((id: string) => {
     setActiveTabId(id)
-    setResearchOpen(false)
     setToolbarState({ visible: false, position: null, editor: null, selectedText: '' })
   }, [])
 
@@ -1108,7 +1166,6 @@ export default function BlockCanvas({
   // Research handler
   const handleResearch = useCallback((text: string) => {
     setResearchText(text)
-    setResearchOpen(true)
     setToolbarState(prev => ({ ...prev, visible: false }))
   }, [])
 
@@ -1142,13 +1199,14 @@ export default function BlockCanvas({
         .menu-item:hover { background: #F5F5F5; }
         .menu-item-danger:hover { background: #FEF2F2; }
         .floating-toolbar-btn:hover { background: #F3F4F6 !important; }
-        .block-option:hover { background: #F5F5F5; }
+        .block-option:hover { background: #F5F5F5 !important; }
         .panel-close-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
         .sources-dropdown-btn:hover { background: #F3F4F6 !important; border-color: #D1D5DB !important; }
         .send-btn:hover { opacity: 0.9; }
         .mode-selector-btn:hover { background: #F3F4F6 !important; }
         .mode-option:hover { background: #F5F5F5 !important; }
         .dock-mode-btn:hover { background: rgba(0,0,0,0.08) !important; }
+        .mode-tab-btn:hover { background: #F5F5F5 !important; }
         
         /* Audit Mode - Signal Highlights (Grammarly-style: faint bg + underline) */
         .signal-blue { 
@@ -1263,16 +1321,11 @@ export default function BlockCanvas({
           </div>
         </div>
 
-        {/* Research Panel - Collapsible */}
-        {researchOpen && (
-          <ResearchPanel
-            selectedText={researchText}
-            onClose={() => {
-              setResearchOpen(false)
-              setResearchText('')
-            }}
-          />
-        )}
+        {/* Right Side Panel - ALWAYS visible like Figma */}
+        <ResearchPanel
+          selectedText={researchText}
+          onClose={() => setResearchText('')}
+        />
 
         {/* Floating Dock - Glassmorphism */}
         <div style={{
@@ -1288,11 +1341,11 @@ export default function BlockCanvas({
           WebkitBackdropFilter: 'blur(12px)',
           borderRadius: 12,
           boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
-          overflow: 'hidden',
         }}>
           {/* Left section - Tools */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px' }}>
             {/* Block Tray */}
+            <Tooltip label="Insert Block">
             <button
               onClick={() => setShowBlockTray(!showBlockTray)}
               className="floating-toolbar-btn"
@@ -1308,33 +1361,13 @@ export default function BlockCanvas({
                 color: showBlockTray ? '#111' : '#6B7280',
                 cursor: 'pointer',
               }}
-              title="Block Tray"
             >
               <Plus className="w-5 h-5" />
             </button>
-            
-            {/* Research */}
-            <button
-              onClick={() => setResearchOpen(!researchOpen)}
-              className="floating-toolbar-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: researchOpen ? '#DCFCE7' : 'transparent',
-                color: researchOpen ? '#22C55E' : '#6B7280',
-                cursor: 'pointer',
-              }}
-              title="Research"
-            >
-              <Search className="w-5 h-5" />
-            </button>
+            </Tooltip>
             
             {/* Active Signals */}
+            <Tooltip label="Active Signals">
             <button
               className="floating-toolbar-btn"
               style={{
@@ -1349,10 +1382,10 @@ export default function BlockCanvas({
                 color: '#6B7280',
                 cursor: 'pointer',
               }}
-              title="Active Signals"
             >
               <Radar className="w-5 h-5" />
             </button>
+            </Tooltip>
           </div>
           
           {/* Separator */}
