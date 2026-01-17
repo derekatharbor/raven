@@ -141,7 +141,7 @@ export default function PublishModal({
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50"
+        className="fixed inset-0 bg-black/50 z-50 cursor-pointer"
         onClick={onClose}
       />
       
@@ -157,7 +157,7 @@ export default function PublishModal({
               {publishState?.published && (
                 <button
                   onClick={copyLink}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#7DD3FC] hover:bg-white/5 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#7DD3FC] hover:bg-white/5 rounded transition-colors cursor-pointer"
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
                   {copied ? 'Copied' : 'Copy link'}
@@ -165,7 +165,7 @@ export default function PublishModal({
               )}
               <button
                 onClick={onClose}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -193,7 +193,7 @@ export default function PublishModal({
                   <button
                     onClick={handleInvite}
                     disabled={!inviteEmail.trim()}
-                    className="px-4 py-2.5 bg-[#4A4A4A] text-white rounded-lg text-sm font-medium hover:bg-[#5A5A5A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2.5 bg-[#4A4A4A] text-white rounded-lg text-sm font-medium hover:bg-[#5A5A5A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   >
                     Invite
                   </button>
@@ -209,7 +209,7 @@ export default function PublishModal({
                   {/* Private - Only invited */}
                   <button
                     onClick={() => setAccessLevel('private')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
                       accessLevel === 'private' ? 'bg-white/10' : 'hover:bg-white/5'
                     }`}
                   >
@@ -221,7 +221,7 @@ export default function PublishModal({
                   {/* Anyone with link */}
                   <button
                     onClick={() => setAccessLevel('link')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
                       accessLevel === 'link' ? 'bg-white/10' : 'hover:bg-white/5'
                     }`}
                   >
@@ -236,7 +236,7 @@ export default function PublishModal({
                   {/* Public */}
                   <button
                     onClick={() => setAccessLevel('public')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
                       accessLevel === 'public' ? 'bg-white/10' : 'hover:bg-white/5'
                     }`}
                   >
@@ -253,11 +253,11 @@ export default function PublishModal({
                   {/* Require email */}
                   <button
                     onClick={() => setRequireEmail(!requireEmail)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <Mail className="w-4 h-4 text-gray-400" />
                     <span className="flex-1 text-left text-sm text-gray-300">Require email to view</span>
-                    <div className={`w-8 h-5 rounded-full transition-colors ${requireEmail ? 'bg-[#4DA8DA]' : 'bg-gray-600'}`}>
+                    <div className={`w-8 h-5 rounded-full transition-colors cursor-pointer ${requireEmail ? 'bg-[#4DA8DA]' : 'bg-gray-600'}`}>
                       <div className={`w-4 h-4 bg-white rounded-full mt-0.5 transition-transform ${requireEmail ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
                     </div>
                   </button>
@@ -265,11 +265,11 @@ export default function PublishModal({
                   {/* Notify on view */}
                   <button
                     onClick={() => setNotifyOnView(!notifyOnView)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <Eye className="w-4 h-4 text-gray-400" />
                     <span className="flex-1 text-left text-sm text-gray-300">Notify me when viewed</span>
-                    <div className={`w-8 h-5 rounded-full transition-colors ${notifyOnView ? 'bg-[#4DA8DA]' : 'bg-gray-600'}`}>
+                    <div className={`w-8 h-5 rounded-full transition-colors cursor-pointer ${notifyOnView ? 'bg-[#4DA8DA]' : 'bg-gray-600'}`}>
                       <div className={`w-4 h-4 bg-white rounded-full mt-0.5 transition-transform ${notifyOnView ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
                     </div>
                   </button>
@@ -289,7 +289,7 @@ export default function PublishModal({
                       </div>
                       <button
                         onClick={copyLink}
-                        className="p-2 bg-[#3A3A3A] hover:bg-[#4A4A4A] rounded-lg transition-colors"
+                        className="p-2 bg-[#3A3A3A] hover:bg-[#4A4A4A] rounded-lg transition-colors cursor-pointer"
                       >
                         {copied ? (
                           <Check className="w-4 h-4 text-emerald-400" />
@@ -313,7 +313,7 @@ export default function PublishModal({
                       <button
                         onClick={handlePublish}
                         disabled={publishing}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors cursor-pointer"
                       >
                         {publishing && <Loader2 className="w-3 h-3 animate-spin" />}
                         Push Update
@@ -324,7 +324,7 @@ export default function PublishModal({
                   <button
                     onClick={handlePublish}
                     disabled={publishing}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     {publishing ? (
                       <>
