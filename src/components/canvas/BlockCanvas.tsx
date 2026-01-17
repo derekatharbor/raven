@@ -13,9 +13,9 @@ import Underline from '@tiptap/extension-underline'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
   X, Bold, Italic, Underline as UnderlineIcon,
-  Atom, Send, Type, Heading1, Heading2, List, Quote,
+  Atom, ArrowUp, Type, Heading1, Heading2, List, Quote,
   Eye, Table, BarChart3, Link2, Variable, Radio,
-  Search, PenLine, Radar, ChevronDown
+  Search, PenLine, Radar, ChevronDown, MessageSquare, Sparkles, Bug
 } from 'lucide-react'
 
 // ============================================================================
@@ -269,8 +269,21 @@ function ResearchPanel({ selectedText, onClose }: {
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [mode, setMode] = useState<'ask' | 'agent' | 'plan' | 'verify'>('ask')
+  const [showModeDropdown, setShowModeDropdown] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const modeDropdownRef = useRef<HTMLDivElement>(null)
+
+  const modes = {
+    ask: { label: 'Ask', icon: MessageSquare, color: '#22C55E', desc: 'Ask questions about sources' },
+    agent: { label: 'Agent', icon: Sparkles, color: '#8B5CF6', desc: 'Deploy research agent' },
+    plan: { label: 'Plan', icon: List, color: '#3B82F6', desc: 'Plan verification steps' },
+    verify: { label: 'Verify', icon: Bug, color: '#F59E0B', desc: 'Verify claims against sources' },
+  }
+
+  const currentMode = modes[mode]
+  const ModeIcon = currentMode.icon
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -279,6 +292,16 @@ function ResearchPanel({ selectedText, onClose }: {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
+        setShowModeDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleSubmit = () => {
     if (!query.trim() && !selectedText) return
@@ -292,11 +315,18 @@ function ResearchPanel({ selectedText, onClose }: {
     setQuery('')
     setIsLoading(true)
 
-    // Mock AI response
+    // Mock AI response based on mode
+    const responses: Record<string, string> = {
+      ask: `Based on my search of connected sources:\n\n**SEC EDGAR (NVDA 10-Q, Q3 2024)**\nNVIDIA reported data center revenue of $14.51 billion, representing a 279% year-over-year increase.\n\n**Bloomberg Terminal**\nConfirms the $14.51B figure with additional context on AI chip demand driving growth.`,
+      agent: `**Agent deployed** - searching 3 connected sources...\n\n✓ SEC EDGAR - Found 2 relevant filings\n✓ Bloomberg - 4 matching articles\n✓ Internal docs - 1 related memo\n\nCompiling findings into a structured summary...`,
+      plan: `**Verification Plan:**\n\n1. Cross-reference revenue figure with 10-Q filing\n2. Check Bloomberg for analyst consensus\n3. Compare with previous quarter guidance\n4. Flag any discrepancies for review\n\nReady to execute? Type "go" to proceed.`,
+      verify: `**Verification Results:**\n\n✓ **$14.51B revenue** - Matches SEC filing (NVDA 10-Q, pg 23)\n⚠️ **279% YoY growth** - Source says 279%, claim says 280%\n✓ **Data center segment** - Correctly attributed\n\n1 discrepancy found. Would you like to update?`,
+    }
+
     setTimeout(() => {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Based on my search of connected sources:\n\n**SEC EDGAR (NVDA 10-Q, Q3 2024)**\nNVIDIA reported data center revenue of $14.51 billion, representing a 279% year-over-year increase.\n\n**Bloomberg Terminal**\nConfirms the $14.51B figure with additional context on AI chip demand driving growth.\n\nWould you like me to insert a citation or explore related metrics?`,
+        content: responses[mode],
       }])
       setIsLoading(false)
     }, 1200)
@@ -426,6 +456,7 @@ function ResearchPanel({ selectedText, onClose }: {
             <button
               onClick={handleSubmit}
               disabled={!query.trim() && !selectedText}
+              className="send-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -434,14 +465,99 @@ function ResearchPanel({ selectedText, onClose }: {
                 height: 32,
                 borderRadius: 6,
                 border: 'none',
-                background: (query.trim() || selectedText) ? '#111' : '#E5E7EB',
+                background: (query.trim() || selectedText) ? currentMode.color : '#E5E7EB',
                 color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
                 cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
                 flexShrink: 0,
+                transition: 'all 0.15s ease',
               }}
             >
-              <Send className="w-4 h-4" />
+              <ArrowUp className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* Mode selector row */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            padding: '8px 12px', 
+            borderTop: '1px solid #F3F4F6',
+            background: '#FAFAFA',
+          }}>
+            <div style={{ position: 'relative' }} ref={modeDropdownRef}>
+              <button
+                onClick={() => setShowModeDropdown(!showModeDropdown)}
+                className="mode-selector-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#6B7280',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              >
+                <ModeIcon className="w-4 h-4" style={{ color: currentMode.color }} />
+                {currentMode.label}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {/* Mode dropdown */}
+              {showModeDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: 0,
+                  marginBottom: 4,
+                  background: 'white',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: 8,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
+                  minWidth: 200,
+                  zIndex: 100,
+                }}>
+                  {Object.entries(modes).map(([key, m]) => {
+                    const Icon = m.icon
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => { setMode(key as typeof mode); setShowModeDropdown(false) }}
+                        className="mode-option"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: 'none',
+                          background: mode === key ? '#F5F5F5' : 'transparent',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <Icon className="w-4 h-4" style={{ color: m.color }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>{m.label}</div>
+                          <div style={{ fontSize: 11, color: '#6B7280' }}>{m.desc}</div>
+                        </div>
+                        {mode === key && (
+                          <span style={{ color: m.color, fontSize: 14 }}>✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            
+            <span style={{ fontSize: 11, color: '#9CA3AF' }}>↵ to send</span>
           </div>
         </div>
       </div>
@@ -521,7 +637,7 @@ function ResearchPanel({ selectedText, onClose }: {
 // ============================================================================
 
 function BlockSelectorModal({ position, onSelect, onClose }: {
-  position: { top: number; left: number }
+  position: { top?: number; bottom?: number; left: number }
   onSelect: (type: string) => void
   onClose: () => void
 }) {
@@ -573,6 +689,7 @@ function BlockSelectorModal({ position, onSelect, onClose }: {
       style={{
         position: 'fixed',
         top: position.top,
+        bottom: position.bottom,
         left: position.left,
         width: 320,
         maxHeight: 400,
@@ -1029,6 +1146,9 @@ export default function BlockCanvas({
         .panel-close-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
         .sources-dropdown-btn:hover { background: #F3F4F6 !important; border-color: #D1D5DB !important; }
         .send-btn:hover { opacity: 0.9; }
+        .mode-selector-btn:hover { background: #F3F4F6 !important; }
+        .mode-option:hover { background: #F5F5F5 !important; }
+        .dock-mode-btn:hover { background: rgba(0,0,0,0.08) !important; }
         
         /* Audit Mode - Signal Highlights (Grammarly-style: faint bg + underline) */
         .signal-blue { 
@@ -1253,6 +1373,7 @@ export default function BlockCanvas({
             }}>
               <button
                 onClick={() => setAuditMode(false)}
+                className={!auditMode ? '' : 'dock-mode-btn'}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1274,6 +1395,7 @@ export default function BlockCanvas({
               </button>
               <button
                 onClick={() => setAuditMode(true)}
+                className={auditMode ? '' : 'dock-mode-btn'}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1297,10 +1419,10 @@ export default function BlockCanvas({
           </div>
         </div>
 
-        {/* Block Tray Modal */}
+        {/* Block Tray Modal - opens ABOVE dock */}
         {showBlockTray && (
           <BlockSelectorModal
-            position={{ top: window.innerHeight - 200, left: window.innerWidth / 2 - 160 }}
+            position={{ bottom: 80, left: window.innerWidth / 2 - 160 }}
             onSelect={(type) => {
               addBlock(blocks[blocks.length - 1]?.id, type)
               setShowBlockTray(false)
