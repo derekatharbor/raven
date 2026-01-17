@@ -1381,12 +1381,15 @@ export default function BlockCanvas({
   }, [tabs, activeTabId])
 
   const handleTabRename = useCallback((id: string, newName: string) => {
-    // Only update the tab name (display name), NOT the document title
+    // Update both tab name AND document title (they stay in sync)
     setTabs(prev => prev.map(t => 
-      t.id === id ? { ...t, name: newName, hasCustomName: true } : t
+      t.id === id ? { ...t, name: newName, title: newName, hasCustomName: true } : t
     ))
-    // Tab name is just local UI - don't save to DB
-  }, [])
+    // Save to DB if it's a real document
+    if (user && id !== 'new' && id === documentId) {
+      updateTitle(newName)
+    }
+  }, [user, documentId, updateTitle])
 
   // Block handlers
   const updateBlocks = useCallback((newBlocks: Block[]) => {
@@ -1401,9 +1404,9 @@ export default function BlockCanvas({
   }, [activeTabId, tabs, triggerSave])
 
   const handleTitleUpdate = useCallback((newTitle: string) => {
-    // Only update the document title - tab name is completely independent
+    // Update both title AND tab name (they stay in sync)
     setTabs(prev => prev.map(t => 
-      t.id === activeTabId ? { ...t, title: newTitle, hasChanges: true } : t
+      t.id === activeTabId ? { ...t, title: newTitle, name: newTitle, hasChanges: true } : t
     ))
     // Trigger title save to DB
     if (user && documentId !== 'new') {
