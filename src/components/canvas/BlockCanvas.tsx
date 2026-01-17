@@ -17,9 +17,10 @@ import {
   Eye, Table, BarChart3, Link2, Variable, Radio,
   Search, PenLine, Radar, ChevronDown, ChevronRight, ChevronLeft,
   Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
-  RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight
+  RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import PublishModal from '@/components/publish/PublishModal'
 
 // ============================================================================
 // TOOLTIP COMPONENT - renders via portal to escape overflow:hidden
@@ -1094,6 +1095,9 @@ export default function BlockCanvas({
   // Panel collapsed state
   const [panelCollapsed, setPanelCollapsed] = useState(false)
   
+  // Publish modal state
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  
   // Block tray state
   const [showBlockTray, setShowBlockTray] = useState(false)
 
@@ -1502,6 +1506,31 @@ export default function BlockCanvas({
               </button>
             </div>
           </div>
+          
+          {/* Share Button */}
+          <div style={{ padding: '6px 8px', marginLeft: -4 }}>
+            <button
+              onClick={() => setShowPublishModal(true)}
+              className="dock-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: 'none',
+                background: '#111',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500,
+                transition: 'all 0.12s ease',
+              }}
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              Share
+            </button>
+          </div>
         </div>
 
         {/* Block Tray Modal - opens ABOVE dock */}
@@ -1525,6 +1554,15 @@ export default function BlockCanvas({
           onResearch={handleResearch}
         />
       </div>
+      
+      {/* Publish Modal */}
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        documentId={activeTab?.id || ''}
+        documentTitle={title || 'Untitled'}
+        blocks={blocks}
+      />
     </div>
   )
 }
