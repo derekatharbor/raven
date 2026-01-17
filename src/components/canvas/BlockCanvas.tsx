@@ -204,10 +204,10 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
               overflow: 'hidden', 
               textOverflow: 'ellipsis', 
               whiteSpace: 'nowrap',
-              color: (tab.name || tab.title) ? undefined : '#9CA3AF', // Faded grey for untitled
-              fontStyle: (tab.name || tab.title) ? undefined : 'italic',
+              color: tab.name ? undefined : '#9CA3AF', // Faded grey for untitled
+              fontStyle: tab.name ? undefined : 'italic',
             }}>
-              {tab.name || tab.title || 'Untitled'}
+              {tab.name || 'Untitled'}
             </span>
           )}
           {tab.hasChanges && editingTabId !== tab.id && (
@@ -1177,7 +1177,7 @@ export default function BlockCanvas({
     if (documents.length > 0) {
       const newTabs: Tab[] = documents.map(doc => ({
         id: doc.id,
-        name: '', // Empty - will inherit from title
+        name: '', // Tab name is independent - user must rename manually
         hasCustomName: false,
         hasChanges: false,
         title: doc.title || '',
@@ -1208,7 +1208,7 @@ export default function BlockCanvas({
         tab.id === currentDoc.id 
           ? {
               ...tab,
-              name: currentDoc.title,
+              // Don't overwrite tab name - keep it independent
               title: currentDoc.title,
               blocks: contentToBlocks(currentDoc.content),
             }
@@ -1345,6 +1345,12 @@ export default function BlockCanvas({
   const blocks = activeTab?.blocks || []
   const title = activeTab?.title || ''
 
+  // Word count (strips HTML tags)
+  const wordCount = blocks.reduce((count, block) => {
+    const text = block.content.replace(/<[^>]*>/g, ' ').trim()
+    return count + (text ? text.split(/\s+/).filter(Boolean).length : 0)
+  }, 0)
+
   const generateId = () => Math.random().toString(36).substring(2, 9)
 
   // Tab handlers
@@ -1395,7 +1401,7 @@ export default function BlockCanvas({
   }, [activeTabId, tabs, triggerSave])
 
   const handleTitleUpdate = useCallback((newTitle: string) => {
-    // Only update the document title, NOT the tab name
+    // Only update the document title - tab name is completely independent
     setTabs(prev => prev.map(t => 
       t.id === activeTabId ? { ...t, title: newTitle, hasChanges: true } : t
     ))
@@ -1742,39 +1748,36 @@ export default function BlockCanvas({
           {/* Separator */}
           <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
           
-          {/* Center - Context Breadcrumb */}
+          {/* Center - Word count & Save status */}
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 6,
+            gap: 12,
             padding: '6px 16px',
             fontSize: 12,
             color: '#6B7280',
           }}>
-            <span>Workspace</span>
-            <ChevronRight className="w-3 h-3" style={{ color: '#D1D5DB' }} />
-            <span style={{ color: '#111', fontWeight: 500 }}>
-              {title || 'Untitled'}
-            </span>
+            <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+            
             {/* Save indicator */}
-            {saving && (
+            {saving ? (
               <span style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: 4, 
                 color: '#9CA3AF',
-                fontSize: 11,
               }}>
                 <RefreshCw className="w-3 h-3 animate-spin" />
-                Saving...
+                Saving
               </span>
-            )}
-            {!saving && hasUnsavedChanges && (
-              <span style={{ color: '#F59E0B', fontSize: 11 }}>Unsaved</span>
-            )}
-            {!saving && !hasUnsavedChanges && activeTab?.hasChanges === false && documentId !== 'new' && (
-              <Check className="w-3 h-3" style={{ color: '#22C55E' }} />
-            )}
+            ) : hasUnsavedChanges ? (
+              <span style={{ color: '#F59E0B' }}>Unsaved</span>
+            ) : activeTab?.hasChanges === false && documentId !== 'new' ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#22C55E' }}>
+                <Check className="w-3 h-3" />
+                Saved
+              </span>
+            ) : null}
           </div>
           
           {/* Separator */}
