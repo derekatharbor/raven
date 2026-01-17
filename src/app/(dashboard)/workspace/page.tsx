@@ -13,7 +13,7 @@ import { useDocuments, useDocument } from '@/lib/hooks/useDocument'
 export default function WorkspacePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const { documents, loading: docsLoading, createDocument } = useDocuments()
+  const { documents, loading: docsLoading, hasFetched, createDocument } = useDocuments()
   const [activeDocId, setActiveDocId] = useState<string | null>(null)
   const creatingDocRef = useRef(false)
   
@@ -26,7 +26,8 @@ export default function WorkspacePage() {
 
   // Set active doc to first document or create one if none exist
   useEffect(() => {
-    if (docsLoading || !user || creatingDocRef.current) return
+    // Wait until we've actually fetched from DB AND finished loading
+    if (!hasFetched || docsLoading || !user || creatingDocRef.current) return
     
     if (documents.length > 0) {
       // Use existing document - set first one if no active doc
@@ -37,14 +38,13 @@ export default function WorkspacePage() {
         return prev
       })
     } else {
-      // No documents - create first one (only once)
+      // No documents in DB - create first one (only once)
       creatingDocRef.current = true
       createDocument('').then(doc => {
         if (doc) setActiveDocId(doc.id)
-        // Don't reset ref - we only want to create once per session
       })
     }
-  }, [documents, docsLoading, user]) // Removed activeDocId and createDocument
+  }, [hasFetched, docsLoading, documents, user]) // Check all conditions
 
   // Handle creating new document
   const handleNewDocument = useCallback(async () => {

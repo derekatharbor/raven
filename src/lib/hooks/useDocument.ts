@@ -277,6 +277,7 @@ export function useDocument(documentId: string | null) {
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
+  const [hasFetched, setHasFetched] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   
   const supabase = createClient()
@@ -299,9 +300,14 @@ export function useDocuments() {
         .order('updated_at', { ascending: false })
       
       if (error) throw error
-      setDocuments((data || []).map(toDocument))
+      
+      // Set both at once to avoid race condition
+      const docs = (data || []).map(toDocument)
+      setDocuments(docs)
+      setHasFetched(true)
     } catch (err) {
       setError(err as Error)
+      setHasFetched(true) // Still mark as fetched even on error
     } finally {
       setLoading(false)
     }
@@ -369,6 +375,7 @@ export function useDocuments() {
   return {
     documents,
     loading,
+    hasFetched,
     error,
     createDocument,
     deleteDocument,
