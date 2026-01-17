@@ -11,17 +11,19 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
+import Image from '@tiptap/extension-image'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
   X, Bold, Italic, Underline as UnderlineIcon,
   Atom, ArrowUp, Type, Heading1, Heading2, List, Quote,
-  Eye, Table, BarChart3, Link2, Variable, Radio,
+  Eye, Table, BarChart3, Link2, Variable, Radio, ImageIcon,
   Search, PenLine, Radar, ChevronDown, ChevronRight, ChevronLeft,
   Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
   RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
+import { uploadImage } from '@/lib/storage/upload'
 
 // ============================================================================
 // TOOLTIP COMPONENT - renders via portal to escape overflow:hidden
@@ -94,14 +96,40 @@ interface Tab {
 // TABS WITH RAVEN FAVICON
 // ============================================================================
 
-function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onShare }: {
+function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onShare, onTabRename }: {
   tabs: Tab[]
   activeTabId: string
   onTabSelect: (id: string) => void
   onTabClose: (id: string) => void
   onNewTab: () => void
   onShare: () => void
+  onTabRename?: (id: string, name: string) => void
 }) {
+  const [editingTabId, setEditingTabId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleDoubleClick = (tab: Tab) => {
+    setEditingTabId(tab.id)
+    setEditValue(tab.name || 'Untitled')
+    setTimeout(() => inputRef.current?.select(), 0)
+  }
+
+  const handleRenameSubmit = (tabId: string) => {
+    if (editValue.trim() && onTabRename) {
+      onTabRename(tabId, editValue.trim())
+    }
+    setEditingTabId(null)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent, tabId: string) => {
+    if (e.key === 'Enter') {
+      handleRenameSubmit(tabId)
+    } else if (e.key === 'Escape') {
+      setEditingTabId(null)
+    }
+  }
+
   return (
     <div style={{
       display: 'flex',
@@ -116,7 +144,8 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
       {tabs.map((tab) => (
         <div
           key={tab.id}
-          onClick={() => onTabSelect(tab.id)}
+          onClick={() => editingTabId !== tab.id && onTabSelect(tab.id)}
+          onDoubleClick={() => handleDoubleClick(tab)}
           className="editor-tab"
           style={{
             display: 'flex',
@@ -147,13 +176,36 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
               flexShrink: 0,
             }} 
           />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {tab.name || 'Untitled'}
-          </span>
-          {tab.hasChanges && (
+          {editingTabId === tab.id ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={() => handleRenameSubmit(tab.id)}
+              onKeyDown={(e) => handleKeyDown(e, tab.id)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontSize: 13,
+                fontWeight: 500,
+                color: '#111',
+                width: '100%',
+                minWidth: 60,
+              }}
+              autoFocus
+            />
+          ) : (
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {tab.name || 'Untitled'}
+            </span>
+          )}
+          {tab.hasChanges && editingTabId !== tab.id && (
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#6B7280', flexShrink: 0 }} />
           )}
-          {tabs.length > 1 && (
+          {tabs.length > 1 && editingTabId !== tab.id && (
             <button
               onClick={(e) => { e.stopPropagation(); onTabClose(tab.id); }}
               className="tab-close-btn"
@@ -784,6 +836,7 @@ function BlockSelectorModal({ position, onSelect, onClose }: {
         { id: 'h2', label: 'Heading 2', icon: Heading2, description: 'Medium section heading' },
         { id: 'list', label: 'Bullet List', icon: List, description: 'Simple bullet list' },
         { id: 'quote', label: 'Quote', icon: Quote, description: 'Quoted text' },
+        { id: 'image', label: 'Image', icon: ImageIcon, description: 'Upload an image' },
         { id: 'table', label: 'Table', icon: Table, description: 'Add a table' },
       ]
     },
@@ -917,6 +970,11 @@ function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, o
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Underline,
+      Image.configure({
+        HTMLAttributes: {
+          class: 'editor-image',
+        },
+      }),
       Placeholder.configure({ 
         placeholder: "Write, press 'space' for AI, '/' for commands...", 
         showOnlyWhenEditable: true, 
@@ -1267,6 +1325,11 @@ export default function BlockCanvas({
   // Block tray state
   const [showBlockTray, setShowBlockTray] = useState(false)
 
+  // Image upload state
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const [imageInsertAfterId, setImageInsertAfterId] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+
   // Get active tab data
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
   const blocks = activeTab?.blocks || []
@@ -1300,6 +1363,16 @@ export default function BlockCanvas({
     if (activeTabId === id) setActiveTabId(newTabs[0].id)
   }, [tabs, activeTabId])
 
+  const handleTabRename = useCallback((id: string, newName: string) => {
+    setTabs(prev => prev.map(t => 
+      t.id === id ? { ...t, name: newName, title: newName, hasChanges: true } : t
+    ))
+    // Also update in DB if this is the active document
+    if (id === activeTabId && user && documentId !== 'new') {
+      updateTitle(newName)
+    }
+  }, [activeTabId, user, documentId, updateTitle])
+
   // Block handlers
   const updateBlocks = useCallback((newBlocks: Block[]) => {
     setTabs(prev => prev.map(t => 
@@ -1323,7 +1396,14 @@ export default function BlockCanvas({
   }, [activeTabId, user, documentId, updateTitle])
 
   const addBlock = useCallback((afterId?: string, blockType?: string) => {
-    // TODO: Handle different block types
+    // Handle image upload specially
+    if (blockType === 'image') {
+      setImageInsertAfterId(afterId || blocks[blocks.length - 1]?.id || null)
+      imageInputRef.current?.click()
+      return
+    }
+    
+    // Default block creation
     const newBlock: Block = { id: generateId(), content: '' }
     const newBlocks = afterId 
       ? blocks.flatMap(b => b.id === afterId ? [b, newBlock] : [b])
@@ -1331,6 +1411,38 @@ export default function BlockCanvas({
     updateBlocks(newBlocks)
     setTimeout(() => setFocusedBlockId(newBlock.id), 50)
   }, [blocks, updateBlocks])
+
+  // Handle image file selection
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    
+    setUploadingImage(true)
+    try {
+      const result = await uploadImage(file, user.id, documentId)
+      
+      // Create image block
+      const imageContent = `<img src="${result.url}" alt="${file.name}" class="editor-image" />`
+      const newBlock: Block = { id: generateId(), content: imageContent }
+      
+      // Insert after the specified block
+      const newBlocks = imageInsertAfterId
+        ? blocks.flatMap(b => b.id === imageInsertAfterId ? [b, newBlock] : [b])
+        : [...blocks, newBlock]
+      
+      updateBlocks(newBlocks)
+    } catch (err) {
+      console.error('Image upload failed:', err)
+      // Could add toast notification here
+    } finally {
+      setUploadingImage(false)
+      setImageInsertAfterId(null)
+      // Reset input
+      if (imageInputRef.current) {
+        imageInputRef.current.value = ''
+      }
+    }
+  }, [user, documentId, blocks, imageInsertAfterId, updateBlocks])
 
   const updateBlock = useCallback((id: string, content: string) => {
     updateBlocks(blocks.map(b => b.id === id ? { ...b, content } : b))
@@ -1396,6 +1508,9 @@ export default function BlockCanvas({
         .ghost-block-content blockquote { border-left: 2px solid #E0E0E0; margin: 12px 0; padding-left: 16px; color: #555; font-style: italic; }
         .ghost-block-content strong { font-weight: 600; }
         .ghost-block-content code { background: #F5F5F5; padding: 2px 5px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', Monaco, monospace; color: #333; }
+        .ghost-block-content img.editor-image { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; cursor: pointer; }
+        .ghost-block-content img.editor-image:hover { opacity: 0.95; }
+        .ghost-block-content img.editor-image.ProseMirror-selectednode { outline: 2px solid #3B82F6; outline-offset: 2px; }
         
         .gutter-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
         .toolbar-btn:hover { background: rgba(255,255,255,0.2) !important; color: #fff !important; }
@@ -1475,6 +1590,7 @@ export default function BlockCanvas({
         onTabClose={handleCloseTab}
         onNewTab={handleNewTab}
         onShare={() => setShowPublishModal(true)}
+        onTabRename={handleTabRename}
       />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
@@ -1738,6 +1854,15 @@ export default function BlockCanvas({
         documentId={activeTab?.id || ''}
         documentTitle={title || 'Untitled'}
         blocks={blocks}
+      />
+
+      {/* Hidden file input for image uploads */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        style={{ display: 'none' }}
       />
     </div>
   )
