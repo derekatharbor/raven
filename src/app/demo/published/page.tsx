@@ -1,4 +1,3 @@
-// Path: src/app/demo/published/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -105,10 +104,15 @@ export default function PublishedDocDemoPage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Reading progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-[2px] bg-gray-200 z-50">
+      <div className="fixed top-0 left-0 right-0 h-[3px] bg-gray-100 z-50">
         <div 
-          className="h-full bg-gray-900 transition-all duration-150"
-          style={{ width: `${readProgress}%` }}
+          className="h-full transition-all duration-150"
+          style={{ 
+            width: `${readProgress}%`,
+            backgroundImage: 'url(/images/progress-gradient.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'left center',
+          }}
         />
       </div>
 
