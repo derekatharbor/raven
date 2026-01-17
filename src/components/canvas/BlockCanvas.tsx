@@ -1,3 +1,4 @@
+// Path: src/components/canvas/BlockCanvas.tsx
 // src/components/canvas/BlockCanvas.tsx
 //
 // Raven "Quiet" Workspace - Cursor for Documents
@@ -93,12 +94,13 @@ interface Tab {
 // TABS WITH RAVEN FAVICON
 // ============================================================================
 
-function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: {
+function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onShare }: {
   tabs: Tab[]
   activeTabId: string
   onTabSelect: (id: string) => void
   onTabClose: (id: string) => void
   onNewTab: () => void
+  onShare: () => void
 }) {
   return (
     <div style={{
@@ -108,6 +110,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: {
       borderBottom: '1px solid #E5E7EB',
       background: '#FAFAFA',
       paddingLeft: 8,
+      paddingRight: 8,
       gap: 1,
     }}>
       {tabs.map((tab) => (
@@ -190,6 +193,30 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab }: {
         }}
       >
         <Plus className="w-4 h-4" />
+      </button>
+      
+      {/* Spacer */}
+      <div style={{ flex: 1 }} />
+      
+      {/* Share Button */}
+      <button
+        onClick={onShare}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '6px 14px',
+          borderRadius: 6,
+          border: 'none',
+          background: '#111',
+          color: 'white',
+          cursor: 'pointer',
+          fontSize: 12,
+          fontWeight: 500,
+        }}
+      >
+        <Share2 className="w-3.5 h-3.5" />
+        Share
       </button>
     </div>
   )
@@ -1293,6 +1320,7 @@ export default function BlockCanvas({
         onTabSelect={handleTabSelect}
         onTabClose={handleCloseTab}
         onNewTab={handleNewTab}
+        onShare={() => setShowPublishModal(true)}
       />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
@@ -1505,31 +1533,6 @@ export default function BlockCanvas({
                 Audit
               </button>
             </div>
-          </div>
-          
-          {/* Share Button */}
-          <div style={{ padding: '6px 8px', marginLeft: -4 }}>
-            <button
-              onClick={() => setShowPublishModal(true)}
-              className="dock-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 14px',
-                borderRadius: 6,
-                border: 'none',
-                background: '#111',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-                transition: 'all 0.12s ease',
-              }}
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              Share
-            </button>
           </div>
         </div>
 
