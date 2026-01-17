@@ -15,7 +15,9 @@ import {
   X, Bold, Italic, Underline as UnderlineIcon,
   Atom, ArrowUp, Type, Heading1, Heading2, List, Quote,
   Eye, Table, BarChart3, Link2, Variable, Radio,
-  Search, PenLine, Radar, ChevronDown, MessageSquare, Sparkles, Bug
+  Search, PenLine, Radar, ChevronDown, ChevronRight,
+  Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
+  RefreshCw, Wifi, WifiOff
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
@@ -313,306 +315,541 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
 // AI RESEARCH PANEL - Input at top, always accessible
 // ============================================================================
 
-function ResearchPanel({ selectedText, onClose }: {
+// ============================================================================
+// INTELLIGENCE HUB - Multi-tabbed side panel (Research, Audit, Sources)
+// ============================================================================
+
+function IntelligenceHub({ selectedText, onClearSelection, auditMode }: {
   selectedText: string
-  onClose: () => void
+  onClearSelection: () => void
+  auditMode: boolean
 }) {
-  const [query, setQuery] = useState('')
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [mode, setMode] = useState<'ask' | 'agent' | 'plan' | 'verify'>('ask')
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState<'research' | 'audit' | 'sources'>('research')
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['sec-edgar']))
 
-  const modes = {
-    ask: { label: 'Ask', icon: MessageSquare, color: '#22C55E', desc: 'Ask questions' },
-    agent: { label: 'Agent', icon: Sparkles, color: '#8B5CF6', desc: 'Deploy agent' },
-    plan: { label: 'Plan', icon: List, color: '#3B82F6', desc: 'Plan steps' },
-    verify: { label: 'Verify', icon: Bug, color: '#F59E0B', desc: 'Check claims' },
+  const tabs = [
+    { id: 'research' as const, icon: Search, label: 'Research' },
+    { id: 'audit' as const, icon: BarChart3, label: 'Audit' },
+    { id: 'sources' as const, icon: Folder, label: 'Sources' },
+  ]
+
+  const toggleFolder = (id: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
-  const currentMode = modes[mode]
+  // Mock data for the Intelligence Base
+  const sources = [
+    { 
+      id: 'sec-edgar', 
+      name: 'SEC EDGAR', 
+      status: 'connected' as const,
+      files: [
+        { id: 'nvda-10k', name: 'NVDA 10-K 2024', indexed: true },
+        { id: 'nvda-10q', name: 'NVDA 10-Q Q3 2024', indexed: true },
+        { id: 'aapl-10k', name: 'AAPL 10-K 2024', indexed: true },
+      ]
+    },
+    { 
+      id: 'bloomberg', 
+      name: 'Bloomberg Terminal', 
+      status: 'connected' as const,
+      files: [
+        { id: 'bb-1', name: 'AI Chip Market Analysis', indexed: true },
+        { id: 'bb-2', name: 'Semiconductor Industry Report', indexed: false },
+      ]
+    },
+    { 
+      id: 'internal', 
+      name: 'Internal Docs', 
+      status: 'syncing' as const,
+      files: [
+        { id: 'int-1', name: 'Q4 Investment Memo', indexed: true },
+      ]
+    },
+  ]
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  const handleSubmit = () => {
-    if (!query.trim() && !selectedText) return
-
-    const userMessage = {
-      role: 'user' as const,
-      content: query || 'Find sources for this claim',
-      context: selectedText || undefined,
-    }
-    setMessages(prev => [...prev, userMessage])
-    setQuery('')
-    setIsLoading(true)
-
-    const responses: Record<string, string> = {
-      ask: `Based on my search of connected sources:\n\n**SEC EDGAR (NVDA 10-Q, Q3 2024)**\nNVIDIA reported data center revenue of $14.51 billion, representing a 279% year-over-year increase.\n\n**Bloomberg Terminal**\nConfirms the $14.51B figure with additional context on AI chip demand driving growth.`,
-      agent: `**Agent deployed** - searching 3 connected sources...\n\n✓ SEC EDGAR - Found 2 relevant filings\n✓ Bloomberg - 4 matching articles\n✓ Internal docs - 1 related memo\n\nCompiling findings into a structured summary...`,
-      plan: `**Verification Plan:**\n\n1. Cross-reference revenue figure with 10-Q filing\n2. Check Bloomberg for analyst consensus\n3. Compare with previous quarter guidance\n4. Flag any discrepancies for review\n\nReady to execute? Type "go" to proceed.`,
-      verify: `**Verification Results:**\n\n✓ **$14.51B revenue** - Matches SEC filing (NVDA 10-Q, pg 23)\n⚠️ **279% YoY growth** - Source says 279%, claim says 280%\n✓ **Data center segment** - Correctly attributed\n\n1 discrepancy found. Would you like to update?`,
-    }
-
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: responses[mode],
-      }])
-      setIsLoading(false)
-    }, 1200)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit()
-    }
-  }
-
-  const truncate = (text: string, max: number = 35) => 
-    text.length <= max ? text : text.substring(0, max) + '...'
+  // Mock integrity cards for Audit tab
+  const integrityCards = [
+    { 
+      id: 'ic-1',
+      claim: 'Data center revenue of $14.51 billion',
+      source: 'NVDA 10-Q Q3 2024',
+      snippet: '"Data Center revenue was $14.51 billion, up 279% from a year ago..."',
+      status: 'verified' as const,
+      page: 23,
+    },
+    { 
+      id: 'ic-2',
+      claim: '279% year-over-year increase',
+      source: 'NVDA 10-Q Q3 2024',
+      snippet: '"...up 279% from a year ago and up 17% sequentially..."',
+      status: 'drift' as const,
+      page: 23,
+      note: 'Document says 280%, source says 279%',
+    },
+    { 
+      id: 'ic-3',
+      claim: 'AI chip demand driving growth',
+      source: 'Bloomberg Terminal',
+      snippet: 'Monitoring: "AI semiconductor demand" keyword tracking',
+      status: 'monitoring' as const,
+    },
+  ]
 
   return (
-    <div 
-      style={{
-        width: 340,
-        flexShrink: 0,
-        borderLeft: '1px solid #E5E7EB',
+    <div style={{
+      width: 340,
+      flexShrink: 0,
+      borderLeft: '1px solid #E5E7EB',
+      background: 'white',
+      display: 'flex',
+    }}>
+      {/* Vertical Icon Strip */}
+      <div style={{
+        width: 48,
+        borderRight: '1px solid #F3F4F6',
         background: '#FAFAFA',
         display: 'flex',
         flexDirection: 'column',
-      }}
-    >
-      {/* Mode Tabs - Figma style */}
-      <div style={{ 
-        display: 'flex',
-        borderBottom: '1px solid #E5E7EB',
-        background: 'white',
+        alignItems: 'center',
+        paddingTop: 8,
+        gap: 4,
       }}>
-        {Object.entries(modes).map(([key, m]) => {
-          const Icon = m.icon
-          const isActive = mode === key
+        {tabs.map(tab => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
           return (
-            <button
-              key={key}
-              onClick={() => setMode(key as typeof mode)}
-              className="mode-tab-btn"
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                padding: '12px 8px',
-                border: 'none',
-                background: 'transparent',
-                color: isActive ? m.color : '#9CA3AF',
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 500,
-                borderBottom: isActive ? `2px solid ${m.color}` : '2px solid transparent',
-                marginBottom: -1,
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <Icon className="w-4 h-4" />
-              {m.label}
-            </button>
+            <Tooltip key={tab.id} label={tab.label}>
+              <button
+                onClick={() => setActiveTab(tab.id)}
+                className="side-tab-btn"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  border: 'none',
+                  background: isActive ? 'white' : 'transparent',
+                  color: isActive ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                }}
+              >
+                <Icon className="w-[18px] h-[18px]" />
+              </button>
+            </Tooltip>
           )
         })}
       </div>
 
-      {/* Sources section */}
-      <div style={{ 
-        padding: '12px 16px', 
-        borderBottom: '1px solid #E5E7EB',
-        background: 'white',
-      }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          Connected Sources
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {['SEC EDGAR', 'Bloomberg Terminal', 'Internal Docs'].map((source, i) => (
-            <div key={i} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8,
-              padding: '6px 8px',
-              background: '#F5F5F5',
-              borderRadius: 6,
-              fontSize: 12,
-              color: '#374151',
-            }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
-              {source}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Input area */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB' }}>
-        {/* Context badge */}
-        {selectedText && (
-          <div style={{ marginBottom: 8 }}>
+      {/* Tab Content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* RESEARCH TAB - File tree view */}
+        {activeTab === 'research' && (
+          <>
             <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: 6, 
-              padding: '4px 10px', 
-              background: '#DCFCE7',
-              borderRadius: 999,
-              fontSize: 11,
-              color: '#166534',
-              fontWeight: 500,
-            }}>
-              <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
-              <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {truncate(selectedText, 30)}
-              </span>
-              <button
-                onClick={onClose}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  width: 14, 
-                  height: 14, 
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(0,0,0,0.1)',
-                  color: '#166534',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </div>
-          </div>
-        )}
-        
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'flex-end', 
-          gap: 8,
-          background: 'white',
-          border: '1px solid #E5E7EB',
-          borderRadius: 8,
-          padding: '10px 12px',
-        }}>
-          <textarea
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`${currentMode.desc}...`}
-            rows={2}
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: 13,
-              lineHeight: 1.5,
-              color: '#111',
-              background: 'transparent',
-            }}
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!query.trim() && !selectedText}
-            className="send-btn"
-            style={{
+              padding: '12px 16px', 
+              borderBottom: '1px solid #F3F4F6',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-              borderRadius: 6,
-              border: 'none',
-              background: (query.trim() || selectedText) ? currentMode.color : '#E5E7EB',
-              color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
-              cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
-              flexShrink: 0,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <ArrowUp className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+              justifyContent: 'space-between',
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Intelligence Base
+              </span>
+            </div>
 
-      {/* Messages / History */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9CA3AF', fontSize: 13, lineHeight: 1.6 }}>
-            {mode === 'ask' && 'Ask questions about your connected sources'}
-            {mode === 'agent' && 'Deploy an agent to research across sources'}
-            {mode === 'plan' && 'Create a verification plan for your claims'}
-            {mode === 'verify' && 'Verify specific claims against sources'}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {messages.map((msg, i) => (
-              <div key={i}>
-                {msg.context && (
-                  <div style={{ marginBottom: 8 }}>
-                    <div style={{ 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      gap: 6, 
-                      padding: '4px 10px', 
-                      background: '#DCFCE7',
-                      borderRadius: 999,
-                      fontSize: 11,
-                      color: '#166534',
-                      fontWeight: 500,
-                    }}>
-                      <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
-                      <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {truncate(msg.context, 25)}
-                      </span>
-                    </div>
-                  </div>
-                )}
+            {/* Selected text context */}
+            {selectedText && (
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', background: '#FAFAFA' }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Searching for
+                </div>
                 <div style={{ 
-                  padding: '10px 12px', 
-                  borderRadius: 8,
-                  background: msg.role === 'user' ? '#111' : 'white',
-                  color: msg.role === 'user' ? 'white' : '#111',
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  border: msg.role === 'assistant' ? '1px solid #E5E7EB' : 'none',
-                  whiteSpace: 'pre-wrap',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8,
+                  padding: '8px 10px',
+                  background: 'white',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  color: '#111',
                 }}>
-                  {msg.content}
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    "{selectedText.length > 40 ? selectedText.slice(0, 40) + '...' : selectedText}"
+                  </span>
+                  <button
+                    onClick={onClearSelection}
+                    className="panel-close-btn"
+                    style={{ 
+                      width: 18, height: 18, borderRadius: 4, border: 'none',
+                      background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div style={{ 
-                padding: '10px 12px', 
-                borderRadius: 8, 
-                background: 'white', 
-                border: '1px solid #E5E7EB',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}>
-                <div className="loading-dots" style={{ display: 'flex', gap: 4 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite' }} />
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.2s' }} />
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#9CA3AF', animation: 'pulse 1s infinite 0.4s' }} />
-                </div>
-                <span style={{ fontSize: 12, color: '#9CA3AF' }}>Searching sources...</span>
               </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
+
+            {/* File tree */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
+              {sources.map(source => {
+                const isExpanded = expandedFolders.has(source.id)
+                return (
+                  <div key={source.id}>
+                    <button
+                      onClick={() => toggleFolder(source.id)}
+                      className="folder-btn"
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 16px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <ChevronRight 
+                        className="w-3 h-3" 
+                        style={{ 
+                          color: '#9CA3AF',
+                          transform: isExpanded ? 'rotate(90deg)' : 'none',
+                          transition: 'transform 0.15s ease',
+                        }} 
+                      />
+                      {isExpanded ? 
+                        <FolderOpen className="w-4 h-4" style={{ color: '#F59E0B' }} /> :
+                        <Folder className="w-4 h-4" style={{ color: '#F59E0B' }} />
+                      }
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#111' }}>
+                        {source.name}
+                      </span>
+                      <div style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: source.status === 'connected' ? '#22C55E' : 
+                                   source.status === 'syncing' ? '#F59E0B' : '#EF4444',
+                      }} />
+                    </button>
+                    {isExpanded && (
+                      <div style={{ paddingLeft: 24 }}>
+                        {source.files.map(file => (
+                          <button
+                            key={file.id}
+                            className="file-btn"
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              padding: '6px 16px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                            }}
+                          >
+                            <FileText className="w-4 h-4" style={{ color: '#9CA3AF' }} />
+                            <span style={{ flex: 1, fontSize: 12, color: '#374151' }}>
+                              {file.name}
+                            </span>
+                            {file.indexed && (
+                              <Check className="w-3 h-3" style={{ color: '#22C55E' }} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Search input at bottom */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #F3F4F6' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 12px',
+                background: '#F5F5F5',
+                borderRadius: 6,
+              }}>
+                <Search className="w-4 h-4" style={{ color: '#9CA3AF' }} />
+                <input
+                  type="text"
+                  placeholder="Search indexed sources..."
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: 13,
+                    color: '#111',
+                    outline: 'none',
+                  }}
+                />
+                <span style={{ fontSize: 11, color: '#9CA3AF' }}>⌘K</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* AUDIT TAB - Integrity Cards */}
+        {activeTab === 'audit' && (
+          <>
+            <div style={{ 
+              padding: '12px 16px', 
+              borderBottom: '1px solid #F3F4F6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Document Integrity
+              </span>
+              <span style={{ 
+                fontSize: 11, 
+                color: auditMode ? '#22C55E' : '#9CA3AF',
+                fontWeight: 500,
+              }}>
+                {auditMode ? '● Audit Active' : '○ Audit Off'}
+              </span>
+            </div>
+
+            <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+              {integrityCards.map(card => (
+                <div 
+                  key={card.id}
+                  className="integrity-card"
+                  style={{
+                    padding: '12px',
+                    marginBottom: 8,
+                    background: '#FAFAFA',
+                    borderRadius: 8,
+                    border: '1px solid #E5E7EB',
+                  }}
+                >
+                  {/* Status indicator */}
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 6, 
+                    marginBottom: 8,
+                  }}>
+                    {card.status === 'verified' && (
+                      <>
+                        <Check className="w-3.5 h-3.5" style={{ color: '#22C55E' }} />
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#22C55E' }}>VERIFIED</span>
+                      </>
+                    )}
+                    {card.status === 'drift' && (
+                      <>
+                        <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#F59E0B' }} />
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#F59E0B' }}>DRIFT DETECTED</span>
+                      </>
+                    )}
+                    {card.status === 'monitoring' && (
+                      <>
+                        <Radio className="w-3.5 h-3.5" style={{ color: '#3B82F6' }} />
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#3B82F6' }}>MONITORING</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Claim */}
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#111', marginBottom: 8 }}>
+                    "{card.claim}"
+                  </div>
+
+                  {/* Source */}
+                  <div style={{ 
+                    fontSize: 11, 
+                    color: '#6B7280', 
+                    marginBottom: 6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}>
+                    <FileText className="w-3 h-3" />
+                    {card.source}
+                    {card.page && <span>• p.{card.page}</span>}
+                  </div>
+
+                  {/* Snippet */}
+                  <div style={{ 
+                    fontSize: 12, 
+                    color: '#374151', 
+                    fontStyle: 'italic',
+                    padding: '8px',
+                    background: 'white',
+                    borderRadius: 4,
+                    borderLeft: `2px solid ${
+                      card.status === 'verified' ? '#22C55E' : 
+                      card.status === 'drift' ? '#F59E0B' : '#3B82F6'
+                    }`,
+                  }}>
+                    {card.snippet}
+                  </div>
+
+                  {/* Note for drift */}
+                  {card.note && (
+                    <div style={{ 
+                      fontSize: 11, 
+                      color: '#F59E0B', 
+                      marginTop: 8,
+                      padding: '6px 8px',
+                      background: '#FEF3C7',
+                      borderRadius: 4,
+                    }}>
+                      ⚠ {card.note}
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  {card.status === 'drift' && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                      <button
+                        className="action-btn"
+                        style={{
+                          flex: 1,
+                          padding: '6px 10px',
+                          fontSize: 11,
+                          fontWeight: 500,
+                          borderRadius: 4,
+                          border: '1px solid #E5E7EB',
+                          background: 'white',
+                          color: '#374151',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Acknowledge
+                      </button>
+                      <button
+                        className="action-btn-primary"
+                        style={{
+                          flex: 1,
+                          padding: '6px 10px',
+                          fontSize: 11,
+                          fontWeight: 500,
+                          borderRadius: 4,
+                          border: 'none',
+                          background: '#111',
+                          color: 'white',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Reconcile
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* SOURCES TAB - Data room management */}
+        {activeTab === 'sources' && (
+          <>
+            <div style={{ 
+              padding: '12px 16px', 
+              borderBottom: '1px solid #F3F4F6',
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Data Room
+              </span>
+            </div>
+
+            <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+              {sources.map(source => (
+                <div 
+                  key={source.id}
+                  style={{
+                    padding: '12px',
+                    marginBottom: 8,
+                    background: '#FAFAFA',
+                    borderRadius: 8,
+                    border: '1px solid #E5E7EB',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <Database className="w-4 h-4" style={{ color: '#6B7280' }} />
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#111' }}>
+                      {source.name}
+                    </span>
+                    {source.status === 'connected' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Wifi className="w-3 h-3" style={{ color: '#22C55E' }} />
+                        <span style={{ fontSize: 11, color: '#22C55E' }}>Connected</span>
+                      </div>
+                    )}
+                    {source.status === 'syncing' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <RefreshCw className="w-3 h-3" style={{ color: '#F59E0B' }} />
+                        <span style={{ fontSize: 11, color: '#F59E0B' }}>Syncing...</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div style={{ marginBottom: 6 }}>
+                    <div style={{ 
+                      height: 4, 
+                      background: '#E5E7EB', 
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{ 
+                        width: source.status === 'connected' ? '100%' : '60%',
+                        height: '100%',
+                        background: source.status === 'connected' ? '#22C55E' : '#F59E0B',
+                        transition: 'width 0.3s ease',
+                      }} />
+                    </div>
+                  </div>
+                  
+                  <div style={{ fontSize: 11, color: '#6B7280' }}>
+                    {source.files.filter(f => f.indexed).length} of {source.files.length} documents indexed
+                  </div>
+                </div>
+              ))}
+
+              {/* Add source button */}
+              <button
+                className="add-source-btn"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px dashed #D1D5DB',
+                  borderRadius: 8,
+                  background: 'transparent',
+                  color: '#6B7280',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                Connect Source
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -1133,8 +1370,16 @@ export default function BlockCanvas({
         .send-btn:hover { opacity: 0.9; }
         .mode-selector-btn:hover { background: #F3F4F6 !important; }
         .mode-option:hover { background: #F5F5F5 !important; }
-        .dock-mode-btn:hover { background: rgba(0,0,0,0.08) !important; }
+        .dock-mode-btn:hover { background: rgba(0,0,0,0.04) !important; }
         .mode-tab-btn:hover { background: #F5F5F5 !important; }
+        .side-tab-btn:hover { background: #F3F4F6 !important; }
+        .folder-btn:hover { background: #F5F5F5 !important; }
+        .file-btn:hover { background: #F5F5F5 !important; }
+        .integrity-card:hover { border-color: #D1D5DB !important; }
+        .action-btn:hover { background: #F5F5F5 !important; }
+        .action-btn-primary:hover { background: #333 !important; }
+        .add-source-btn:hover { background: #F5F5F5 !important; border-color: #9CA3AF !important; }
+        .dock-btn:hover { background: #F3F4F6 !important; color: #111 !important; }
         
         /* Audit Mode - Signal Highlights (Grammarly-style: faint bg + underline) */
         .signal-blue { 
@@ -1249,13 +1494,14 @@ export default function BlockCanvas({
           </div>
         </div>
 
-        {/* Right Side Panel - ALWAYS visible like Figma */}
-        <ResearchPanel
+        {/* Intelligence Hub - ALWAYS visible */}
+        <IntelligenceHub
           selectedText={researchText}
-          onClose={() => setResearchText('')}
+          onClearSelection={() => setResearchText('')}
+          auditMode={auditMode}
         />
 
-        {/* Floating Dock - Glassmorphism */}
+        {/* Floating Dock - Figma-style */}
         <div style={{
           position: 'absolute',
           bottom: 24,
@@ -1264,72 +1510,85 @@ export default function BlockCanvas({
           display: 'flex',
           alignItems: 'center',
           gap: 0,
-          background: 'rgba(255, 255, 255, 0.85)',
+          background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: 12,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
+          borderRadius: 10,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
         }}>
           {/* Left section - Tools */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px' }}>
-            {/* Block Tray */}
-            <Tooltip label="Insert Block">
-            <button
-              onClick={() => setShowBlockTray(!showBlockTray)}
-              className="floating-toolbar-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: showBlockTray ? '#E5E7EB' : 'transparent',
-                color: showBlockTray ? '#111' : '#6B7280',
-                cursor: 'pointer',
-              }}
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
+            <Tooltip label="Insert Block (+)">
+              <button
+                onClick={() => setShowBlockTray(!showBlockTray)}
+                className="dock-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 6,
+                  border: 'none',
+                  background: showBlockTray ? '#F3F4F6' : 'transparent',
+                  color: showBlockTray ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus className="w-[18px] h-[18px]" />
+              </button>
             </Tooltip>
             
-            {/* Active Signals */}
-            <Tooltip label="Active Signals">
-            <button
-              className="floating-toolbar-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: 'transparent',
-                color: '#6B7280',
-                cursor: 'pointer',
-              }}
-            >
-              <Radar className="w-5 h-5" />
-            </button>
+            <Tooltip label="Search (⌘K)">
+              <button
+                className="dock-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 6,
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#6B7280',
+                  cursor: 'pointer',
+                }}
+              >
+                <Search className="w-[18px] h-[18px]" />
+              </button>
             </Tooltip>
           </div>
           
           {/* Separator */}
-          <div style={{ width: 1, height: 28, background: 'rgba(0,0,0,0.1)' }} />
+          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
           
-          {/* Right section - Mode Switcher (Segmented Control) */}
+          {/* Center - Context Breadcrumb */}
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            padding: '6px 10px',
+            gap: 6,
+            padding: '6px 16px',
+            fontSize: 12,
+            color: '#6B7280',
           }}>
+            <span>Workspace</span>
+            <ChevronRight className="w-3 h-3" style={{ color: '#D1D5DB' }} />
+            <span style={{ color: '#111', fontWeight: 500 }}>
+              {title || 'Untitled'}
+            </span>
+          </div>
+          
+          {/* Separator */}
+          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+          
+          {/* Right section - Mode Switcher */}
+          <div style={{ padding: '6px 8px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(0,0,0,0.06)',
-              borderRadius: 8,
+              background: '#F3F4F6',
+              borderRadius: 6,
               padding: 2,
             }}>
               <button
@@ -1338,20 +1597,20 @@ export default function BlockCanvas({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 6,
+                  gap: 5,
+                  padding: '5px 10px',
+                  borderRadius: 4,
                   border: 'none',
                   background: !auditMode ? 'white' : 'transparent',
                   color: !auditMode ? '#111' : '#6B7280',
                   cursor: 'pointer',
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 500,
-                  boxShadow: !auditMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  transition: 'all 0.15s ease',
+                  boxShadow: !auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.12s ease',
                 }}
               >
-                <PenLine className="w-4 h-4" />
+                <PenLine className="w-3.5 h-3.5" />
                 Drafting
               </button>
               <button
@@ -1360,20 +1619,20 @@ export default function BlockCanvas({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 6,
+                  gap: 5,
+                  padding: '5px 10px',
+                  borderRadius: 4,
                   border: 'none',
                   background: auditMode ? 'white' : 'transparent',
                   color: auditMode ? '#111' : '#6B7280',
                   cursor: 'pointer',
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 500,
-                  boxShadow: auditMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  transition: 'all 0.15s ease',
+                  boxShadow: auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.12s ease',
                 }}
               >
-                <Eye className="w-4 h-4" />
+                <Eye className="w-3.5 h-3.5" />
                 Audit
               </button>
             </div>
