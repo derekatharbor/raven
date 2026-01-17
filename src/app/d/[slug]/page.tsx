@@ -49,7 +49,7 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
         version_number,
         title_snapshot,
         blocks_snapshot,
-        created_at
+        published_at
       )
     `)
     .eq('slug', slug)
@@ -89,7 +89,7 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
     version_number: number
     title_snapshot: string
     blocks_snapshot: unknown[]
-    created_at: string
+    published_at: string
   } | null
 
   return (
@@ -102,7 +102,7 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
         blocks: version.blocks_snapshot as any[],
       } : undefined}
       versionNumber={version?.version_number}
-      updatedAt={version?.created_at || link.updated_at}
+      updatedAt={version?.published_at || link.updated_at}
     />
   )
 }
