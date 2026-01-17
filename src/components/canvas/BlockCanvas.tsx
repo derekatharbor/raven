@@ -1,4 +1,3 @@
-// Path: src/components/canvas/BlockCanvas.tsx
 // src/components/canvas/BlockCanvas.tsx
 //
 // Raven "Quiet" Workspace - Cursor for Documents
@@ -117,6 +116,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
         <div
           key={tab.id}
           onClick={() => onTabSelect(tab.id)}
+          className="editor-tab"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -132,6 +132,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
             fontWeight: activeTabId === tab.id ? 500 : 400,
             flexShrink: 0,
             maxWidth: 200,
+            transition: 'background 0.15s ease',
           }}
         >
           <img 
@@ -167,6 +168,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
                 color: '#9CA3AF',
                 cursor: 'pointer',
                 flexShrink: 0,
+                transition: 'background 0.15s ease, color 0.15s ease',
               }}
             >
               <X className="w-3 h-3" />
@@ -190,6 +192,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
           cursor: 'pointer',
           marginLeft: 4,
           flexShrink: 0,
+          transition: 'background 0.15s ease, color 0.15s ease',
         }}
       >
         <Plus className="w-4 h-4" />
@@ -201,6 +204,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
       {/* Share Button */}
       <button
         onClick={onShare}
+        className="share-btn"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -213,6 +217,7 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
           cursor: 'pointer',
           fontSize: 12,
           fontWeight: 500,
+          transition: 'background 0.15s ease',
         }}
       >
         <Share2 className="w-3.5 h-3.5" />
@@ -1273,6 +1278,13 @@ export default function BlockCanvas({
         .add-source-btn:hover { background: #F5F5F5 !important; border-color: #9CA3AF !important; }
         .dock-btn:hover { background: #F3F4F6 !important; color: #111 !important; }
         .web-toggle-btn:hover { background: #E5E7EB !important; }
+        
+        /* Tab row hover states */
+        .editor-tab:hover { background: #F3F4F6 !important; }
+        .editor-tab:hover .tab-close-btn { color: #6B7280 !important; }
+        .tab-close-btn:hover { background: #E5E7EB !important; color: #374151 !important; }
+        .tab-add-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
+        .share-btn:hover { background: #333 !important; }
         
         /* Audit Mode - Signal Highlights (Grammarly-style: faint bg + underline) */
         .signal-blue { 
