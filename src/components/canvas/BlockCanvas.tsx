@@ -14,7 +14,8 @@ import {
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
   X, Bold, Italic, Underline as UnderlineIcon,
   Atom, Send, Type, Heading1, Heading2, List, Quote,
-  Eye, EyeOff, Table, BarChart3, Link2, Variable, Radio
+  Eye, Table, BarChart3, Link2, Variable, Radio,
+  Search, PenLine, Radar
 } from 'lucide-react'
 
 // ============================================================================
@@ -640,15 +641,15 @@ function BlockSelectorModal({ position, onSelect, onClose }: {
   )
 }
 
-function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate, onAddBlockAfter, onFocusPrevious, onSelectionChange }: {
+function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, onDuplicate, onAddBlockAfter, onSelectionChange }: {
   block: Block
   isFirst: boolean
+  isFocused: boolean
   onFocus: () => void
   onUpdate: (content: string) => void
   onDelete: () => void
   onDuplicate: () => void
   onAddBlockAfter: (type?: string) => void
-  onFocusPrevious: () => void
   onSelectionChange: (visible: boolean, pos: { top: number; left: number } | null, editor: any, text?: string) => void
 }) {
   const [isHovered, setIsHovered] = useState(false)
@@ -684,7 +685,25 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
       }
     },
     onBlur: () => setTimeout(() => onSelectionChange(false, null, null, ''), 150),
-  })
+  }, []) // Empty deps - editor created once per mount
+
+  // Sync editor content when block.content changes from external source (tab switch)
+  useEffect(() => {
+    if (editor && block.content !== editor.getHTML()) {
+      editor.commands.setContent(block.content)
+    }
+  }, [block.content, editor])
+
+  // Focus this editor when isFocused becomes true
+  useEffect(() => {
+    if (isFocused && editor) {
+      // Small delay to ensure React render is complete
+      const timer = setTimeout(() => {
+        editor.commands.focus('end')
+      }, 10)
+      return () => clearTimeout(timer)
+    }
+  }, [isFocused, editor])
 
   const handlePlusClick = () => {
     if (plusBtnRef.current) {
@@ -702,13 +721,19 @@ function BlockEditor({ block, isFirst, onFocus, onUpdate, onDelete, onDuplicate,
   useEffect(() => {
     if (!editor) return
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Backspace' && editor.isEmpty) { event.preventDefault(); onFocusPrevious(); onDelete() }
-      if (event.key === 'Enter' && !event.shiftKey && editor.isEmpty) { event.preventDefault(); onAddBlockAfter() }
+      if (event.key === 'Backspace' && editor.isEmpty) { 
+        event.preventDefault()
+        onDelete() // deleteBlock now handles focus
+      }
+      if (event.key === 'Enter' && !event.shiftKey && editor.isEmpty) { 
+        event.preventDefault()
+        onAddBlockAfter() 
+      }
     }
     const el = editor.view.dom
     el.addEventListener('keydown', handleKeyDown)
     return () => el.removeEventListener('keydown', handleKeyDown)
-  }, [editor, onDelete, onAddBlockAfter, onFocusPrevious])
+  }, [editor, onDelete, onAddBlockAfter])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false) }
@@ -801,11 +826,11 @@ const DEFAULT_TABS: Tab[] = [
     hasChanges: false,
     title: 'Q4 2024 Investment Analysis',
     blocks: [
-      { id: '1', content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>' },
-      { id: '2', content: '<h2>Key Findings</h2>' },
-      { id: '3', content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase.</p>' },
-      { id: '4', content: '<p>The company maintained healthy gross margins of 45.2% despite macroeconomic headwinds.</p>' },
-      { id: '5', content: '' },
+      { id: 'd1-1', content: '<p>Apple Inc. reported revenue of $119.6 billion for Q4 2024, representing a 6% increase year-over-year.</p>' },
+      { id: 'd1-2', content: '<h2>Key Findings</h2>' },
+      { id: 'd1-3', content: '<p>iPhone revenue reached $69.7 billion, up 5% from the prior year period. Services revenue grew to $23.1 billion, a 14% increase.</p>' },
+      { id: 'd1-4', content: '<p>The company maintained healthy gross margins of 45.2% despite macroeconomic headwinds.</p>' },
+      { id: 'd1-5', content: '' },
     ]
   },
   { 
@@ -814,10 +839,10 @@ const DEFAULT_TABS: Tab[] = [
     hasChanges: true,
     title: 'Series B Due Diligence',
     blocks: [
-      { id: '1', content: '<h2>Executive Summary</h2>' },
-      { id: '2', content: '<p>This report presents findings from our comprehensive due diligence review of the target company.</p>' },
-      { id: '3', content: '<p>Key areas of focus include financial performance, market position, and technology assessment.</p>' },
-      { id: '4', content: '' },
+      { id: 'd2-1', content: '<h2>Executive Summary</h2>' },
+      { id: 'd2-2', content: '<p>This report presents findings from our comprehensive due diligence review of the target company.</p>' },
+      { id: 'd2-3', content: '<p>Key areas of focus include financial performance, market position, and technology assessment.</p>' },
+      { id: 'd2-4', content: '' },
     ]
   },
 ]
@@ -846,6 +871,9 @@ export default function BlockCanvas({
   
   // Audit mode state
   const [auditMode, setAuditMode] = useState(false)
+  
+  // Block tray state
+  const [showBlockTray, setShowBlockTray] = useState(false)
 
   // Get active tab data
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
@@ -893,7 +921,8 @@ export default function BlockCanvas({
     ))
   }, [activeTabId])
 
-  const addBlock = useCallback((afterId?: string) => {
+  const addBlock = useCallback((afterId?: string, blockType?: string) => {
+    // TODO: Handle different block types
     const newBlock: Block = { id: generateId(), content: '' }
     const newBlocks = afterId 
       ? blocks.flatMap(b => b.id === afterId ? [b, newBlock] : [b])
@@ -908,15 +937,27 @@ export default function BlockCanvas({
 
   const deleteBlock = useCallback((id: string) => {
     if (blocks.length === 1) {
+      // Can't delete last block, just clear it
       updateBlocks([{ ...blocks[0], content: '' }])
+      setFocusedBlockId(blocks[0].id)
     } else {
+      // Find the index of block being deleted
+      const index = blocks.findIndex(b => b.id === id)
+      // Focus the previous block (or first if deleting first)
+      const focusIndex = index > 0 ? index - 1 : 0
+      const focusId = blocks[focusIndex]?.id
+      if (focusId && focusId !== id) {
+        setFocusedBlockId(focusId)
+      }
       updateBlocks(blocks.filter(b => b.id !== id))
     }
   }, [blocks, updateBlocks])
 
   const focusPreviousBlock = useCallback((currentId: string) => {
     const index = blocks.findIndex(b => b.id === currentId)
-    if (index > 0) setFocusedBlockId(blocks[index - 1].id)
+    if (index > 0) {
+      setFocusedBlockId(blocks[index - 1].id)
+    }
   }, [blocks])
 
   const duplicateBlock = useCallback((id: string) => {
@@ -1043,23 +1084,33 @@ export default function BlockCanvas({
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {blocks.map((block, index) => (
                 <BlockEditor 
-                  key={block.id} 
+                  key={`${activeTabId}-${block.id}`} 
                   block={block} 
-                  isFirst={index === 0 && !title} 
+                  isFirst={index === 0 && !title}
+                  isFocused={focusedBlockId === block.id}
                   onFocus={() => setFocusedBlockId(block.id)} 
                   onUpdate={(content) => updateBlock(block.id, content)} 
                   onDelete={() => deleteBlock(block.id)} 
                   onDuplicate={() => duplicateBlock(block.id)} 
                   onAddBlockAfter={() => addBlock(block.id)} 
-                  onFocusPrevious={() => focusPreviousBlock(block.id)} 
                   onSelectionChange={(visible, pos, editor, text) => setToolbarState({ visible, position: pos, editor, selectedText: text || '' })} 
                 />
               ))}
             </div>
 
-            {/* Clickable empty space to add block */}
+            {/* Clickable empty space to add block - only if last block has content */}
             <div 
-              onClick={() => addBlock(blocks[blocks.length - 1]?.id)}
+              onClick={() => {
+                const lastBlock = blocks[blocks.length - 1]
+                // Check if last block has actual content (not empty or just empty paragraph tag)
+                const hasContent = lastBlock?.content && 
+                  lastBlock.content !== '' && 
+                  lastBlock.content !== '<p></p>' &&
+                  lastBlock.content.replace(/<[^>]*>/g, '').trim() !== ''
+                if (hasContent) {
+                  addBlock(lastBlock.id)
+                }
+              }}
               style={{ 
                 minHeight: 200, 
                 cursor: 'text',
@@ -1069,33 +1120,59 @@ export default function BlockCanvas({
           </div>
         </div>
 
-        {/* Research Panel - Always visible */}
-        <ResearchPanel
-          selectedText={researchText}
-          onClose={() => {
-            setResearchOpen(false)
-            setResearchText('')
-          }}
-        />
+        {/* Research Panel - Collapsible */}
+        {researchOpen && (
+          <ResearchPanel
+            selectedText={researchText}
+            onClose={() => {
+              setResearchOpen(false)
+              setResearchText('')
+            }}
+          />
+        )}
 
-        {/* Floating Dock - Figma style */}
+        {/* Floating Dock - Glassmorphism */}
         <div style={{
           position: 'absolute',
           bottom: 24,
           left: '50%',
-          transform: 'translateX(-60%)',
+          transform: 'translateX(-50%)',
           display: 'flex',
           alignItems: 'center',
           gap: 0,
-          background: 'white',
+          background: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderRadius: 12,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)',
           overflow: 'hidden',
         }}>
           {/* Left section - Tools */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px' }}>
+            {/* Block Tray */}
             <button
-              onClick={() => setResearchOpen(true)}
+              onClick={() => setShowBlockTray(!showBlockTray)}
+              className="floating-toolbar-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                border: 'none',
+                background: showBlockTray ? '#E5E7EB' : 'transparent',
+                color: showBlockTray ? '#111' : '#6B7280',
+                cursor: 'pointer',
+              }}
+              title="Block Tray"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+            
+            {/* Research */}
+            <button
+              onClick={() => setResearchOpen(!researchOpen)}
               className="floating-toolbar-btn"
               style={{
                 display: 'flex',
@@ -1111,9 +1188,10 @@ export default function BlockCanvas({
               }}
               title="Research"
             >
-              <Atom className="w-5 h-5" />
+              <Search className="w-5 h-5" />
             </button>
             
+            {/* Active Signals */}
             <button
               className="floating-toolbar-btn"
               style={{
@@ -1128,100 +1206,85 @@ export default function BlockCanvas({
                 color: '#6B7280',
                 cursor: 'pointer',
               }}
-              title="Heading 1"
+              title="Active Signals"
             >
-              <Heading1 className="w-5 h-5" />
-            </button>
-            
-            <button
-              className="floating-toolbar-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: 'transparent',
-                color: '#6B7280',
-                cursor: 'pointer',
-              }}
-              title="Heading 2"
-            >
-              <Heading2 className="w-5 h-5" />
-            </button>
-            
-            <button
-              className="floating-toolbar-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: 'transparent',
-                color: '#6B7280',
-                cursor: 'pointer',
-              }}
-              title="List"
-            >
-              <List className="w-5 h-5" />
-            </button>
-            
-            <button
-              className="floating-toolbar-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                border: 'none',
-                background: 'transparent',
-                color: '#6B7280',
-                cursor: 'pointer',
-              }}
-              title="Table"
-            >
-              <Table className="w-5 h-5" />
+              <Radar className="w-5 h-5" />
             </button>
           </div>
           
-          {/* Right section - Audit Mode toggle */}
+          {/* Separator */}
+          <div style={{ width: 1, height: 28, background: 'rgba(0,0,0,0.1)' }} />
+          
+          {/* Right section - Mode Switcher (Segmented Control) */}
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 8,
-            padding: '6px 12px',
-            borderLeft: '1px solid #E5E7EB',
-            background: '#FAFAFA',
+            padding: '6px 10px',
           }}>
-            <button
-              onClick={() => setAuditMode(!auditMode)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 10px',
-                borderRadius: 6,
-                border: 'none',
-                background: auditMode ? '#111' : 'transparent',
-                color: auditMode ? '#fff' : '#6B7280',
-                cursor: 'pointer',
-                fontSize: 13,
-                fontWeight: 500,
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {auditMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              Audit
-            </button>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(0,0,0,0.06)',
+              borderRadius: 8,
+              padding: 2,
+            }}>
+              <button
+                onClick={() => setAuditMode(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: !auditMode ? 'white' : 'transparent',
+                  color: !auditMode ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  boxShadow: !auditMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <PenLine className="w-4 h-4" />
+                Drafting
+              </button>
+              <button
+                onClick={() => setAuditMode(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: auditMode ? 'white' : 'transparent',
+                  color: auditMode ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  boxShadow: auditMode ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Eye className="w-4 h-4" />
+                Audit
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Block Tray Modal */}
+        {showBlockTray && (
+          <BlockSelectorModal
+            position={{ top: window.innerHeight - 200, left: window.innerWidth / 2 - 160 }}
+            onSelect={(type) => {
+              addBlock(blocks[blocks.length - 1]?.id, type)
+              setShowBlockTray(false)
+            }}
+            onClose={() => setShowBlockTray(false)}
+          />
+        )}
 
         {/* Selection Toolbar */}
         <SelectionToolbar 
