@@ -192,8 +192,9 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
                 fontSize: 13,
                 fontWeight: 500,
                 color: '#111',
-                width: '100%',
-                minWidth: 60,
+                width: `${Math.max(editValue.length, 6)}ch`,
+                minWidth: '6ch',
+                maxWidth: 150,
               }}
               autoFocus
             />
@@ -1364,14 +1365,12 @@ export default function BlockCanvas({
   }, [tabs, activeTabId])
 
   const handleTabRename = useCallback((id: string, newName: string) => {
+    // Only update the tab name (display name), NOT the document title
     setTabs(prev => prev.map(t => 
-      t.id === id ? { ...t, name: newName, title: newName, hasChanges: true } : t
+      t.id === id ? { ...t, name: newName } : t
     ))
-    // Also update in DB if this is the active document
-    if (id === activeTabId && user && documentId !== 'new') {
-      updateTitle(newName)
-    }
-  }, [activeTabId, user, documentId, updateTitle])
+    // Tab name is just local UI - don't save to DB
+  }, [])
 
   // Block handlers
   const updateBlocks = useCallback((newBlocks: Block[]) => {
@@ -1386,10 +1385,11 @@ export default function BlockCanvas({
   }, [activeTabId, tabs, triggerSave])
 
   const handleTitleUpdate = useCallback((newTitle: string) => {
+    // Only update the document title, NOT the tab name
     setTabs(prev => prev.map(t => 
-      t.id === activeTabId ? { ...t, title: newTitle, name: newTitle || 'Untitled', hasChanges: true } : t
+      t.id === activeTabId ? { ...t, title: newTitle, hasChanges: true } : t
     ))
-    // Trigger title save
+    // Trigger title save to DB
     if (user && documentId !== 'new') {
       updateTitle(newTitle)
     }
@@ -1602,7 +1602,7 @@ export default function BlockCanvas({
               <input 
                 type="text" 
                 value={title} 
-                onChange={(e) => updateTitle(e.target.value)} 
+                onChange={(e) => handleTitleUpdate(e.target.value)} 
                 placeholder="Untitled" 
                 style={{ 
                   width: '100%', 
