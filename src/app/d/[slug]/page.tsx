@@ -25,10 +25,13 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
       require_email,
       expires_at,
       is_active,
+      updated_at,
       current_version:document_versions(
         id,
+        version_number,
         title_snapshot,
-        blocks_snapshot
+        blocks_snapshot,
+        created_at
       )
     `)
     .eq('slug', slug)
@@ -62,8 +65,10 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
 
   const version = (link.current_version as unknown) as {
     id: string
+    version_number: number
     title_snapshot: string
     blocks_snapshot: unknown[]
+    created_at: string
   } | null
 
   return (
@@ -75,6 +80,8 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
         title: version.title_snapshot || 'Untitled',
         blocks: version.blocks_snapshot as any[],
       } : undefined}
+      versionNumber={version?.version_number}
+      updatedAt={version?.created_at || link.updated_at}
     />
   )
 }
