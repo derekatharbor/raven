@@ -3,11 +3,14 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import PublishedDocument from '@/components/published/PublishedDocument'
 
-// Use service role to fetch public documents
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Use service role to fetch public documents (bypasses RLS)
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+
+// Only create client if we have the required env vars
+const supabase = supabaseUrl && serviceRoleKey 
+  ? createClient(supabaseUrl, serviceRoleKey)
+  : null
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -15,6 +18,21 @@ interface PageProps {
 
 export default async function PublishedDocumentPage({ params }: PageProps) {
   const { slug } = await params
+
+  // Check if supabase client is configured
+  if (!supabase) {
+    console.error('[Published Page] Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL')
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <h1 className="text-xl font-semibold text-gray-900">Configuration Error</h1>
+          <p className="text-gray-500 mt-2">Server is not properly configured to serve published documents.</p>
+        </div>
+      </div>
+    )
+  }
+
+  console.log('[Published Page] Looking for slug:', slug)
 
   // Fetch the published link
   const { data: link, error } = await supabase
@@ -37,7 +55,10 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
+  console.log('[Published Page] Query result:', { hasLink: !!link, error: error?.message })
+
   if (error || !link) {
+    console.log('[Published Page] Not found - error:', error?.message, error?.code)
     notFound()
   }
 
@@ -89,6 +110,13 @@ export default async function PublishedDocumentPage({ params }: PageProps) {
 // Generate metadata
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
+
+  if (!supabase) {
+    return {
+      title: 'Document | Raven',
+      description: 'Shared document via Raven',
+    }
+  }
 
   const { data: link } = await supabase
     .from('published_links')
