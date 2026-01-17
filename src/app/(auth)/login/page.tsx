@@ -2,25 +2,40 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Mail, Eye, EyeOff, ChevronLeft } from 'lucide-react'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [step, setStep] = useState<'initial' | 'credentials'>('initial')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error'>('error')
 
   const supabase = createClient()
+
+  // Check if already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.push('/workspace')
+      }
+    }
+    checkAuth()
+  }, [router, supabase])
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault()
     if (email.trim()) {
       setStep('credentials')
+      setMessage('')
     }
   }
 
@@ -37,8 +52,10 @@ export default function LoginPage() {
 
     if (error) {
       setMessage(error.message)
+      setMessageType('error')
     } else {
       setMessage('Check your email for the sign-in link!')
+      setMessageType('success')
     }
     setLoading(false)
   }
@@ -48,15 +65,19 @@ export default function LoginPage() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
     if (error) {
       setMessage(error.message)
+      setMessageType('error')
+      setLoading(false)
+    } else if (data.session) {
+      // Successful login - redirect to workspace
+      router.push('/workspace')
     }
-    setLoading(false)
   }
 
   const handleGoogleLogin = async () => {
@@ -280,7 +301,7 @@ export default function LoginPage() {
               {/* Message */}
               {message && (
                 <p style={{ 
-                  color: message.includes('Check') ? '#4ade80' : '#f87171', 
+                  color: messageType === 'success' ? '#4ade80' : '#f87171', 
                   fontSize: 14, 
                   textAlign: 'center', 
                   marginTop: 16 

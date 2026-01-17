@@ -2,25 +2,40 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Mail, Eye, EyeOff, ChevronLeft } from 'lucide-react'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [step, setStep] = useState<'initial' | 'credentials'>('initial')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error'>('error')
 
   const supabase = createClient()
+
+  // Check if already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.push('/workspace')
+      }
+    }
+    checkAuth()
+  }, [router, supabase])
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault()
     if (email.trim()) {
       setStep('credentials')
+      setMessage('')
     }
   }
 
@@ -37,18 +52,27 @@ export default function SignupPage() {
 
     if (error) {
       setMessage(error.message)
+      setMessageType('error')
     } else {
       setMessage('Check your email to complete signup!')
+      setMessageType('success')
     }
     setLoading(false)
   }
 
   const handlePasswordSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (password.length < 8) {
+      setMessage('Password must be at least 8 characters')
+      setMessageType('error')
+      return
+    }
+    
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -58,10 +82,17 @@ export default function SignupPage() {
 
     if (error) {
       setMessage(error.message)
-    } else {
+      setMessageType('error')
+      setLoading(false)
+    } else if (data.session) {
+      // Immediate session (email confirmation disabled) - redirect
+      router.push('/workspace')
+    } else if (data.user) {
+      // Email confirmation required
       setMessage('Check your email to confirm your account!')
+      setMessageType('success')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleGoogleSignup = async () => {
@@ -280,7 +311,7 @@ export default function SignupPage() {
               {/* Message */}
               {message && (
                 <p style={{ 
-                  color: message.includes('Check') ? '#4ade80' : '#f87171', 
+                  color: messageType === 'success' ? '#4ade80' : '#f87171', 
                   fontSize: 14, 
                   textAlign: 'center', 
                   marginTop: 16 
