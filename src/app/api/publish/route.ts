@@ -28,11 +28,15 @@ async function getClient() {
 }
 
 export async function POST(req: NextRequest) {
+  console.log('[Publish API] POST request received')
+  
   try {
     const supabase = await getClient()
     
     // Check auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('[Publish API] Auth check:', { userId: user?.id, error: authError?.message })
+    
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -47,6 +51,8 @@ export async function POST(req: NextRequest) {
       notify_on_view = true,
       expires_in_days,
     } = body
+    
+    console.log('[Publish API] Request body:', { document_id, title, blocksCount: blocks?.length })
 
     // Verify document ownership
     const { data: doc, error: docError } = await supabase
@@ -56,12 +62,14 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
+    console.log('[Publish API] Doc check:', { doc, error: docError?.message })
+
     if (docError || !doc) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Document not found', details: docError?.message }, { status: 404 })
     }
 
     // Get current version number
-    const { data: latestVersion } = await (supabase
+    const { data: latestVersion, error: latestError } = await (supabase
       .from('document_versions' as any)
       .select('version_number')
       .eq('document_id', document_id)
@@ -69,7 +77,10 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single() as any)
 
+    console.log('[Publish API] Latest version:', { latestVersion, error: latestError?.message })
+
     const newVersionNumber = ((latestVersion as any)?.version_number || 0) + 1
+    console.log('[Publish API] New version number:', newVersionNumber)
 
     // Create new version
     const { data: version, error: versionError } = await (supabase
@@ -85,9 +96,11 @@ export async function POST(req: NextRequest) {
       .select('id')
       .single() as any)
 
+    console.log('[Publish API] Version created:', { version, error: versionError?.message, code: versionError?.code })
+
     if (versionError) {
-      console.error('Version creation error:', versionError)
-      return NextResponse.json({ error: 'Failed to create version' }, { status: 500 })
+      console.error('[Publish API] Version creation error:', versionError)
+      return NextResponse.json({ error: 'Failed to create version', details: versionError.message }, { status: 500 })
     }
 
     // Check for existing published link
@@ -96,6 +109,8 @@ export async function POST(req: NextRequest) {
       .select('id, slug')
       .eq('document_id', document_id)
       .single() as any)
+
+    console.log('[Publish API] Existing link check:', { existingLink })
 
     let link
     
@@ -116,14 +131,17 @@ export async function POST(req: NextRequest) {
         .select('id, slug')
         .single() as any)
 
+      console.log('[Publish API] Link update:', { updatedLink, error: updateError?.message })
+
       if (updateError) {
-        return NextResponse.json({ error: 'Failed to update link' }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to update link', details: updateError.message }, { status: 500 })
       }
       
       link = updatedLink
     } else {
       // Create new published link
       const slug = generateSlug()
+      console.log('[Publish API] Creating new link with slug:', slug)
       
       const { data: newLink, error: linkError } = await (supabase
         .from('published_links' as any)
@@ -141,17 +159,18 @@ export async function POST(req: NextRequest) {
         .select('id, slug')
         .single() as any)
 
+      console.log('[Publish API] Link creation:', { newLink, error: linkError?.message, code: linkError?.code })
+
       if (linkError) {
-        console.error('Link creation error:', linkError)
-        return NextResponse.json({ error: 'Failed to create link' }, { status: 500 })
+        console.error('[Publish API] Link creation error:', linkError)
+        return NextResponse.json({ error: 'Failed to create link', details: linkError.message }, { status: 500 })
       }
       
       link = newLink
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tryraven.io'
-    
-    return NextResponse.json({
+    const responseData = {
       success: true,
       version_id: version.id,
       version_number: newVersionNumber,
@@ -159,7 +178,11 @@ export async function POST(req: NextRequest) {
       slug: link.slug,
       url: `${baseUrl}/d/${link.slug}`,
       is_update: !!existingLink,
-    })
+    }
+    
+    console.log('[Publish API] Success response:', responseData)
+    
+    return NextResponse.json(responseData)
 
   } catch (error) {
     console.error('[Publish API] Error:', error)
