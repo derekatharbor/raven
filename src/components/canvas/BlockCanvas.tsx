@@ -1177,7 +1177,7 @@ export default function BlockCanvas({
     if (documents.length > 0) {
       const newTabs: Tab[] = documents.map(doc => ({
         id: doc.id,
-        name: '', // Tab name is independent - user must rename manually
+        name: doc.title || '', // Initialize from doc title, but won't sync after
         hasCustomName: false,
         hasChanges: false,
         title: doc.title || '',
