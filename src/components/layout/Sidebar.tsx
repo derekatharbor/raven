@@ -1,3 +1,4 @@
+// Path: src/components/layout/Sidebar.tsx
 // src/components/layout/Sidebar.tsx
 
 'use client'
@@ -15,6 +16,7 @@ import {
   Plus,
   Layers,
   Check,
+  Home,
 } from 'lucide-react'
 
 const WORKSPACES = [
@@ -48,10 +50,10 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
       <div className="h-11 flex items-center justify-between px-3 border-b border-gray-200">
         {!isCollapsed ? (
           <>
-            <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img src="/images/raven-logo.png" alt="Raven" className="w-5 h-5 object-contain" />
               <span className="text-sm font-semibold text-gray-900">Raven</span>
-            </div>
+            </Link>
             <button onClick={() => setIsCollapsed(true)} className="p-1 rounded hover:bg-black/5 cursor-pointer">
               <ChevronLeft className="w-4 h-4 text-gray-400" />
             </button>
@@ -63,6 +65,45 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
               <ChevronRight className="w-4 h-4 absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity text-gray-500" />
             </div>
           </button>
+        )}
+      </div>
+
+      {/* Main Navigation */}
+      <div className="px-2 py-2 border-b border-gray-200">
+        {!isCollapsed ? (
+          <div className="space-y-0.5">
+            <Link 
+              href="/dashboard"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/dashboard') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+            >
+              <Home className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] text-gray-900">Home</span>
+            </Link>
+            <Link 
+              href="/workspace"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/workspace') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+            >
+              <FolderOpen className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] text-gray-900">Workspace</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-0.5">
+            <Link 
+              href="/dashboard"
+              className={`flex items-center justify-center p-2 rounded ${isActive('/dashboard') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+              title="Home"
+            >
+              <Home className="w-4 h-4 text-gray-500" />
+            </Link>
+            <Link 
+              href="/workspace"
+              className={`flex items-center justify-center p-2 rounded ${isActive('/workspace') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+              title="Workspace"
+            >
+              <FolderOpen className="w-4 h-4 text-gray-500" />
+            </Link>
+          </div>
         )}
       </div>
 
@@ -103,7 +144,7 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
         ) : (
           <div className="px-2 py-3">
             <button onClick={() => setIsCollapsed(false)} className="w-full flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" title="Workspaces">
-              <Layers className="w-4 h-4 text-gray-500" />
+              <Home className="w-4 h-4 text-gray-500" />
             </button>
           </div>
         )}

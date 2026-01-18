@@ -1,14 +1,15 @@
 // Path: src/app/(dashboard)/dashboard/page.tsx
-// src/app/(dashboard)/page.tsx
+// src/app/(dashboard)/dashboard/page.tsx
 // Dashboard - Home view with document preview cards
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Clock, TrendingUp, FileText, Eye } from 'lucide-react'
+import { Plus, Clock, FileText } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useDocuments } from '@/lib/hooks/useDocument'
+import Sidebar from '@/components/layout/Sidebar'
 
 // Get time-based greeting
 function getGreeting() {
@@ -56,7 +57,7 @@ function extractPreview(content: any): { title: string; body: string } {
   return { title, body: body.trim() }
 }
 
-// Document Preview Card
+// Document Preview Card with gradient overlay
 function DocumentCard({ 
   document, 
   onClick 
@@ -73,11 +74,10 @@ function DocumentCard({
       onClick={onClick}
       className="group cursor-pointer"
       style={{
-        width: 280,
-        height: 340,
+        width: 300,
+        height: 360,
         background: '#18181B',
         borderRadius: 20,
-        padding: 20,
         position: 'relative',
         overflow: 'hidden',
         flexShrink: 0,
@@ -85,21 +85,99 @@ function DocumentCard({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-4px)'
-        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.3)'
+        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.4)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)'
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
+      {/* Document Preview Window - positioned at bottom */}
+      <div style={{
+        position: 'absolute',
+        bottom: -20,
+        left: 20,
+        right: 20,
+        height: 260,
+      }}>
+        {/* Shadow layer behind */}
+        <div style={{
+          position: 'absolute',
+          top: 14,
+          left: 8,
+          right: 8,
+          bottom: 8,
+          background: 'rgba(255,255,255,0.04)',
+          borderRadius: 12,
+        }} />
+        
+        {/* Main document preview */}
+        <div style={{
+          position: 'relative',
+          background: 'white',
+          borderRadius: 12,
+          padding: 18,
+          height: '100%',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          overflow: 'hidden',
+        }}>
+          {/* Document content preview */}
+          <div style={{
+            fontSize: 15,
+            fontWeight: 600,
+            color: '#18181B',
+            marginBottom: 8,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {displayTitle}
+          </div>
+          <div style={{
+            fontSize: 12,
+            color: '#71717A',
+            lineHeight: 1.7,
+            display: '-webkit-box',
+            WebkitLineClamp: 7,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>
+            {displayBody}
+          </div>
+          
+          {/* Fade gradient at bottom of document */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)',
+          }} />
+        </div>
+      </div>
+
+      {/* Top gradient overlay for text readability */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 180,
+        background: 'linear-gradient(180deg, #18181B 0%, #18181B 50%, rgba(24,24,27,0) 100%)',
+        borderRadius: '20px 20px 0 0',
+        pointerEvents: 'none',
+        zIndex: 5,
+      }} />
+
       {/* Title & Timestamp */}
-      <div style={{ position: 'relative', zIndex: 10 }}>
+      <div style={{ position: 'relative', zIndex: 10, padding: '22px 22px' }}>
         <h3 style={{
           color: 'white',
           fontSize: 18,
           fontWeight: 600,
-          lineHeight: 1.3,
-          marginBottom: 6,
+          lineHeight: 1.35,
+          marginBottom: 8,
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -115,83 +193,6 @@ function DocumentCard({
           {formatRelativeTime(document.updated_at)}
         </span>
       </div>
-
-      {/* Document Preview Window */}
-      <div style={{
-        position: 'absolute',
-        bottom: -20,
-        left: 20,
-        right: 20,
-        height: 220,
-      }}>
-        {/* Shadow layer */}
-        <div style={{
-          position: 'absolute',
-          top: 20,
-          left: 10,
-          right: 10,
-          bottom: 0,
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: 12,
-        }} />
-        
-        {/* Main document preview */}
-        <div style={{
-          position: 'relative',
-          background: 'white',
-          borderRadius: 12,
-          padding: 16,
-          height: '100%',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-          overflow: 'hidden',
-        }}>
-          {/* Document content preview */}
-          <div style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#18181B',
-            marginBottom: 8,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}>
-            {displayTitle}
-          </div>
-          <div style={{
-            fontSize: 12,
-            color: '#71717A',
-            lineHeight: 1.6,
-            display: '-webkit-box',
-            WebkitLineClamp: 5,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}>
-            {displayBody}
-          </div>
-          
-          {/* Fade gradient at bottom */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 60,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)',
-          }} />
-        </div>
-      </div>
-
-      {/* Top gradient for text readability */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 120,
-        background: 'linear-gradient(180deg, #18181B 0%, rgba(24,24,27,0.8) 60%, rgba(24,24,27,0) 100%)',
-        borderRadius: '20px 20px 0 0',
-        pointerEvents: 'none',
-      }} />
     </div>
   )
 }
@@ -203,9 +204,9 @@ function NewDocumentCard({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="cursor-pointer"
       style={{
-        width: 280,
-        height: 340,
-        background: '#18181B',
+        width: 300,
+        height: 360,
+        background: 'transparent',
         borderRadius: 20,
         display: 'flex',
         flexDirection: 'column',
@@ -213,59 +214,32 @@ function NewDocumentCard({ onClick }: { onClick: () => void }) {
         justifyContent: 'center',
         gap: 12,
         flexShrink: 0,
-        border: '2px dashed #27272A',
+        border: '1px dashed #27272A',
         transition: 'border-color 0.2s ease, background 0.2s ease',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = '#3F3F46'
-        e.currentTarget.style.background = '#1F1F23'
+        e.currentTarget.style.background = 'rgba(39,39,42,0.3)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = '#27272A'
-        e.currentTarget.style.background = '#18181B'
+        e.currentTarget.style.background = 'transparent'
       }}
     >
       <div style={{
-        width: 48,
-        height: 48,
-        borderRadius: 12,
+        width: 52,
+        height: 52,
+        borderRadius: 14,
         background: '#27272A',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        <Plus className="w-6 h-6 text-zinc-400" />
+        <Plus className="w-6 h-6 text-zinc-500" />
       </div>
-      <span style={{ color: '#71717A', fontSize: 14, fontWeight: 500 }}>
+      <span style={{ color: '#52525B', fontSize: 14, fontWeight: 500 }}>
         New Document
       </span>
-    </div>
-  )
-}
-
-// Quick Stats Card
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value 
-}: { 
-  icon: any
-  label: string
-  value: string | number 
-}) {
-  return (
-    <div style={{
-      background: '#18181B',
-      borderRadius: 12,
-      padding: 16,
-      flex: 1,
-      minWidth: 140,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <Icon className="w-4 h-4 text-zinc-500" />
-        <span style={{ color: '#71717A', fontSize: 12 }}>{label}</span>
-      </div>
-      <div style={{ color: 'white', fontSize: 24, fontWeight: 600 }}>{value}</div>
     </div>
   )
 }
@@ -291,7 +265,6 @@ export default function DashboardPage() {
   }
 
   const handleOpenDocument = (docId: string) => {
-    // TODO: Pass docId to workspace
     router.push('/workspace')
   }
 
@@ -312,192 +285,96 @@ export default function DashboardPage() {
   // Sort documents by updated_at
   const recentDocs = [...documents].sort((a, b) => 
     new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-  ).slice(0, 6)
-
-  // Calculate stats
-  const totalDocs = documents.length
-  const thisWeekDocs = documents.filter(d => {
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-    return new Date(d.updated_at).getTime() > weekAgo
-  }).length
+  ).slice(0, 11) // Show up to 11 + 1 new = 12 cards (4 rows of 3 or 3 rows of 4)
 
   return (
-    <div className="min-h-screen bg-[#09090B]">
-      {/* Top Navigation */}
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px 48px',
-        borderBottom: '1px solid #27272A',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img 
-              src="/images/raven-logo.png" 
-              alt="Raven" 
-              style={{ width: 24, height: 24, filter: 'brightness(0) invert(1)' }} 
-            />
-            <span style={{ color: 'white', fontSize: 16, fontWeight: 600 }}>Raven</span>
-          </div>
-          
-          {/* Nav Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                border: 'none',
-                background: '#27272A',
-                color: 'white',
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => router.push('/workspace')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                border: 'none',
-                background: 'transparent',
-                color: '#71717A',
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
-            >
-              Workspace
-            </button>
-            <button
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                border: 'none',
-                background: 'transparent',
-                color: '#71717A',
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
-            >
-              Analytics
-            </button>
-          </div>
-        </div>
-        
-        {/* Right side */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={handleNewDocument}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 14px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'white',
-              color: '#09090B',
+    <div className="h-screen flex bg-[#09090B]">
+      <Sidebar 
+        activeWorkspaceId="ws-1"
+        onWorkspaceSelect={() => {}}
+        connectedSourceCount={3}
+      />
+      
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {/* Main Content */}
+        <div style={{ padding: '48px 48px 80px' }}>
+          {/* Greeting */}
+          <h1 style={{
+            color: 'white',
+            fontSize: 36,
+            fontWeight: 600,
+            marginBottom: 48,
+            letterSpacing: '-0.02em',
+          }}>
+            {greeting}
+          </h1>
+
+          {/* Recently Edited */}
+          <div>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              marginBottom: 20,
+              color: '#71717A',
               fontSize: 13,
               fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            New
-          </button>
-        </div>
-      </nav>
-      
-      {/* Main Content */}
-      <div style={{ padding: '48px 48px', maxWidth: 1400, margin: '0 auto' }}>
-        {/* Greeting */}
-        <h1 style={{
-          color: 'white',
-          fontSize: 40,
-          fontWeight: 600,
-          marginBottom: 48,
-          letterSpacing: '-0.02em',
-        }}>
-          {greeting}
-        </h1>
+            }}>
+              <Clock className="w-4 h-4" />
+              <span>Recently edited</span>
+            </div>
 
-        {/* Quick Stats */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 48, maxWidth: 500 }}>
-          <StatCard icon={FileText} label="Documents" value={totalDocs} />
-          <StatCard icon={TrendingUp} label="Active this week" value={thisWeekDocs} />
-          <StatCard icon={Eye} label="Total views" value="—" />
-        </div>
-
-        {/* Recently Visited */}
-        <div style={{ marginBottom: 48 }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 8, 
-            marginBottom: 20,
-            color: '#71717A',
-            fontSize: 13,
-            fontWeight: 500,
-          }}>
-            <Clock className="w-4 h-4" />
-            <span>Recently edited</span>
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              gap: 20, 
+              paddingTop: 8,
+              paddingBottom: 12,
+            }}>
+              <NewDocumentCard onClick={handleNewDocument} />
+              
+              {recentDocs.map(doc => (
+                <DocumentCard 
+                  key={doc.id}
+                  document={doc}
+                  onClick={() => handleOpenDocument(doc.id)}
+                />
+              ))}
+            </div>
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            gap: 20, 
-            overflowX: 'auto',
-            paddingBottom: 12,
-          }}>
-            <NewDocumentCard onClick={handleNewDocument} />
-            
-            {recentDocs.map(doc => (
-              <DocumentCard 
-                key={doc.id}
-                document={doc}
-                onClick={() => handleOpenDocument(doc.id)}
-              />
-            ))}
-          </div>
+          {/* Empty state if no documents */}
+          {documents.length === 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '80px 20px',
+              color: '#71717A',
+            }}>
+              <FileText className="w-12 h-12 mx-auto mb-4 opacity-40" />
+              <h3 style={{ color: 'white', fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
+                No documents yet
+              </h3>
+              <p style={{ fontSize: 14, marginBottom: 24 }}>
+                Create your first document to get started
+              </p>
+              <button
+                onClick={handleNewDocument}
+                style={{
+                  background: 'white',
+                  color: '#09090B',
+                  padding: '10px 20px',
+                  borderRadius: 8,
+                  border: 'none',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Create Document
+              </button>
+            </div>
+          )}
         </div>
-
-        {/* Empty state if no documents */}
-        {documents.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '80px 20px',
-            color: '#71717A',
-          }}>
-            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <h3 style={{ color: 'white', fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
-              No documents yet
-            </h3>
-            <p style={{ fontSize: 14, marginBottom: 20 }}>
-              Create your first document to get started
-            </p>
-            <button
-              onClick={handleNewDocument}
-              style={{
-                background: 'white',
-                color: '#09090B',
-                padding: '10px 20px',
-                borderRadius: 8,
-                border: 'none',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
-            >
-              Create Document
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )
