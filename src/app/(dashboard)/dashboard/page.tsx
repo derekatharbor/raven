@@ -267,7 +267,7 @@ export default function DashboardPage() {
   }
 
   const handleOpenDocument = (docId: string) => {
-    router.push('/workspace')
+    router.push(`/workspace?doc=${docId}`)
   }
 
   // Loading state

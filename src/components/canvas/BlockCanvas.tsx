@@ -135,9 +135,9 @@ function EditorTabs({ tabs, activeTabId, onTabSelect, onTabClose, onNewTab, onSh
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      height: 40,
+      height: 44,
       borderBottom: '1px solid #E5E7EB',
-      background: '#FAFAFA',
+      background: '#FBF9F7',
       paddingLeft: 8,
       paddingRight: 8,
       gap: 1,
@@ -1173,15 +1173,17 @@ export default function BlockCanvas({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Sync documents from props to tabs
-  // Initialize with only the current document (or most recent), not all documents
+  // Initialize tab with the current documentId
   useEffect(() => {
-    // Skip if already have tabs initialized (prevents overwriting on every documents change)
-    if (tabs.length > 0 && tabs[0].id !== 'new') return
+    // Skip if we already have this document loaded as a tab
+    if (tabs.some(t => t.id === documentId)) return
     
-    if (documents.length > 0) {
-      // Only load the most recent document as initial tab
-      const doc = documents[0]
-      const initialTab: Tab = {
+    // Find the document to load
+    const doc = documents.find(d => d.id === documentId)
+    
+    if (doc) {
+      // Load the specified document
+      const newTab: Tab = {
         id: doc.id,
         name: doc.title || '',
         hasCustomName: false,
@@ -1189,10 +1191,16 @@ export default function BlockCanvas({
         title: doc.title || '',
         blocks: contentToBlocks(doc.content),
       }
-      setTabs([initialTab])
+      
+      // Replace any 'new' placeholder tab, or add to existing tabs
+      if (tabs.length === 1 && tabs[0].id === 'new') {
+        setTabs([newTab])
+      } else {
+        setTabs(prev => [...prev.filter(t => t.id !== 'new'), newTab])
+      }
       setActiveTabId(doc.id)
-    } else {
-      // No documents - show empty state
+    } else if (documents.length === 0 && tabs.length === 0) {
+      // No documents at all - show empty placeholder
       setTabs([{
         id: 'new',
         name: '',
@@ -1203,7 +1211,7 @@ export default function BlockCanvas({
       }])
       setActiveTabId('new')
     }
-  }, [documents.length]) // Only run when doc count changes, not on every docs update
+  }, [documentId, documents])
 
   // Update tab when currentDoc loads
   useEffect(() => {
