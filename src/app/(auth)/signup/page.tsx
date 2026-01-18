@@ -1,4 +1,5 @@
 // Path: src/app/(auth)/signup/page.tsx
+// Path: src/app/(auth)/signup/page.tsx
 
 'use client'
 
@@ -25,7 +26,7 @@ export default function SignupPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        router.push('/workspace')
+        router.push('/dashboard')
       }
     }
     checkAuth()
@@ -86,7 +87,7 @@ export default function SignupPage() {
       setLoading(false)
     } else if (data.session) {
       // Immediate session (email confirmation disabled) - redirect
-      router.push('/workspace')
+      router.push('/dashboard')
     } else if (data.user) {
       // Email confirmation required
       setMessage('Check your email to confirm your account!')

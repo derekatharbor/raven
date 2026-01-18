@@ -1,4 +1,5 @@
 // Path: src/app/(auth)/login/page.tsx
+// Path: src/app/(auth)/login/page.tsx
 
 'use client'
 
@@ -25,7 +26,7 @@ export default function LoginPage() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        router.push('/workspace')
+        router.push('/dashboard')
       }
     }
     checkAuth()
@@ -75,8 +76,8 @@ export default function LoginPage() {
       setMessageType('error')
       setLoading(false)
     } else if (data.session) {
-      // Successful login - redirect to workspace
-      router.push('/workspace')
+      // Successful login - redirect to dashboard
+      router.push('/dashboard')
     }
   }
 
