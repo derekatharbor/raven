@@ -21,6 +21,15 @@ function WorkspaceContent() {
   const [activeDocId, setActiveDocId] = useState<string | null>(null)
   const creatingDocRef = useRef(false)
   
+  const OPEN_TABS_KEY = 'raven_open_tabs'
+  
+  // Get open tabs from localStorage
+  const getOpenTabs = (): string[] => {
+    try {
+      return JSON.parse(localStorage.getItem(OPEN_TABS_KEY) || '[]')
+    } catch { return [] }
+  }
+  
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -28,7 +37,7 @@ function WorkspaceContent() {
     }
   }, [user, authLoading, router])
 
-  // Set active doc from URL param, or first document, or create one
+  // Set active doc from URL param, or first OPEN tab, or first document
   useEffect(() => {
     // Wait until we've actually fetched from DB AND finished loading
     if (!hasFetched || docsLoading || !user || creatingDocRef.current) return
@@ -38,22 +47,31 @@ function WorkspaceContent() {
       if (docIdFromUrl && documents.find(d => d.id === docIdFromUrl)) {
         setActiveDocId(docIdFromUrl)
       } else {
-        // Otherwise use first document
-        setActiveDocId(prev => {
-          if (!prev || !documents.find(d => d.id === prev)) {
-            return documents[0].id
-          }
-          return prev
-        })
+        // No URL param - check localStorage for open tabs
+        const openTabs = getOpenTabs()
+        const firstOpenTab = openTabs.find(id => documents.some(d => d.id === id))
+        
+        if (firstOpenTab) {
+          setActiveDocId(firstOpenTab)
+          router.replace(`/workspace?doc=${firstOpenTab}`, { scroll: false })
+        } else {
+          // No open tabs - use first document
+          const firstDocId = documents[0].id
+          setActiveDocId(firstDocId)
+          router.replace(`/workspace?doc=${firstDocId}`, { scroll: false })
+        }
       }
     } else {
       // No documents in DB - create first one (only once)
       creatingDocRef.current = true
       createDocument('').then(doc => {
-        if (doc) setActiveDocId(doc.id)
+        if (doc) {
+          setActiveDocId(doc.id)
+          router.replace(`/workspace?doc=${doc.id}`, { scroll: false })
+        }
       })
     }
-  }, [hasFetched, docsLoading, documents, user, docIdFromUrl])
+  }, [hasFetched, docsLoading, documents, user, docIdFromUrl, router])
 
   // Handle creating new document
   const handleNewDocument = useCallback(async () => {
