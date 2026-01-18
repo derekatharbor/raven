@@ -1773,26 +1773,6 @@ export default function BlockCanvas({
             color: '#6B7280',
           }}>
             <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
-            
-            {/* Save indicator */}
-            {saving ? (
-              <span style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 4, 
-                color: '#9CA3AF',
-              }}>
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                Saving
-              </span>
-            ) : hasUnsavedChanges ? (
-              <span style={{ color: '#F59E0B' }}>Unsaved</span>
-            ) : activeTab?.hasChanges === false && documentId !== 'new' ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#22C55E' }}>
-                <Check className="w-3 h-3" />
-                Saved
-              </span>
-            ) : null}
           </div>
           
           {/* Separator */}

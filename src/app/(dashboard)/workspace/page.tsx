@@ -75,11 +75,7 @@ function WorkspaceContent() {
 
   return (
     <div className="h-screen flex bg-white">
-      <Sidebar 
-        activeWorkspaceId="ws-1"
-        onWorkspaceSelect={() => {}}
-        connectedSourceCount={3}
-      />
+      <Sidebar connectedSourceCount={3} />
       
       <BlockCanvas 
         documentId={activeDocId} 

@@ -284,11 +284,7 @@ export default function DashboardPage() {
 
   return (
     <div className="h-screen flex bg-[#FBF9F7]">
-      <Sidebar 
-        activeWorkspaceId="ws-1"
-        onWorkspaceSelect={() => {}}
-        connectedSourceCount={3}
-      />
+      <Sidebar connectedSourceCount={3} />
       
       <div style={{ flex: 1, overflow: 'auto' }}>
         {/* Main Content */}
