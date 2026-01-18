@@ -10,13 +10,14 @@ import {
   ChevronRight,
   ChevronLeft,
   ChevronDown,
-  FolderOpen,
+  PenLine,
   Database,
   Settings,
   Plus,
   Layers,
   Check,
   Home,
+  Folder,
 } from 'lucide-react'
 
 const WORKSPACES = [
@@ -83,7 +84,7 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
               href="/workspace"
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/workspace') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
             >
-              <FolderOpen className="w-4 h-4 text-gray-400" />
+              <PenLine className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Workspace</span>
             </Link>
           </div>
@@ -101,7 +102,7 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
               className={`flex items-center justify-center p-2 rounded ${isActive('/workspace') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
               title="Workspace"
             >
-              <FolderOpen className="w-4 h-4 text-gray-500" />
+              <PenLine className="w-4 h-4 text-gray-500" />
             </Link>
           </div>
         )}
@@ -131,7 +132,7 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
                     onClick={() => onWorkspaceSelect?.(ws.id)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${activeWorkspaceId === ws.id ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
                   >
-                    <FolderOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <Folder className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <span className="text-[13px] text-gray-900 truncate flex-1 text-left">{ws.name}</span>
                     {ws.alerts > 0 && (
                       <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">{ws.alerts}</span>
@@ -144,7 +145,7 @@ export default function Sidebar({ activeWorkspaceId, onWorkspaceSelect, connecte
         ) : (
           <div className="px-2 py-3">
             <button onClick={() => setIsCollapsed(false)} className="w-full flex items-center justify-center p-2 rounded hover:bg-black/5 cursor-pointer" title="Workspaces">
-              <Home className="w-4 h-4 text-gray-500" />
+              <Layers className="w-4 h-4 text-gray-500" />
             </button>
           </div>
         )}

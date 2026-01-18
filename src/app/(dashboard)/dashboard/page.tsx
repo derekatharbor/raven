@@ -10,6 +10,7 @@ import { Plus, Clock, FileText } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useDocuments } from '@/lib/hooks/useDocument'
 import Sidebar from '@/components/layout/Sidebar'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 // Get time-based greeting
 function getGreeting() {
@@ -76,16 +77,17 @@ function DocumentCard({
       style={{
         width: 300,
         height: 360,
-        background: '#18181B',
-        borderRadius: 20,
+        background: 'white',
+        borderRadius: 16,
         position: 'relative',
         overflow: 'hidden',
         flexShrink: 0,
+        border: '1px solid #E5E5E5',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-4px)'
-        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.4)'
+        e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.12)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)'
@@ -107,18 +109,18 @@ function DocumentCard({
           left: 8,
           right: 8,
           bottom: 8,
-          background: 'rgba(255,255,255,0.04)',
-          borderRadius: 12,
+          background: 'rgba(0,0,0,0.02)',
+          borderRadius: 10,
         }} />
         
         {/* Main document preview */}
         <div style={{
           position: 'relative',
-          background: 'white',
-          borderRadius: 12,
+          background: '#FAFAFA',
+          borderRadius: 10,
           padding: 18,
           height: '100%',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          border: '1px solid #E5E5E5',
           overflow: 'hidden',
         }}>
           {/* Document content preview */}
@@ -152,7 +154,7 @@ function DocumentCard({
             left: 0,
             right: 0,
             height: 80,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)',
+            background: 'linear-gradient(180deg, rgba(250,250,250,0) 0%, rgba(250,250,250,1) 100%)',
           }} />
         </div>
       </div>
@@ -163,9 +165,9 @@ function DocumentCard({
         top: 0,
         left: 0,
         right: 0,
-        height: 180,
-        background: 'linear-gradient(180deg, #18181B 0%, #18181B 50%, rgba(24,24,27,0) 100%)',
-        borderRadius: '20px 20px 0 0',
+        height: 160,
+        background: 'linear-gradient(180deg, white 0%, white 50%, rgba(255,255,255,0) 100%)',
+        borderRadius: '16px 16px 0 0',
         pointerEvents: 'none',
         zIndex: 5,
       }} />
@@ -173,7 +175,7 @@ function DocumentCard({
       {/* Title & Timestamp */}
       <div style={{ position: 'relative', zIndex: 10, padding: '22px 22px' }}>
         <h3 style={{
-          color: 'white',
+          color: '#18181B',
           fontSize: 18,
           fontWeight: 600,
           lineHeight: 1.35,
@@ -207,22 +209,22 @@ function NewDocumentCard({ onClick }: { onClick: () => void }) {
         width: 300,
         height: 360,
         background: 'transparent',
-        borderRadius: 20,
+        borderRadius: 16,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
         flexShrink: 0,
-        border: '1px dashed #27272A',
+        border: '1px dashed #D4D4D8',
         transition: 'border-color 0.2s ease, background 0.2s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = '#3F3F46'
-        e.currentTarget.style.background = 'rgba(39,39,42,0.3)'
+        e.currentTarget.style.borderColor = '#A1A1AA'
+        e.currentTarget.style.background = 'rgba(0,0,0,0.02)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#27272A'
+        e.currentTarget.style.borderColor = '#D4D4D8'
         e.currentTarget.style.background = 'transparent'
       }}
     >
@@ -230,14 +232,14 @@ function NewDocumentCard({ onClick }: { onClick: () => void }) {
         width: 52,
         height: 52,
         borderRadius: 14,
-        background: '#27272A',
+        background: '#F4F4F5',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        <Plus className="w-6 h-6 text-zinc-500" />
+        <Plus className="w-6 h-6 text-zinc-400" />
       </div>
-      <span style={{ color: '#52525B', fontSize: 14, fontWeight: 500 }}>
+      <span style={{ color: '#71717A', fontSize: 14, fontWeight: 500 }}>
         New Document
       </span>
     </div>
@@ -270,14 +272,7 @@ export default function DashboardPage() {
 
   // Loading state
   if (authLoading || docsLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-[#09090B]">
-        <div className="flex items-center gap-3 text-zinc-500">
-          <div className="w-5 h-5 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen light message="Loading documents..." />
   }
 
   if (!user) return null
@@ -288,7 +283,7 @@ export default function DashboardPage() {
   ).slice(0, 11) // Show up to 11 + 1 new = 12 cards (4 rows of 3 or 3 rows of 4)
 
   return (
-    <div className="h-screen flex bg-[#09090B]">
+    <div className="h-screen flex bg-[#FBF9F7]">
       <Sidebar 
         activeWorkspaceId="ws-1"
         onWorkspaceSelect={() => {}}
@@ -300,7 +295,7 @@ export default function DashboardPage() {
         <div style={{ padding: '48px 48px 80px' }}>
           {/* Greeting */}
           <h1 style={{
-            color: 'white',
+            color: '#18181B',
             fontSize: 36,
             fontWeight: 600,
             marginBottom: 48,
@@ -351,7 +346,7 @@ export default function DashboardPage() {
               color: '#71717A',
             }}>
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-40" />
-              <h3 style={{ color: 'white', fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
+              <h3 style={{ color: '#18181B', fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
                 No documents yet
               </h3>
               <p style={{ fontSize: 14, marginBottom: 24 }}>
@@ -360,8 +355,8 @@ export default function DashboardPage() {
               <button
                 onClick={handleNewDocument}
                 style={{
-                  background: 'white',
-                  color: '#09090B',
+                  background: '#18181B',
+                  color: 'white',
                   padding: '10px 20px',
                   borderRadius: 8,
                   border: 'none',

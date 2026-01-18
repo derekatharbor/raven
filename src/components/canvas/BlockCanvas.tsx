@@ -1173,20 +1173,24 @@ export default function BlockCanvas({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Sync documents from props to tabs
+  // Initialize with only the current document (or most recent), not all documents
   useEffect(() => {
+    // Skip if already have tabs initialized (prevents overwriting on every documents change)
+    if (tabs.length > 0 && tabs[0].id !== 'new') return
+    
     if (documents.length > 0) {
-      const newTabs: Tab[] = documents.map(doc => ({
+      // Only load the most recent document as initial tab
+      const doc = documents[0]
+      const initialTab: Tab = {
         id: doc.id,
-        name: doc.title || '', // Initialize from doc title, but won't sync after
+        name: doc.title || '',
         hasCustomName: false,
         hasChanges: false,
         title: doc.title || '',
         blocks: contentToBlocks(doc.content),
-      }))
-      setTabs(newTabs)
-      if (!activeTabId || !documents.find(d => d.id === activeTabId)) {
-        setActiveTabId(documents[0].id)
       }
+      setTabs([initialTab])
+      setActiveTabId(doc.id)
     } else {
       // No documents - show empty state
       setTabs([{
@@ -1199,7 +1203,7 @@ export default function BlockCanvas({
       }])
       setActiveTabId('new')
     }
-  }, [documents])
+  }, [documents.length]) // Only run when doc count changes, not on every docs update
 
   // Update tab when currentDoc loads
   useEffect(() => {

@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import BlockCanvas from '@/components/canvas/BlockCanvas'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useDocuments, useDocument } from '@/lib/hooks/useDocument'
 
@@ -56,14 +57,7 @@ export default function WorkspacePage() {
 
   // Loading state - wait for doc creation
   if (authLoading || docsLoading || !activeDocId) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="flex items-center gap-3 text-gray-400">
-          <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-          <span>Loading...</span>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen light message="Loading workspace..." />
   }
 
   // Not authenticated
