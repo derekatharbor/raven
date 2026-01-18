@@ -1173,83 +1173,91 @@ export default function BlockCanvas({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initializedRef = useRef(false)
   
-  // Persist open tab IDs to localStorage
-  const TABS_STORAGE_KEY = 'raven_open_tabs'
+  const OPEN_TABS_KEY = 'raven_open_tab_ids'
   
-  // Save open tab IDs whenever tabs change (but not on initial empty state)
-  useEffect(() => {
-    if (tabs.length > 0 && tabs[0].id !== 'new' && initializedRef.current) {
-      const tabIds = tabs.map(t => t.id).filter(id => id !== 'new')
-      localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(tabIds))
+  // Read open tab IDs from localStorage
+  const getOpenTabIds = (): string[] => {
+    try {
+      const saved = localStorage.getItem(OPEN_TABS_KEY)
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
     }
-  }, [tabs])
+  }
   
-  // Initialize tabs from localStorage + current documentId
+  // Save open tab IDs to localStorage
+  const saveOpenTabIds = (ids: string[]) => {
+    localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(ids))
+  }
+  
+  // Initialize tabs from localStorage on first load
   useEffect(() => {
-    // Wait for documents to load
-    if (documents.length === 0) return
-    // Only initialize once
-    if (initializedRef.current) return
+    if (documents.length === 0 || initializedRef.current) return
     initializedRef.current = true
     
-    // Get previously open tabs from localStorage
-    let savedTabIds: string[] = []
-    try {
-      const saved = localStorage.getItem(TABS_STORAGE_KEY)
-      if (saved) savedTabIds = JSON.parse(saved)
-    } catch (e) {
-      // Ignore parse errors
+    let openTabIds = getOpenTabIds()
+    
+    // If current documentId isn't in the list, add it
+    if (documentId && !openTabIds.includes(documentId)) {
+      openTabIds = [...openTabIds, documentId]
+      saveOpenTabIds(openTabIds)
     }
     
-    // Always include the current documentId
-    if (documentId && documentId !== 'new' && !savedTabIds.includes(documentId)) {
-      savedTabIds.push(documentId)
-    }
+    // Filter to only docs that exist
+    const validIds = openTabIds.filter(id => documents.some(d => d.id === id))
     
-    // Filter to only docs that still exist
-    const validTabIds = savedTabIds.filter(id => documents.some(d => d.id === id))
-    
-    if (validTabIds.length > 0) {
-      // Build tabs from saved IDs
-      const newTabs: Tab[] = validTabIds.map(id => {
-        const doc = documents.find(d => d.id === id)!
-        return {
+    // If nothing valid, just use the current documentId
+    if (validIds.length === 0 && documentId) {
+      const doc = documents.find(d => d.id === documentId)
+      if (doc) {
+        saveOpenTabIds([documentId])
+        setTabs([{
           id: doc.id,
           name: doc.title || '',
           hasCustomName: false,
           hasChanges: false,
           title: doc.title || '',
           blocks: contentToBlocks(doc.content),
-        }
-      })
-      setTabs(newTabs)
-      // Set active to documentId if valid, otherwise first tab
-      setActiveTabId(validTabIds.includes(documentId) ? documentId : validTabIds[0])
-    } else {
-      // No valid tabs - show empty placeholder
-      setTabs([{
-        id: 'new',
-        name: '',
+        }])
+        setActiveTabId(documentId)
+      }
+      return
+    }
+    
+    // Build tabs from valid IDs
+    const newTabs: Tab[] = validIds.map(id => {
+      const doc = documents.find(d => d.id === id)!
+      return {
+        id: doc.id,
+        name: doc.title || '',
         hasCustomName: false,
         hasChanges: false,
-        title: '',
-        blocks: DEFAULT_BLOCKS,
-      }])
-      setActiveTabId('new')
+        title: doc.title || '',
+        blocks: contentToBlocks(doc.content),
+      }
+    })
+    
+    // Update localStorage if we filtered out invalid IDs
+    if (validIds.length !== openTabIds.length) {
+      saveOpenTabIds(validIds)
     }
+    
+    setTabs(newTabs)
+    setActiveTabId(documentId && validIds.includes(documentId) ? documentId : validIds[0])
   }, [documents, documentId])
   
-  // When documentId changes (from URL), add it as a tab if not already open
+  // When documentId changes (navigated from dashboard or new doc created), add to tabs if not there
   useEffect(() => {
-    if (!documentId || documentId === 'new' || !initializedRef.current) return
+    if (!documentId || !initializedRef.current) return
     
-    // Already have this tab?
-    if (tabs.some(t => t.id === documentId)) {
+    // Already have this tab? Just switch to it
+    const existingTab = tabs.find(t => t.id === documentId)
+    if (existingTab) {
       setActiveTabId(documentId)
       return
     }
     
-    // Find the document and add as new tab
+    // Find doc and add new tab
     const doc = documents.find(d => d.id === documentId)
     if (doc) {
       const newTab: Tab = {
@@ -1260,8 +1268,13 @@ export default function BlockCanvas({
         title: doc.title || '',
         blocks: contentToBlocks(doc.content),
       }
-      setTabs(prev => [...prev.filter(t => t.id !== 'new'), newTab])
-      setActiveTabId(doc.id)
+      
+      setTabs(prev => {
+        const updated = [...prev, newTab]
+        saveOpenTabIds(updated.map(t => t.id))
+        return updated
+      })
+      setActiveTabId(documentId)
     }
   }, [documentId, documents, tabs])
 
@@ -1432,10 +1445,15 @@ export default function BlockCanvas({
   }, [onNewDocument])
 
   const handleCloseTab = useCallback((id: string) => {
-    if (tabs.length === 1) return
+    if (tabs.length === 1) return // Don't close last tab
+    
     const newTabs = tabs.filter(t => t.id !== id)
     setTabs(newTabs)
-    if (activeTabId === id) setActiveTabId(newTabs[0].id)
+    saveOpenTabIds(newTabs.map(t => t.id))
+    
+    if (activeTabId === id) {
+      setActiveTabId(newTabs[0].id)
+    }
   }, [tabs, activeTabId])
 
   const handleTabRename = useCallback((id: string, newName: string) => {
