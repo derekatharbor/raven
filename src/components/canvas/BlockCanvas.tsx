@@ -1328,20 +1328,26 @@ export default function BlockCanvas({
     }
   }, [documentId, documents, docToTab])
 
-  // Update tab when currentDoc loads
+  // Update tab when currentDoc loads - ONLY if tab hasn't been modified
+  // This prevents overwriting user edits when the hook re-renders
+  const loadedDocIds = useRef<Set<string>>(new Set())
+  
   useEffect(() => {
-    if (currentDoc && !docLoading) {
-      setTabs(prev => prev.map(tab => 
-        tab.id === currentDoc.id 
-          ? {
-              ...tab,
-              // Don't overwrite tab name - keep it independent
-              title: currentDoc.title,
-              blocks: contentToBlocks(currentDoc.content),
-            }
-          : tab
-      ))
-    }
+    if (!currentDoc || docLoading) return
+    
+    // Only load from DB once per document
+    if (loadedDocIds.current.has(currentDoc.id)) return
+    loadedDocIds.current.add(currentDoc.id)
+    
+    setTabs(prev => prev.map(tab => 
+      tab.id === currentDoc.id 
+        ? {
+            ...tab,
+            title: currentDoc.title,
+            blocks: contentToBlocks(currentDoc.content),
+          }
+        : tab
+    ))
   }, [currentDoc, docLoading])
 
   // Convert DB content (TipTap JSON) to our block format
@@ -1471,6 +1477,15 @@ export default function BlockCanvas({
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
   const blocks = activeTab?.blocks || []
   const title = activeTab?.title || ''
+  const titleRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize title on change
+  useEffect(() => {
+    if (titleRef.current) {
+      titleRef.current.style.height = 'auto'
+      titleRef.current.style.height = titleRef.current.scrollHeight + 'px'
+    }
+  }, [title])
 
   // Word count (strips HTML tags)
   const wordCount = blocks.reduce((count, block) => {
@@ -1753,12 +1768,24 @@ export default function BlockCanvas({
           <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px 120px' }}>
             {/* Document title */}
             <div style={{ marginBottom: 32, paddingLeft: 64 }}>
-              <input 
-                type="text" 
+              <textarea 
+                ref={titleRef}
                 value={title} 
-                onChange={(e) => handleTitleUpdate(e.target.value)} 
+                onChange={(e) => {
+                  handleTitleUpdate(e.target.value)
+                  // Auto-resize
+                  e.target.style.height = 'auto'
+                  e.target.style.height = e.target.scrollHeight + 'px'
+                }} 
+                onInput={(e) => {
+                  // Auto-resize on input too
+                  const target = e.target as HTMLTextAreaElement
+                  target.style.height = 'auto'
+                  target.style.height = target.scrollHeight + 'px'
+                }}
                 placeholder="Untitled" 
                 className="doc-title-input"
+                rows={1}
                 style={{ 
                   width: '100%', 
                   fontSize: 32, 
@@ -1769,6 +1796,9 @@ export default function BlockCanvas({
                   outline: 'none', 
                   background: 'transparent',
                   letterSpacing: '-0.02em',
+                  resize: 'none',
+                  overflow: 'hidden',
+                  lineHeight: 1.2,
                 }} 
               />
             </div>

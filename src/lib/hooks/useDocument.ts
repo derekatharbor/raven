@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 
@@ -80,16 +80,20 @@ export function useDocument(documentId: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [saving, setSaving] = useState(false)
+  const [hasFetched, setHasFetched] = useState(false)
   
-  const supabase = createClient()
+  // Memoize supabase client to prevent re-fetching
+  const supabase = useMemo(() => createClient(), [])
   const { user } = useAuth()
 
-  // Fetch document and claims
+  // Fetch document and claims - only once
   const fetchDocument = useCallback(async () => {
-    if (!documentId || !user) {
-      setDocument(null)
-      setClaims([])
-      setLoading(false)
+    if (!documentId || !user || hasFetched) {
+      if (!documentId || !user) {
+        setDocument(null)
+        setClaims([])
+        setLoading(false)
+      }
       return
     }
 
@@ -115,13 +119,14 @@ export function useDocument(documentId: string | null) {
       
       if (claimsError) throw claimsError
       setClaims((claimsData || []).map(toClaim))
+      setHasFetched(true)
 
     } catch (err) {
       setError(err as Error)
     } finally {
       setLoading(false)
     }
-  }, [documentId, user, supabase])
+  }, [documentId, user, supabase, hasFetched])
 
   useEffect(() => {
     fetchDocument()
@@ -280,7 +285,8 @@ export function useDocuments() {
   const [hasFetched, setHasFetched] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   
-  const supabase = createClient()
+  // Memoize supabase client to prevent re-fetching
+  const supabase = useMemo(() => createClient(), [])
   const { user } = useAuth()
 
   const fetchDocuments = useCallback(async () => {
