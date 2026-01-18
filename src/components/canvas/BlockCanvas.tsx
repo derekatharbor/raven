@@ -1178,14 +1178,11 @@ export default function BlockCanvas({
   // Helper to read/write localStorage
   const getStoredTabs = (): string[] => {
     try {
-      const stored = JSON.parse(localStorage.getItem(OPEN_TABS_KEY) || '[]')
-      console.log('[TABS] getStoredTabs:', stored)
-      return stored
+      return JSON.parse(localStorage.getItem(OPEN_TABS_KEY) || '[]')
     } catch { return [] }
   }
   
   const setStoredTabs = (ids: string[]) => {
-    console.log('[TABS] setStoredTabs:', ids)
     localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(ids))
   }
   
@@ -1201,17 +1198,14 @@ export default function BlockCanvas({
   
   // ONE-TIME initialization when documents first load
   useEffect(() => {
-    console.log('[TABS] Init effect - hasInitialized:', hasInitialized.current, 'docs:', documents.length, 'docId:', documentId)
     if (hasInitialized.current || documents.length === 0) return
     hasInitialized.current = true
-    console.log('[TABS] Initializing...')
     
     // Get stored tab IDs
     let storedIds = getStoredTabs()
     
     // Add current documentId if not already there
     if (documentId && !storedIds.includes(documentId)) {
-      console.log('[TABS] Adding documentId to stored:', documentId)
       storedIds = [...storedIds, documentId]
       setStoredTabs(storedIds)
     }
@@ -1230,13 +1224,11 @@ export default function BlockCanvas({
     
     // Clean up localStorage if we removed any
     if (validIds.length !== storedIds.length) {
-      console.log('[TABS] Cleaning invalid tabs, was:', storedIds, 'now:', validIds)
       setStoredTabs(validIds)
     }
     
     // Set tabs and active
     if (validTabs.length > 0) {
-      console.log('[TABS] Setting tabs:', validIds)
       setTabs(validTabs)
       setActiveTabId(documentId && validIds.includes(documentId) ? documentId : validIds[0])
     }
@@ -1244,13 +1236,11 @@ export default function BlockCanvas({
   
   // Add tab when documentId changes AFTER initialization
   useEffect(() => {
-    console.log('[TABS] Add effect - hasInit:', hasInitialized.current, 'docId:', documentId)
     if (!hasInitialized.current || !documentId) return
     
     // Check if already have this tab using current localStorage (source of truth)
     const storedIds = getStoredTabs()
     if (storedIds.includes(documentId)) {
-      console.log('[TABS] Already in storage, just switching to:', documentId)
       setActiveTabId(documentId)
       return
     }
@@ -1258,7 +1248,6 @@ export default function BlockCanvas({
     // New doc - add as tab
     const doc = documents.find(d => d.id === documentId)
     if (doc) {
-      console.log('[TABS] Adding new tab:', documentId)
       const newTab = docToTab(doc)
       setTabs(prev => [...prev, newTab])
       setStoredTabs([...storedIds, documentId])
@@ -1433,11 +1422,9 @@ export default function BlockCanvas({
   }, [onNewDocument])
 
   const handleCloseTab = useCallback((id: string) => {
-    console.log('[TABS] Closing tab:', id, 'current tabs:', tabs.map(t => t.id))
     if (tabs.length === 1) return // Don't close last tab
     
     const newTabs = tabs.filter(t => t.id !== id)
-    console.log('[TABS] After close:', newTabs.map(t => t.id))
     setTabs(newTabs)
     setStoredTabs(newTabs.map(t => t.id))
     

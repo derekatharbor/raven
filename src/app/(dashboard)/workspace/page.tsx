@@ -60,8 +60,15 @@ function WorkspaceContent() {
     const doc = await createDocument('')
     if (doc) {
       setActiveDocId(doc.id)
+      router.replace(`/workspace?doc=${doc.id}`, { scroll: false })
     }
-  }, [createDocument])
+  }, [createDocument, router])
+
+  // Handle document selection (from tab switch or close)
+  const handleDocumentSelect = useCallback((docId: string) => {
+    setActiveDocId(docId)
+    router.replace(`/workspace?doc=${docId}`, { scroll: false })
+  }, [router])
 
   // Loading state - wait for doc creation
   if (authLoading || docsLoading || !activeDocId) {
@@ -80,7 +87,7 @@ function WorkspaceContent() {
       <BlockCanvas 
         documentId={activeDocId} 
         documents={documents}
-        onDocumentSelect={setActiveDocId}
+        onDocumentSelect={handleDocumentSelect}
         onNewDocument={handleNewDocument}
       />
     </div>
