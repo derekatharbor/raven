@@ -12,6 +12,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
+import ReactMarkdown from 'react-markdown'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
   X, Bold, Italic, Underline as UnderlineIcon,
@@ -24,6 +25,34 @@ import {
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
 import { uploadImage } from '@/lib/storage/upload'
+
+// ============================================================================
+// RAVEN SPINNER - Logo rotates 90 degrees at a time
+// ============================================================================
+
+function RavenSpinner({ size = 32 }: { size?: number }) {
+  const [rotation, setRotation] = useState(0)
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRotation(prev => prev + 90)
+    }, 300)
+    return () => clearInterval(interval)
+  }, [])
+  
+  return (
+    <img 
+      src="/images/raven-logo.png" 
+      alt="Loading" 
+      style={{ 
+        width: size, 
+        height: size, 
+        transform: `rotate(${rotation}deg)`,
+        transition: 'transform 0.3s ease',
+      }} 
+    />
+  )
+}
 
 // ============================================================================
 // TOOLTIP COMPONENT - renders via portal to escape overflow:hidden
@@ -424,7 +453,7 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [mode, setMode] = useState<'ask' | 'agent' | 'verify'>('ask')
+  const [mode, setMode] = useState<'ask' | 'verify'>('ask')
   const [webEnabled, setWebEnabled] = useState(false)
   const [showModeDropdown, setShowModeDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -438,7 +467,6 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
 
   const modes = {
     ask: { label: 'Ask', color: '#10B981', desc: 'Research' },
-    agent: { label: 'Agent', color: '#8B5CF6', desc: 'Deploy agent' },
     verify: { label: 'Verify', color: '#F59E0B', desc: 'Check claims' },
   }
 
@@ -471,25 +499,40 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!query.trim() && !selectedText) return
 
-    const userMessage = { role: 'user' as const, content: query || 'Find sources', context: selectedText || undefined }
+    const userMessage = { role: 'user' as const, content: query || 'Analyze this text', context: selectedText || undefined }
     setMessages(prev => [...prev, userMessage])
     setQuery('')
     setIsLoading(true)
 
-    const webPrefix = webEnabled ? '🌐 **Web + Sources**\n\n' : ''
-    const responses: Record<string, string> = {
-      ask: `${webPrefix}**SEC EDGAR (NVDA 10-Q, Q3 2024)**\nData center revenue of $14.51B, up 279% YoY.\n\n**Bloomberg**\nConfirms figure with AI chip demand context.`,
-      agent: `${webPrefix}**Agent deployed** - searching ${webEnabled ? 'web + ' : ''}3 sources...\n\n✓ SEC EDGAR - 2 filings\n✓ Bloomberg - 4 articles\n✓ Internal - 1 memo`,
-      verify: `${webPrefix}**Verification:**\n\n✓ $14.51B revenue - Matches SEC filing\n⚠️ 279% growth - Source says 279%, doc says 280%`,
-    }
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          mode,
+          webEnabled,
+        }),
+      })
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: responses[mode] }])
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
+
+      const data = await response.json()
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
+    } catch (error) {
+      console.error('Chat error:', error)
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: '⚠️ Sorry, I encountered an error. Please check that the API keys are configured correctly.' 
+      }])
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   // Single container with animated width
@@ -709,15 +752,45 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
                         padding: '10px 12px', borderRadius: 8,
                         background: msg.role === 'user' ? '#111' : '#F5F5F5',
                         color: msg.role === 'user' ? 'white' : '#111',
-                        fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap',
+                        fontSize: 13, lineHeight: 1.6,
                       }}>
-                        {msg.content}
+                        {msg.role === 'user' ? (
+                          msg.content
+                        ) : (
+                          <div className="markdown-response">
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => <p style={{ margin: '0 0 8px 0', lineHeight: 1.6 }}>{children}</p>,
+                                strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+                                ul: ({ children }) => <ul style={{ margin: '8px 0', paddingLeft: 20 }}>{children}</ul>,
+                                ol: ({ children }) => <ol style={{ margin: '8px 0', paddingLeft: 20 }}>{children}</ol>,
+                                li: ({ children }) => <li style={{ margin: '4px 0' }}>{children}</li>,
+                                a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#3B82F6', textDecoration: 'underline' }}>{children}</a>,
+                                code: ({ children }) => <code style={{ background: '#E5E7EB', padding: '2px 4px', borderRadius: 4, fontSize: 12 }}>{children}</code>,
+                                h1: ({ children }) => <h1 style={{ fontSize: 16, fontWeight: 600, margin: '12px 0 8px' }}>{children}</h1>,
+                                h2: ({ children }) => <h2 style={{ fontSize: 14, fontWeight: 600, margin: '10px 0 6px' }}>{children}</h2>,
+                                h3: ({ children }) => <h3 style={{ fontSize: 13, fontWeight: 600, margin: '8px 0 4px' }}>{children}</h3>,
+                                blockquote: ({ children }) => <blockquote style={{ borderLeft: '3px solid #E5E7EB', paddingLeft: 12, margin: '8px 0', color: '#6B7280', fontStyle: 'italic' }}>{children}</blockquote>,
+                              }}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                   {isLoading && (
-                    <div style={{ padding: '10px 12px', borderRadius: 8, background: '#F5F5F5', fontSize: 12, color: '#9CA3AF' }}>
-                      Searching...
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      padding: '24px 12px', 
+                      gap: 12,
+                    }}>
+                      <RavenSpinner size={28} />
+                      <span style={{ fontSize: 12, color: '#9CA3AF' }}>Researching...</span>
                     </div>
                   )}
                   <div ref={messagesEndRef} />
@@ -1557,9 +1630,10 @@ export default function BlockCanvas({
     updateBlocks(newBlocks)
   }, [blocks, updateBlocks])
 
-  // Research handler
+  // Research handler - opens panel and sets selected text
   const handleResearch = useCallback((text: string) => {
     setResearchText(text)
+    setPanelCollapsed(false) // Auto-open the Intelligence Hub
     setToolbarState(prev => ({ ...prev, visible: false }))
   }, [])
 
@@ -1653,6 +1727,9 @@ export default function BlockCanvas({
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
         }
+        
+        .markdown-response p:last-child { margin-bottom: 0 !important; }
+        .markdown-response ul:last-child, .markdown-response ol:last-child { margin-bottom: 0 !important; }
         
         @media print {
           .gutter-btn, .tab-close-btn, .tab-add-btn { display: none !important; }
