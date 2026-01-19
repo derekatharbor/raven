@@ -112,12 +112,20 @@ export default function PublishedDocument({
         }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to start session')
+      // Try to parse response, handle empty/malformed gracefully
+      let data: any = {}
+      try {
+        const text = await response.text()
+        if (text) {
+          data = JSON.parse(text)
+        }
+      } catch {
+        // Response body empty or malformed - continue anyway
       }
 
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start session')
+      }
       
       // If we have initial version from SSR, use that. Otherwise use API response.
       if (!document && data.blocks) {
@@ -484,30 +492,42 @@ export default function PublishedDocument({
         </article>
       </main>
 
-      {/* Chat widget - floating bottom */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
-        {/* Expanded chat panel */}
-        {chatOpen && chatMessages.length > 0 && (
-          <div className="mb-3 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            {/* Chat header */}
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Ask this document</span>
+      {/* Chat widget - floating bottom with frosted glass */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        {/* Frosted glass backdrop */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(250, 250, 250, 0.8) 30%, rgba(250, 250, 250, 0.95) 100%)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+        />
+        
+        {/* Content container */}
+        <div className="relative max-w-lg mx-auto px-4 pb-4 pt-6">
+          {/* Expanded chat panel */}
+          {chatOpen && chatMessages.length > 0 && (
+            <div className="mb-3 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              {/* Chat header */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">Ask this document</span>
+                </div>
+                <button 
+                  onClick={() => setChatOpen(false)}
+                  className="p-1 hover:bg-gray-200 rounded transition-colors"
+                >
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
               </div>
-              <button 
-                onClick={() => setChatOpen(false)}
-                className="p-1 hover:bg-gray-200 rounded transition-colors"
+              
+              {/* Messages */}
+              <div 
+                ref={chatMessagesRef}
+                className="max-h-64 overflow-y-auto p-4 space-y-3"
               >
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </button>
-            </div>
-            
-            {/* Messages */}
-            <div 
-              ref={chatMessagesRef}
-              className="max-h-64 overflow-y-auto p-4 space-y-3"
-            >
               {chatMessages.map((msg, i) => (
                 <div 
                   key={i}
@@ -572,6 +592,7 @@ export default function PublishedDocument({
         <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-gray-400">
           <img src="/images/raven-logo.png" alt="" className="w-3 h-3 opacity-50" />
           <span>Powered by <a href="https://tryraven.io?ref=doc-chat" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">Raven</a></span>
+        </div>
         </div>
       </div>
 
