@@ -105,6 +105,89 @@ function Tooltip({ children, label }: { children: React.ReactNode; label: string
 }
 
 // ============================================================================
+// INSERTABLE FINDING - hover to reveal insert button
+// ============================================================================
+
+// Helper to extract text from React children
+function extractTextFromChildren(children: React.ReactNode): string {
+  if (typeof children === 'string') return children
+  if (typeof children === 'number') return String(children)
+  if (Array.isArray(children)) {
+    return children.map(extractTextFromChildren).join('')
+  }
+  // Handle React elements
+  if (children && typeof children === 'object') {
+    const element = children as { props?: { children?: React.ReactNode } }
+    if (element.props?.children) {
+      return extractTextFromChildren(element.props.children)
+    }
+  }
+  return ''
+}
+
+function InsertableFinding({ children, text, onInsert }: { 
+  children: React.ReactNode
+  text: string
+  onInsert: () => void 
+}) {
+  const [isHovered, setIsHovered] = useState(false)
+  
+  // Don't show insert for very short text
+  if (text.trim().length < 10) {
+    return <>{children}</>
+  }
+  
+  return (
+    <div 
+      style={{ position: 'relative' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={{
+        background: isHovered ? 'rgba(34, 197, 94, 0.06)' : 'transparent',
+        borderRadius: 4,
+        margin: '-2px -4px',
+        padding: '2px 4px',
+        transition: 'background 0.15s ease',
+      }}>
+        {children}
+      </div>
+      
+      {isHovered && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onInsert()
+          }}
+          style={{
+            position: 'absolute',
+            right: -28,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 22,
+            height: 22,
+            borderRadius: 4,
+            border: '1px solid #D1D5DB',
+            background: 'white',
+            color: '#22C55E',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            transition: 'all 0.1s ease',
+          }}
+          className="finding-insert-btn"
+          title="Insert into document (Tab to accept)"
+        >
+          <Plus className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -770,11 +853,31 @@ function IntelligenceHub({
                           <div className="markdown-response">
                             <ReactMarkdown
                               components={{
-                                p: ({ children }) => <p style={{ margin: '0 0 8px 0', lineHeight: 1.6 }}>{children}</p>,
+                                p: ({ children }) => {
+                                  const text = extractTextFromChildren(children)
+                                  return (
+                                    <InsertableFinding 
+                                      text={text} 
+                                      onInsert={() => onInsertText(text)}
+                                    >
+                                      <p style={{ margin: '0 0 8px 0', lineHeight: 1.6 }}>{children}</p>
+                                    </InsertableFinding>
+                                  )
+                                },
                                 strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
                                 ul: ({ children }) => <ul style={{ margin: '8px 0', paddingLeft: 20 }}>{children}</ul>,
                                 ol: ({ children }) => <ol style={{ margin: '8px 0', paddingLeft: 20 }}>{children}</ol>,
-                                li: ({ children }) => <li style={{ margin: '4px 0' }}>{children}</li>,
+                                li: ({ children }) => {
+                                  const text = extractTextFromChildren(children)
+                                  return (
+                                    <InsertableFinding 
+                                      text={text} 
+                                      onInsert={() => onInsertText(text)}
+                                    >
+                                      <li style={{ margin: '4px 0' }}>{children}</li>
+                                    </InsertableFinding>
+                                  )
+                                },
                                 a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#3B82F6', textDecoration: 'underline' }}>{children}</a>,
                                 code: ({ children }) => <code style={{ background: '#E5E7EB', padding: '2px 4px', borderRadius: 4, fontSize: 12 }}>{children}</code>,
                                 h1: ({ children }) => <h1 style={{ fontSize: 16, fontWeight: 600, margin: '12px 0 8px' }}>{children}</h1>,
@@ -789,7 +892,7 @@ function IntelligenceHub({
                         )}
                       </div>
                       
-                      {/* Action buttons for assistant messages */}
+                      {/* Quick actions for whole message */}
                       {msg.role === 'assistant' && (
                         <div style={{ 
                           display: 'flex', 
@@ -797,38 +900,6 @@ function IntelligenceHub({
                           marginTop: 8,
                           paddingLeft: 4,
                         }}>
-                          <button
-                            onClick={() => {
-                              // Extract plain text from markdown for insertion
-                              const plainText = msg.content
-                                .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-                                .replace(/\*(.*?)\*/g, '$1') // Remove italic
-                                .replace(/`(.*?)`/g, '$1') // Remove code
-                                .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links
-                                .replace(/^#+\s*/gm, '') // Remove headers
-                                .replace(/^[-*]\s*/gm, '• ') // Convert list items
-                                .trim()
-                              onInsertText(plainText)
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              padding: '4px 8px',
-                              borderRadius: 4,
-                              border: '1px solid #E5E7EB',
-                              background: 'white',
-                              color: '#374151',
-                              fontSize: 11,
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                            }}
-                            className="action-btn"
-                          >
-                            <Plus className="w-3 h-3" />
-                            Insert
-                          </button>
-                          
                           <button
                             onClick={() => {
                               // Extract first sentence or key finding for tracking
@@ -1133,7 +1204,20 @@ function BlockSelectorModal({ position, onSelect, onClose }: {
   )
 }
 
-function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, onDuplicate, onAddBlockAfter, onSelectionChange }: {
+function BlockEditor({ 
+  block, 
+  isFirst, 
+  isFocused, 
+  onFocus, 
+  onUpdate, 
+  onDelete, 
+  onDuplicate, 
+  onAddBlockAfter, 
+  onSelectionChange,
+  ghostText,
+  onAcceptGhost,
+  onRejectGhost,
+}: {
   block: Block
   isFirst: boolean
   isFocused: boolean
@@ -1143,6 +1227,9 @@ function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, o
   onDuplicate: () => void
   onAddBlockAfter: (type?: string) => void
   onSelectionChange: (visible: boolean, pos: { top: number; left: number } | null, editor: any, text?: string) => void
+  ghostText?: string
+  onAcceptGhost?: () => void
+  onRejectGhost?: () => void
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -1201,6 +1288,25 @@ function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, o
       return () => clearTimeout(timer)
     }
   }, [isFocused, editor])
+
+  // Handle Tab/Escape for ghost text
+  useEffect(() => {
+    if (!ghostText) return
+    
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault()
+        onAcceptGhost?.()
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onRejectGhost?.()
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [ghostText, onAcceptGhost, onRejectGhost])
 
   const handlePlusClick = () => {
     if (plusBtnRef.current) {
@@ -1273,6 +1379,66 @@ function BlockEditor({ block, isFirst, isFocused, onFocus, onUpdate, onDelete, o
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0, paddingLeft: 12 }}>
         <EditorContent editor={editor} />
+        
+        {/* Ghost text - Tab to accept, Escape to dismiss */}
+        {ghostText && (
+          <div 
+            style={{ 
+              position: 'relative',
+              marginTop: 4,
+            }}
+          >
+            <div 
+              style={{ 
+                color: '#9CA3AF',
+                opacity: 0.7,
+                fontSize: 15,
+                lineHeight: 1.7,
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                padding: '8px 12px',
+                background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%)',
+                borderLeft: '2px solid #22C55E',
+                borderRadius: '0 4px 4px 0',
+              }}
+            >
+              {ghostText}
+            </div>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              marginTop: 8,
+              fontSize: 11,
+              color: '#6B7280',
+            }}>
+              <span style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: 4,
+                padding: '2px 6px',
+                background: '#F3F4F6',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+              }}>
+                Tab
+              </span>
+              <span>to accept</span>
+              <span style={{ color: '#D1D5DB' }}>•</span>
+              <span style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: 4,
+                padding: '2px 6px',
+                background: '#F3F4F6',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+              }}>
+                Esc
+              </span>
+              <span>to dismiss</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Right menu */}
@@ -1612,6 +1778,13 @@ export default function BlockCanvas({
   const [imageInsertAfterId, setImageInsertAfterId] = useState<string | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Ghost text state (for Tab to accept research findings)
+  const [pendingGhostText, setPendingGhostText] = useState<{
+    text: string
+    blockId: string | null
+    source?: string
+  } | null>(null)
+
   // Get active tab data
   const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0]
   const blocks = activeTab?.blocks || []
@@ -1791,27 +1964,79 @@ export default function BlockCanvas({
     setToolbarState(prev => ({ ...prev, visible: false }))
   }, [])
 
-  // Insert text from research into document
-  const handleInsertText = useCallback((text: string) => {
-    // If we have a focused block, append to it
-    // Otherwise, create a new block with the text
-    if (focusedBlockId) {
-      const focusedBlock = blocks.find(b => b.id === focusedBlockId)
-      if (focusedBlock) {
+  // Insert text from research into document (shows as ghost first)
+  const handleInsertText = useCallback((text: string, source?: string) => {
+    // Show as ghost text first - user presses Tab to accept
+    setPendingGhostText({
+      text,
+      blockId: focusedBlockId,
+      source,
+    })
+  }, [focusedBlockId])
+
+  // Accept ghost text - insert into document + auto-track
+  const handleAcceptGhost = useCallback(async () => {
+    if (!pendingGhostText) return
+    
+    const { text, blockId, source } = pendingGhostText
+    
+    if (blockId) {
+      const targetBlock = blocks.find(b => b.id === blockId)
+      if (targetBlock) {
         // Append text to the focused block
-        const newContent = focusedBlock.content + `<p>${text}</p>`
-        updateBlock(focusedBlockId, newContent)
-        return
+        const newContent = targetBlock.content + `<p>${text}</p>`
+        updateBlock(blockId, newContent)
+      }
+    } else {
+      // No focused block - add as new block at the end
+      const newBlock: Block = {
+        id: `block-${Date.now()}`,
+        content: `<p>${text}</p>`,
+      }
+      updateBlocks([...blocks, newBlock])
+    }
+    
+    // Auto-track the inserted text as a verified claim
+    if (documentId && documentId !== 'new') {
+      const claimId = `RAV-${Date.now().toString(36).toUpperCase()}`
+      // Extract first sentence for claim text
+      const claimText = text.split(/[.!?]/)[0]?.trim() || text.slice(0, 100)
+      
+      await addClaim({
+        claimId,
+        text: claimText,
+        source: source || 'web',
+        cadence: 'daily',
+        category: 'general',
+      })
+    }
+    
+    setPendingGhostText(null)
+  }, [pendingGhostText, blocks, updateBlock, updateBlocks, documentId, addClaim])
+
+  // Reject ghost text
+  const handleRejectGhost = useCallback(() => {
+    setPendingGhostText(null)
+  }, [])
+
+  // Global keyboard handler for ghost text (when no block has focus)
+  useEffect(() => {
+    if (!pendingGhostText || pendingGhostText.blockId) return
+    
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault()
+        handleAcceptGhost()
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        handleRejectGhost()
       }
     }
     
-    // No focused block - add as new block at the end
-    const newBlock: Block = {
-      id: `block-${Date.now()}`,
-      content: `<p>${text}</p>`,
-    }
-    updateBlocks([...blocks, newBlock])
-  }, [focusedBlockId, blocks, updateBlock, updateBlocks])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [pendingGhostText, handleAcceptGhost, handleRejectGhost])
 
   // Track a claim from research
   const handleTrackClaim = useCallback(async (claim: string, source?: string) => {
@@ -1877,6 +2102,7 @@ export default function BlockCanvas({
         .mode-option:hover { background: #F5F5F5 !important; }
         .dock-mode-btn:hover { background: rgba(0,0,0,0.04) !important; }
         .action-btn:hover { background: #F3F4F6 !important; border-color: #D1D5DB !important; }
+        .finding-insert-btn:hover { background: #DCFCE7 !important; border-color: #22C55E !important; }
         .mode-tab-btn:hover { background: #F5F5F5 !important; }
         .side-tab-btn:hover { background: #F3F4F6 !important; }
         .folder-btn:hover { background: #F5F5F5 !important; }
@@ -2003,9 +2229,67 @@ export default function BlockCanvas({
                   onDuplicate={() => duplicateBlock(block.id)} 
                   onAddBlockAfter={() => addBlock(block.id)} 
                   onSelectionChange={(visible, pos, editor, text) => setToolbarState({ visible, position: pos, editor, selectedText: text || '' })} 
+                  ghostText={pendingGhostText?.blockId === block.id ? pendingGhostText.text : undefined}
+                  onAcceptGhost={handleAcceptGhost}
+                  onRejectGhost={handleRejectGhost}
                 />
               ))}
             </div>
+
+            {/* Ghost text preview when no specific block is focused */}
+            {pendingGhostText && !pendingGhostText.blockId && (
+              <div style={{ marginLeft: 64, marginTop: 16 }}>
+                <div 
+                  style={{ 
+                    color: '#9CA3AF',
+                    opacity: 0.7,
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                    padding: '8px 12px',
+                    background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%)',
+                    borderLeft: '2px solid #22C55E',
+                    borderRadius: '0 4px 4px 0',
+                  }}
+                >
+                  {pendingGhostText.text}
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8, 
+                  marginTop: 8,
+                  fontSize: 11,
+                  color: '#6B7280',
+                }}>
+                  <span style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: 4,
+                    padding: '2px 6px',
+                    background: '#F3F4F6',
+                    borderRadius: 4,
+                    fontFamily: 'monospace',
+                  }}>
+                    Tab
+                  </span>
+                  <span>to accept</span>
+                  <span style={{ color: '#D1D5DB' }}>•</span>
+                  <span style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: 4,
+                    padding: '2px 6px',
+                    background: '#F3F4F6',
+                    borderRadius: 4,
+                    fontFamily: 'monospace',
+                  }}>
+                    Esc
+                  </span>
+                  <span>to dismiss</span>
+                </div>
+              </div>
+            )}
 
             {/* Clickable empty space to add block - only if last block has content */}
             <div 
