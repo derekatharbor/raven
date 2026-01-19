@@ -1,4 +1,3 @@
-// Path: src/components/layout/Sidebar.tsx
 // src/components/layout/Sidebar.tsx
 
 'use client'
@@ -14,6 +13,7 @@ import {
   Settings,
   Check,
   Home,
+  BarChart3,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -74,6 +74,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               <PenLine className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Editor</span>
             </Link>
+            <Link 
+              href="/analytics"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/analytics') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+            >
+              <BarChart3 className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] text-gray-900">Analytics</span>
+            </Link>
           </div>
         ) : (
           <div className="space-y-0.5">
@@ -90,6 +97,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               title="Editor"
             >
               <PenLine className="w-4 h-4 text-gray-500" />
+            </Link>
+            <Link 
+              href="/analytics"
+              className={`flex items-center justify-center p-2 rounded ${isActive('/analytics') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+              title="Analytics"
+            >
+              <BarChart3 className="w-4 h-4 text-gray-500" />
             </Link>
           </div>
         )}

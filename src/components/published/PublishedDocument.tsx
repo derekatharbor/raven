@@ -228,7 +228,7 @@ export default function PublishedDocument({
           question,
           documentContent: getDocumentText(),
           documentTitle: document?.title,
-          sessionId: trackerRef.current ? 'active' : null,
+          linkId,
         }),
       })
 
