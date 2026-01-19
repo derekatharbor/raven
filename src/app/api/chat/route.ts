@@ -69,6 +69,12 @@ function formatSearchResults(results: { title: string; url: string; content: str
   ).join('\n\n')
 }
 
+// Extract primary source from search results
+function extractPrimarySource(results: { title: string; url: string; content: string }[]): string | undefined {
+  if (results.length === 0) return undefined
+  return results[0].url
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest = await request.json()
@@ -88,11 +94,12 @@ export async function POST(request: NextRequest) {
 
     // Build context from web search if enabled
     let webContext = ''
+    let searchResults: { title: string; url: string; content: string }[] = []
     if (webEnabled) {
       const searchQuery = selectedText 
         ? `${userQuery} ${selectedText}`.slice(0, 200)
         : userQuery
-      const searchResults = await searchWeb(searchQuery)
+      searchResults = await searchWeb(searchQuery)
       webContext = formatSearchResults(searchResults)
     }
 
@@ -103,7 +110,14 @@ Your responses should be:
 - Concise and well-structured
 - Cite sources when available (use [Source X] format)
 - Use markdown formatting for clarity
-- Be direct and helpful`
+- Be direct and helpful
+
+IMPORTANT: At the very end of your response, include a KEY_FACT line with the single most important atomic fact that directly answers the user's question. This should be a brief, insertable snippet (under 50 words) that a writer could drop into their document.
+
+Format: KEY_FACT: <the atomic fact>
+
+Example: If asked about NVIDIA's market cap, end with:
+KEY_FACT: $3.2 trillion (as of January 2025)`
 
     if (mode === 'verify') {
       systemPrompt += `
@@ -112,7 +126,9 @@ You are in VERIFY mode. Your job is to:
 - Check if claims are accurate based on available sources
 - Identify any discrepancies or inconsistencies
 - Note what can be verified vs what needs more research
-- Use ✓ for verified, ⚠️ for issues, and ? for unverified`
+- Use ✓ for verified, ⚠️ for issues, and ? for unverified
+
+For KEY_FACT in verify mode, provide the corrected/verified version of the claim.`
     }
 
     // Build the user message with context
@@ -151,13 +167,24 @@ You are in VERIFY mode. Your job is to:
     })
 
     // Extract text from response
-    const assistantMessage = response.content
+    let assistantMessage = response.content
       .filter(block => block.type === 'text')
       .map(block => (block as { type: 'text'; text: string }).text)
       .join('')
 
+    // Extract KEY_FACT from response
+    let keyFact: string | undefined
+    const keyFactMatch = assistantMessage.match(/KEY_FACT:\s*(.+?)(?:\n|$)/i)
+    if (keyFactMatch) {
+      keyFact = keyFactMatch[1].trim()
+      // Remove KEY_FACT line from the displayed message
+      assistantMessage = assistantMessage.replace(/\n?KEY_FACT:\s*.+?(?:\n|$)/i, '').trim()
+    }
+
     return NextResponse.json({
       message: assistantMessage,
+      keyFact,
+      source: extractPrimarySource(searchResults),
       webSearched: webEnabled && webContext.length > 0,
     })
 

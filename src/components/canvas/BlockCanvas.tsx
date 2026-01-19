@@ -7,11 +7,13 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, Extension } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import ReactMarkdown from 'react-markdown'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
@@ -25,6 +27,124 @@ import {
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
 import { uploadImage } from '@/lib/storage/upload'
+
+// ============================================================================
+// GHOST TEXT EXTENSION - Inline suggestions like Cursor
+// ============================================================================
+
+const ghostTextPluginKey = new PluginKey('ghostText')
+
+interface GhostTextState {
+  text: string | null
+  source?: string
+}
+
+const GhostText = Extension.create({
+  name: 'ghostText',
+
+  addStorage() {
+    return {
+      ghostText: null as string | null,
+      source: undefined as string | undefined,
+    }
+  },
+
+  addProseMirrorPlugins() {
+    const extension = this
+
+    return [
+      new Plugin({
+        key: ghostTextPluginKey,
+        props: {
+          decorations(state) {
+            const ghostText = extension.storage.ghostText
+            if (!ghostText) return DecorationSet.empty
+
+            // Get cursor position
+            const { from } = state.selection
+            
+            // Create a widget decoration at cursor
+            const widget = Decoration.widget(from, () => {
+              const span = document.createElement('span')
+              span.className = 'ghost-text-suggestion'
+              span.textContent = ghostText
+              span.style.cssText = `
+                color: #9CA3AF;
+                opacity: 0.7;
+                pointer-events: none;
+                user-select: none;
+              `
+              return span
+            }, { side: 1 }) // side: 1 puts it after the cursor
+
+            return DecorationSet.create(state.doc, [widget])
+          },
+          
+          handleKeyDown(view, event) {
+            const ghostText = extension.storage.ghostText
+            if (!ghostText) return false
+
+            // Tab to accept
+            if (event.key === 'Tab' && !event.shiftKey) {
+              event.preventDefault()
+              
+              // Insert the ghost text at cursor
+              const { from } = view.state.selection
+              const tr = view.state.tr.insertText(ghostText, from)
+              view.dispatch(tr)
+              
+              // Clear ghost text
+              extension.storage.ghostText = null
+              
+              // Trigger custom event for tracking
+              const customEvent = new CustomEvent('ghostTextAccepted', { 
+                detail: { text: ghostText, source: extension.storage.source } 
+              })
+              document.dispatchEvent(customEvent)
+              
+              return true
+            }
+
+            // Escape to dismiss
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              extension.storage.ghostText = null
+              extension.storage.source = undefined
+              view.dispatch(view.state.tr) // Force re-render
+              return true
+            }
+
+            // Any other key dismisses ghost text
+            if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete') {
+              extension.storage.ghostText = null
+              extension.storage.source = undefined
+            }
+
+            return false
+          },
+        },
+      }),
+    ]
+  },
+
+  addCommands() {
+    return {
+      setGhostText: (text: string, source?: string) => ({ editor }: { editor: any }) => {
+        this.storage.ghostText = text
+        this.storage.source = source
+        // Force decoration update
+        editor.view.dispatch(editor.view.state.tr)
+        return true
+      },
+      clearGhostText: () => ({ editor }: { editor: any }) => {
+        this.storage.ghostText = null
+        this.storage.source = undefined
+        editor.view.dispatch(editor.view.state.tr)
+        return true
+      },
+    } as any // Cast to satisfy TipTap's RawCommands type
+  },
+})
 
 // ============================================================================
 // RAVEN SPINNER - Logo rotates 90 degrees at a time
@@ -533,6 +653,7 @@ function IntelligenceHub({
   onToggleCollapse,
   onInsertText,
   onTrackClaim,
+  onKeyFact,
 }: {
   selectedText: string
   onClearSelection: () => void
@@ -541,13 +662,14 @@ function IntelligenceHub({
   onToggleCollapse: () => void
   onInsertText: (text: string) => void
   onTrackClaim: (claim: string, source?: string) => void
+  onKeyFact: (keyFact: string, source?: string) => void
 }) {
   const [activeTab, setActiveTab] = useState<'research' | 'audit' | 'sources'>('research')
   const [query, setQuery] = useState('')
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; sources?: string[] }>>([])
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; keyFact?: string; source?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'ask' | 'verify'>('ask')
-  const [webEnabled, setWebEnabled] = useState(false)
+  const [webEnabled, setWebEnabled] = useState(true) // Default to on
   const [showModeDropdown, setShowModeDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const modeDropdownRef = useRef<HTMLDivElement>(null)
@@ -616,7 +738,19 @@ function IntelligenceHub({
       }
 
       const data = await response.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
+      
+      // Store message with keyFact if available
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.message,
+        keyFact: data.keyFact,
+        source: data.source,
+      }])
+      
+      // If we got a keyFact, inject it as ghost text at cursor
+      if (data.keyFact) {
+        onKeyFact(data.keyFact, data.source)
+      }
     } catch (error) {
       console.error('Chat error:', error)
       setMessages(prev => [...prev, { 
@@ -892,6 +1026,60 @@ function IntelligenceHub({
                         )}
                       </div>
                       
+                      {/* Key Fact card - prominent, insertable */}
+                      {msg.role === 'assistant' && msg.keyFact && (
+                        <div style={{
+                          marginTop: 8,
+                          padding: '10px 12px',
+                          background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%)',
+                          border: '1px solid rgba(34, 197, 94, 0.2)',
+                          borderRadius: 8,
+                        }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 6, 
+                            marginBottom: 6,
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: '#22C55E',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}>
+                            <Radar className="w-3 h-3" />
+                            Key Fact
+                          </div>
+                          <div style={{ 
+                            fontSize: 14, 
+                            fontWeight: 500, 
+                            color: '#111',
+                            lineHeight: 1.5,
+                          }}>
+                            {msg.keyFact}
+                          </div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 8, 
+                            marginTop: 8,
+                            fontSize: 11,
+                            color: '#6B7280',
+                          }}>
+                            <span>Press</span>
+                            <span style={{ 
+                              padding: '2px 6px',
+                              background: '#F3F4F6',
+                              borderRadius: 4,
+                              fontFamily: 'monospace',
+                              fontWeight: 500,
+                            }}>
+                              Tab
+                            </span>
+                            <span>to insert at cursor</span>
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Quick actions for whole message */}
                       {msg.role === 'assistant' && (
                         <div style={{ 
@@ -902,13 +1090,13 @@ function IntelligenceHub({
                         }}>
                           <button
                             onClick={() => {
-                              // Extract first sentence or key finding for tracking
-                              const firstSentence = msg.content.split(/[.!?]/)[0]?.trim() || msg.content.slice(0, 100)
-                              const cleanClaim = firstSentence
+                              // Track the keyFact if available, otherwise first sentence
+                              const claimText = msg.keyFact || msg.content.split(/[.!?]/)[0]?.trim() || msg.content.slice(0, 100)
+                              const cleanClaim = claimText
                                 .replace(/\*\*/g, '')
                                 .replace(/^#+\s*/gm, '')
                                 .trim()
-                              onTrackClaim(cleanClaim)
+                              onTrackClaim(cleanClaim, msg.source)
                             }}
                             style={{
                               display: 'flex',
@@ -931,7 +1119,7 @@ function IntelligenceHub({
                           
                           <button
                             onClick={() => {
-                              navigator.clipboard.writeText(msg.content)
+                              navigator.clipboard.writeText(msg.keyFact || msg.content)
                             }}
                             style={{
                               display: 'flex',
@@ -1217,6 +1405,7 @@ function BlockEditor({
   ghostText,
   onAcceptGhost,
   onRejectGhost,
+  onEditorReady,
 }: {
   block: Block
   isFirst: boolean
@@ -1230,6 +1419,7 @@ function BlockEditor({
   ghostText?: string
   onAcceptGhost?: () => void
   onRejectGhost?: () => void
+  onEditorReady?: (editor: any) => void
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -1252,6 +1442,7 @@ function BlockEditor({
         showOnlyWhenEditable: true, 
         showOnlyCurrent: true 
       }),
+      GhostText,
     ],
     content: block.content,
     editorProps: { attributes: { class: 'ghost-block-content' } },
@@ -1284,29 +1475,25 @@ function BlockEditor({
       // Small delay to ensure React render is complete
       const timer = setTimeout(() => {
         editor.commands.focus('end')
+        // Report editor to parent for ghost text injection
+        onEditorReady?.(editor)
       }, 10)
       return () => clearTimeout(timer)
     }
-  }, [isFocused, editor])
+  }, [isFocused, editor, onEditorReady])
 
-  // Handle Tab/Escape for ghost text
+  // Sync ghostText prop with editor extension
   useEffect(() => {
-    if (!ghostText) return
+    if (!editor) return
     
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Tab' && !event.shiftKey) {
-        event.preventDefault()
-        onAcceptGhost?.()
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onRejectGhost?.()
-      }
+    if (ghostText) {
+      // @ts-ignore - custom command
+      editor.commands.setGhostText(ghostText)
+    } else {
+      // @ts-ignore - custom command
+      editor.commands.clearGhostText?.()
     }
-    
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [ghostText, onAcceptGhost, onRejectGhost])
+  }, [ghostText, editor])
 
   const handlePlusClick = () => {
     if (plusBtnRef.current) {
@@ -1380,63 +1567,37 @@ function BlockEditor({
       <div style={{ flex: 1, minWidth: 0, paddingLeft: 12 }}>
         <EditorContent editor={editor} />
         
-        {/* Ghost text - Tab to accept, Escape to dismiss */}
+        {/* Ghost text hint - Tab to accept, Escape to dismiss */}
         {ghostText && (
-          <div 
-            style={{ 
-              position: 'relative',
-              marginTop: 4,
-            }}
-          >
-            <div 
-              style={{ 
-                color: '#9CA3AF',
-                opacity: 0.7,
-                fontSize: 15,
-                lineHeight: 1.7,
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                padding: '8px 12px',
-                background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%)',
-                borderLeft: '2px solid #22C55E',
-                borderRadius: '0 4px 4px 0',
-              }}
-            >
-              {ghostText}
-            </div>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8, 
-              marginTop: 8,
-              fontSize: 11,
-              color: '#6B7280',
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            marginTop: 4,
+            fontSize: 11,
+            color: '#6B7280',
+          }}>
+            <span style={{ 
+              padding: '2px 6px',
+              background: '#DCFCE7',
+              borderRadius: 4,
+              fontFamily: 'monospace',
+              fontWeight: 500,
+              color: '#16A34A',
             }}>
-              <span style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: 4,
-                padding: '2px 6px',
-                background: '#F3F4F6',
-                borderRadius: 4,
-                fontFamily: 'monospace',
-              }}>
-                Tab
-              </span>
-              <span>to accept</span>
-              <span style={{ color: '#D1D5DB' }}>•</span>
-              <span style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: 4,
-                padding: '2px 6px',
-                background: '#F3F4F6',
-                borderRadius: 4,
-                fontFamily: 'monospace',
-              }}>
-                Esc
-              </span>
-              <span>to dismiss</span>
-            </div>
+              Tab
+            </span>
+            <span>to accept</span>
+            <span style={{ color: '#D1D5DB' }}>•</span>
+            <span style={{ 
+              padding: '2px 6px',
+              background: '#F3F4F6',
+              borderRadius: 4,
+              fontFamily: 'monospace',
+            }}>
+              Esc
+            </span>
+            <span>to dismiss</span>
           </div>
         )}
       </div>
@@ -1516,6 +1677,9 @@ export default function BlockCanvas({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hasInitialized = useRef(false)
+  
+  // Track active editor for ghost text injection
+  const activeEditorRef = useRef<any>(null)
   
   const OPEN_TABS_KEY = 'raven_open_tabs'
   
@@ -1964,23 +2128,54 @@ export default function BlockCanvas({
     setToolbarState(prev => ({ ...prev, visible: false }))
   }, [])
 
+  // Handle keyFact from API - inject as ghost text at cursor position
+  const handleKeyFact = useCallback((keyFact: string, source?: string) => {
+    // Determine which block to show ghost text in
+    // If a block is focused, use that; otherwise use the last block
+    const targetBlockId = focusedBlockId || blocks[blocks.length - 1]?.id || null
+    
+    if (targetBlockId) {
+      setPendingGhostText({
+        text: keyFact,
+        blockId: targetBlockId,
+        source,
+      })
+      // Focus the target block if not already focused
+      if (!focusedBlockId && targetBlockId) {
+        setFocusedBlockId(targetBlockId)
+      }
+    }
+  }, [focusedBlockId, blocks])
+
   // Insert text from research into document (shows as ghost first)
   const handleInsertText = useCallback((text: string, source?: string) => {
     // Show as ghost text first - user presses Tab to accept
-    setPendingGhostText({
-      text,
-      blockId: focusedBlockId,
-      source,
-    })
-  }, [focusedBlockId])
+    const targetBlockId = focusedBlockId || blocks[blocks.length - 1]?.id || null
+    
+    if (targetBlockId) {
+      setPendingGhostText({
+        text,
+        blockId: targetBlockId,
+        source,
+      })
+      if (!focusedBlockId && targetBlockId) {
+        setFocusedBlockId(targetBlockId)
+      }
+    }
+  }, [focusedBlockId, blocks])
 
   // Accept ghost text - insert into document + auto-track
   const handleAcceptGhost = useCallback(async () => {
     if (!pendingGhostText) return
     
     const { text, blockId, source } = pendingGhostText
+    const editor = activeEditorRef.current
     
-    if (blockId) {
+    // Try to insert at cursor position in active editor
+    if (editor && blockId) {
+      // Insert at cursor position
+      editor.chain().focus().insertContent(text).run()
+    } else if (blockId) {
       const targetBlock = blocks.find(b => b.id === blockId)
       if (targetBlock) {
         // Append text to the focused block
@@ -2019,24 +2214,33 @@ export default function BlockCanvas({
     setPendingGhostText(null)
   }, [])
 
-  // Global keyboard handler for ghost text (when no block has focus)
+  // Listen for ghost text acceptance from TipTap extension
   useEffect(() => {
-    if (!pendingGhostText || pendingGhostText.blockId) return
-    
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Tab' && !event.shiftKey) {
-        event.preventDefault()
-        handleAcceptGhost()
+    const handleGhostAccepted = async (event: Event) => {
+      const customEvent = event as CustomEvent<{ text: string; source?: string }>
+      const { text, source } = customEvent.detail
+      
+      // Auto-track the inserted text as a verified claim
+      if (documentId && documentId !== 'new') {
+        const claimId = `RAV-${Date.now().toString(36).toUpperCase()}`
+        const claimText = text.split(/[.!?]/)[0]?.trim() || text.slice(0, 100)
+        
+        await addClaim({
+          claimId,
+          text: claimText,
+          source: source || 'web',
+          cadence: 'daily',
+          category: 'general',
+        })
       }
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        handleRejectGhost()
-      }
+      
+      // Clear pending state
+      setPendingGhostText(null)
     }
     
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [pendingGhostText, handleAcceptGhost, handleRejectGhost])
+    document.addEventListener('ghostTextAccepted', handleGhostAccepted)
+    return () => document.removeEventListener('ghostTextAccepted', handleGhostAccepted)
+  }, [documentId, addClaim])
 
   // Track a claim from research
   const handleTrackClaim = useCallback(async (claim: string, source?: string) => {
@@ -2087,6 +2291,15 @@ export default function BlockCanvas({
         .ghost-block-content img.editor-image { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; cursor: pointer; }
         .ghost-block-content img.editor-image:hover { opacity: 0.95; }
         .ghost-block-content img.editor-image.ProseMirror-selectednode { outline: 2px solid #3B82F6; outline-offset: 2px; }
+        
+        /* Ghost text inline suggestion - like Cursor */
+        .ghost-text-suggestion {
+          color: #22C55E !important;
+          opacity: 0.6;
+          font-style: normal;
+          pointer-events: none;
+          user-select: none;
+        }
         
         .gutter-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
         .toolbar-btn:hover { background: rgba(255,255,255,0.2) !important; color: #fff !important; }
@@ -2232,64 +2445,10 @@ export default function BlockCanvas({
                   ghostText={pendingGhostText?.blockId === block.id ? pendingGhostText.text : undefined}
                   onAcceptGhost={handleAcceptGhost}
                   onRejectGhost={handleRejectGhost}
+                  onEditorReady={(editor) => { activeEditorRef.current = editor }}
                 />
               ))}
             </div>
-
-            {/* Ghost text preview when no specific block is focused */}
-            {pendingGhostText && !pendingGhostText.blockId && (
-              <div style={{ marginLeft: 64, marginTop: 16 }}>
-                <div 
-                  style={{ 
-                    color: '#9CA3AF',
-                    opacity: 0.7,
-                    fontSize: 15,
-                    lineHeight: 1.7,
-                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                    padding: '8px 12px',
-                    background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%)',
-                    borderLeft: '2px solid #22C55E',
-                    borderRadius: '0 4px 4px 0',
-                  }}
-                >
-                  {pendingGhostText.text}
-                </div>
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8, 
-                  marginTop: 8,
-                  fontSize: 11,
-                  color: '#6B7280',
-                }}>
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: 4,
-                    padding: '2px 6px',
-                    background: '#F3F4F6',
-                    borderRadius: 4,
-                    fontFamily: 'monospace',
-                  }}>
-                    Tab
-                  </span>
-                  <span>to accept</span>
-                  <span style={{ color: '#D1D5DB' }}>•</span>
-                  <span style={{ 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: 4,
-                    padding: '2px 6px',
-                    background: '#F3F4F6',
-                    borderRadius: 4,
-                    fontFamily: 'monospace',
-                  }}>
-                    Esc
-                  </span>
-                  <span>to dismiss</span>
-                </div>
-              </div>
-            )}
 
             {/* Clickable empty space to add block - only if last block has content */}
             <div 
@@ -2322,6 +2481,7 @@ export default function BlockCanvas({
           onToggleCollapse={() => setPanelCollapsed(!panelCollapsed)}
           onInsertText={handleInsertText}
           onTrackClaim={handleTrackClaim}
+          onKeyFact={handleKeyFact}
         />
 
         {/* Floating Dock - Figma-style */}
