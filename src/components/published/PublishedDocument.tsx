@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { RavenTracker, generateFingerprint } from '@/lib/tracking/tracker'
-import { Clock, Eye, MessageCircle, Send, X, ChevronDown } from 'lucide-react'
+import { Clock, Eye, MessageCircle, Send, ChevronDown, History } from 'lucide-react'
 
 interface Block {
   id: string
@@ -14,6 +14,12 @@ interface Block {
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+}
+
+interface VersionHistoryItem {
+  version_number: number
+  published_at: string
+  note?: string
 }
 
 interface PublishedDocumentProps {
@@ -54,6 +60,12 @@ export default function PublishedDocument({
   const [chatLoading, setChatLoading] = useState(false)
   const chatInputRef = useRef<HTMLInputElement>(null)
   const chatMessagesRef = useRef<HTMLDivElement>(null)
+  
+  // Version history state
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [versionHistory, setVersionHistory] = useState<VersionHistoryItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const versionDropdownRef = useRef<HTMLDivElement>(null)
 
   // Calculate estimated read time (avg 200 words/min)
   const estimateReadTime = (blocks: Block[]) => {
@@ -240,6 +252,48 @@ export default function PublishedDocument({
     }
   }, [chatMessages])
 
+  // Fetch version history when dropdown opens
+  const handleVersionHistoryClick = async () => {
+    if (showVersionHistory) {
+      setShowVersionHistory(false)
+      return
+    }
+    
+    setShowVersionHistory(true)
+    
+    // Only fetch if we haven't already
+    if (versionHistory.length === 0) {
+      setHistoryLoading(true)
+      try {
+        const response = await fetch(`/api/published/${linkId}/versions`)
+        if (response.ok) {
+          const data = await response.json()
+          setVersionHistory(data.versions || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch version history:', error)
+        // Fallback: show current version only
+        setVersionHistory([{ 
+          version_number: versionNumber, 
+          published_at: updatedAt || new Date().toISOString() 
+        }])
+      } finally {
+        setHistoryLoading(false)
+      }
+    }
+  }
+
+  // Close version dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (versionDropdownRef.current && !versionDropdownRef.current.contains(e.target as Node)) {
+        setShowVersionHistory(false)
+      }
+    }
+    window.document.addEventListener('mousedown', handleClickOutside)
+    return () => window.document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   // Email gate
   if (showEmailGate) {
     return (
@@ -349,13 +403,68 @@ export default function PublishedDocument({
             {updatedAt && (
               <>
                 <span className="text-gray-300">·</span>
-                <span>Updated {formatRelativeTime(updatedAt)}</span>
-              </>
-            )}
-            {versionNumber > 1 && (
-              <>
-                <span className="text-gray-300">·</span>
-                <span className="font-mono">v{versionNumber}</span>
+                <div className="relative" ref={versionDropdownRef}>
+                  <button
+                    onClick={handleVersionHistoryClick}
+                    className="flex items-center gap-1 hover:text-gray-600 transition-colors"
+                  >
+                    <span>Updated {formatRelativeTime(updatedAt)}</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${showVersionHistory ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {/* Version History Dropdown */}
+                  {showVersionHistory && (
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50">
+                      <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+                          <History className="w-3 h-3" />
+                          Version History
+                        </div>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {historyLoading ? (
+                          <div className="px-3 py-4 text-center text-gray-400 text-xs">
+                            Loading...
+                          </div>
+                        ) : versionHistory.length > 0 ? (
+                          versionHistory.map((v, i) => (
+                            <div 
+                              key={v.version_number}
+                              className={`px-3 py-2.5 border-b border-gray-50 last:border-0 ${i === 0 ? 'bg-green-50' : ''}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className={`text-xs font-medium ${i === 0 ? 'text-green-700' : 'text-gray-700'}`}>
+                                  Version {v.version_number}
+                                  {i === 0 && <span className="ml-1.5 text-[10px] text-green-600">(Current)</span>}
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                  {formatRelativeTime(v.published_at)}
+                                </span>
+                              </div>
+                              {v.note && (
+                                <p className="text-[11px] text-gray-500 mt-1">{v.note}</p>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div 
+                            className="px-3 py-2.5 bg-green-50"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-green-700">
+                                Version {versionNumber}
+                                <span className="ml-1.5 text-[10px] text-green-600">(Current)</span>
+                              </span>
+                              <span className="text-[10px] text-gray-400">
+                                {formatRelativeTime(updatedAt)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
