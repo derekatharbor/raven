@@ -647,7 +647,7 @@ function IntelligenceHub({
       width: isCollapsed ? 44 : 380,
       flexShrink: 0,
       borderLeft: '1px solid #E5E7EB',
-      background: 'white',
+      background: '#FBF9F7',
       display: 'flex',
       flexDirection: 'column',
       transition: 'width 0.2s ease',
@@ -665,7 +665,7 @@ function IntelligenceHub({
             onClick={onToggleCollapse}
             style={{
               width: 32, height: 32, borderRadius: 6, border: 'none',
-              background: '#F3F4F6', color: '#374151', cursor: 'pointer',
+              background: 'transparent', color: '#6B7280', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             className="panel-expand-btn"
