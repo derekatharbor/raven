@@ -34,82 +34,75 @@ import { uploadImage } from '@/lib/storage/upload'
 
 const ghostTextPluginKey = new PluginKey('ghostText')
 
+interface GhostTextPluginState {
+  ghostText: string | null
+  source: string | undefined
+}
+
 const GhostText = Extension.create({
   name: 'ghostText',
 
   addProseMirrorPlugins() {
     return [
-      new Plugin({
+      new Plugin<GhostTextPluginState>({
         key: ghostTextPluginKey,
         state: {
-          init() {
-            return { ghostText: null as string | null, source: undefined as string | undefined }
+          init(): GhostTextPluginState {
+            return { ghostText: null, source: undefined }
           },
-          apply(tr, value) {
-            // Check for meta to update ghost text
+          apply(tr, value): GhostTextPluginState {
             const meta = tr.getMeta(ghostTextPluginKey)
             if (meta !== undefined) {
-              return meta
+              return meta as GhostTextPluginState
             }
-            // Clear ghost text on document changes (user typing)
-            if (tr.docChanged) {
+            if (tr.docChanged && value.ghostText) {
               return { ghostText: null, source: undefined }
             }
             return value
           },
         },
         props: {
-          decorations(state) {
+          decorations: (state) => {
             const pluginState = ghostTextPluginKey.getState(state)
-            const ghostText = pluginState?.ghostText
-            if (!ghostText) return DecorationSet.empty
-
-            // Get cursor position
-            const { from } = state.selection
+            if (!pluginState?.ghostText) return undefined
             
-            // Create a widget decoration at cursor
+            const { from } = state.selection
             const widget = Decoration.widget(from, () => {
               const span = document.createElement('span')
               span.className = 'ghost-text-suggestion'
-              span.textContent = ghostText
+              span.textContent = pluginState.ghostText!
               return span
-            }, { side: 1 }) // side: 1 puts it after the cursor
+            }, { side: 1, key: 'ghost-text' })
 
             return DecorationSet.create(state.doc, [widget])
           },
           
-          handleKeyDown(view, event) {
+          handleKeyDown: (view, event) => {
             const pluginState = ghostTextPluginKey.getState(view.state)
-            const ghostText = pluginState?.ghostText
-            if (!ghostText) return false
+            if (!pluginState?.ghostText) return false
 
-            // Tab to accept
             if (event.key === 'Tab' && !event.shiftKey) {
               event.preventDefault()
-              
-              const source = pluginState?.source
-              
-              // Insert the ghost text at cursor
+              const { ghostText, source } = pluginState
               const { from } = view.state.selection
-              const tr = view.state.tr
-                .insertText(ghostText, from)
-                .setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
-              view.dispatch(tr)
               
-              // Trigger custom event for tracking
-              const customEvent = new CustomEvent('ghostTextAccepted', { 
+              view.dispatch(
+                view.state.tr
+                  .insertText(ghostText!, from)
+                  .setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
+              )
+              
+              document.dispatchEvent(new CustomEvent('ghostTextAccepted', { 
                 detail: { text: ghostText, source } 
-              })
-              document.dispatchEvent(customEvent)
-              
+              }))
               return true
             }
 
-            // Escape to dismiss
             if (event.key === 'Escape') {
               event.preventDefault()
-              const tr = view.state.tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
-              view.dispatch(tr)
+              view.dispatch(
+                view.state.tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
+              )
               return true
             }
 
@@ -124,15 +117,13 @@ const GhostText = Extension.create({
     return {
       setGhostText: (text: string, source?: string) => ({ tr, dispatch }: { tr: any; dispatch: any }) => {
         if (dispatch) {
-          tr.setMeta(ghostTextPluginKey, { ghostText: text, source })
-          dispatch(tr)
+          dispatch(tr.setMeta(ghostTextPluginKey, { ghostText: text, source }))
         }
         return true
       },
       clearGhostText: () => ({ tr, dispatch }: { tr: any; dispatch: any }) => {
         if (dispatch) {
-          tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
-          dispatch(tr)
+          dispatch(tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined }))
         }
         return true
       },
@@ -2295,6 +2286,14 @@ export default function BlockCanvas({
           font-style: normal;
           pointer-events: none;
           user-select: none;
+        }
+        
+        /* Ensure text selection is visible */
+        .ghost-block-content ::selection {
+          background: #B4D7FF;
+        }
+        .ProseMirror-selectednode {
+          outline: 2px solid #68CEF8;
         }
         
         .gutter-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
