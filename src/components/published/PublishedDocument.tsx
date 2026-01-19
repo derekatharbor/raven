@@ -1,14 +1,19 @@
-// Path: src/components/published/PublishedDocument.tsx
+// src/components/published/PublishedDocument.tsx
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { RavenTracker, generateFingerprint } from '@/lib/tracking/tracker'
-import { Clock, Eye } from 'lucide-react'
+import { Clock, Eye, MessageCircle, Send, X, ChevronDown } from 'lucide-react'
 
 interface Block {
   id: string
   content: string
   type?: string
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 interface PublishedDocumentProps {
@@ -41,6 +46,14 @@ export default function PublishedDocument({
   const [readProgress, setReadProgress] = useState(0)
   const [sessionStarted, setSessionStarted] = useState(false)
   const trackerRef = useRef<RavenTracker | null>(null)
+  
+  // Chat state
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatQuestion, setChatQuestion] = useState('')
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatLoading, setChatLoading] = useState(false)
+  const chatInputRef = useRef<HTMLInputElement>(null)
+  const chatMessagesRef = useRef<HTMLDivElement>(null)
 
   // Calculate estimated read time (avg 200 words/min)
   const estimateReadTime = (blocks: Block[]) => {
@@ -162,6 +175,70 @@ export default function PublishedDocument({
     if (diffDays < 7) return `${diffDays}d ago`
     return date.toLocaleDateString()
   }
+
+  // Extract plain text from document for chat context
+  const getDocumentText = () => {
+    if (!document) return ''
+    return document.blocks.map(b => {
+      const div = typeof window !== 'undefined' ? window.document.createElement('div') : null
+      if (div) {
+        div.innerHTML = b.content
+        return div.textContent || div.innerText || ''
+      }
+      return b.content.replace(/<[^>]*>/g, ' ')
+    }).join('\n\n')
+  }
+
+  // Handle chat submission
+  const handleChatSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (!chatQuestion.trim() || chatLoading) return
+
+    const question = chatQuestion.trim()
+    setChatQuestion('')
+    setChatMessages(prev => [...prev, { role: 'user', content: question }])
+    setChatLoading(true)
+    setChatOpen(true)
+
+    try {
+      const response = await fetch('/api/document-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          documentContent: getDocumentText(),
+          documentTitle: document?.title,
+          sessionId: trackerRef.current ? 'active' : null,
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        setChatMessages(prev => [...prev, { role: 'assistant', content: data.answer }])
+      } else {
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: 'Sorry, I had trouble processing that question. Please try again.' 
+        }])
+      }
+    } catch (error) {
+      console.error('Chat error:', error)
+      setChatMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Sorry, something went wrong. Please try again.' 
+      }])
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  // Scroll chat to bottom on new messages
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight
+    }
+  }, [chatMessages])
 
   // Email gate
   if (showEmailGate) {
@@ -298,19 +375,99 @@ export default function PublishedDocument({
         </article>
       </main>
 
-      {/* Raven badge - floating bottom right */}
-      <a
-        href="https://tryraven.io?ref=shared"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm text-xs text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors cursor-pointer"
-      >
-        <img src="/images/raven-logo.png" alt="" className="w-3.5 h-3.5" />
-        <span>Shared via <span className="font-medium text-gray-700">Raven</span></span>
-      </a>
+      {/* Chat widget - floating bottom */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
+        {/* Expanded chat panel */}
+        {chatOpen && chatMessages.length > 0 && (
+          <div className="mb-3 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Ask this document</span>
+              </div>
+              <button 
+                onClick={() => setChatOpen(false)}
+                className="p-1 hover:bg-gray-200 rounded transition-colors"
+              >
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            
+            {/* Messages */}
+            <div 
+              ref={chatMessagesRef}
+              className="max-h-64 overflow-y-auto p-4 space-y-3"
+            >
+              {chatMessages.map((msg, i) => (
+                <div 
+                  key={i}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div 
+                    className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                      msg.role === 'user' 
+                        ? 'bg-gray-900 text-white' 
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                    style={{ lineHeight: 1.5 }}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 px-3 py-2 rounded-lg">
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Input bar */}
+        <form 
+          onSubmit={handleChatSubmit}
+          className="bg-white rounded-full shadow-lg border border-gray-200 flex items-center gap-2 px-4 py-2 hover:border-gray-300 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input
+            ref={chatInputRef}
+            type="text"
+            value={chatQuestion}
+            onChange={(e) => setChatQuestion(e.target.value)}
+            onFocus={() => chatMessages.length > 0 && setChatOpen(true)}
+            placeholder="Ask this document anything..."
+            className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+          />
+          <button
+            type="submit"
+            disabled={!chatQuestion.trim() || chatLoading}
+            className={`p-1.5 rounded-full transition-colors ${
+              chatQuestion.trim() && !chatLoading
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                : 'bg-gray-100 text-gray-400'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+          </button>
+        </form>
+
+        {/* Powered by Raven */}
+        <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-gray-400">
+          <img src="/images/raven-logo.png" alt="" className="w-3 h-3 opacity-50" />
+          <span>Powered by <a href="https://tryraven.io?ref=doc-chat" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">Raven</a></span>
+        </div>
+      </div>
 
       {/* Styles for rendered HTML content */}
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .published-content p { 
           font-size: 15px; 
           line-height: 1.7; 
@@ -372,7 +529,7 @@ export default function PublishedDocument({
           border-radius: 8px;
           margin: 1rem 0;
         }
-      `}</style>
+      `}} />
     </div>
   )
 }
