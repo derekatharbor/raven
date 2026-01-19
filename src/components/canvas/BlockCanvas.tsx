@@ -1,4 +1,3 @@
-// Path: src/components/canvas/BlockCanvas.tsx
 // src/components/canvas/BlockCanvas.tsx
 //
 // Raven "Quiet" Workspace - Cursor for Documents
@@ -1307,6 +1306,7 @@ function BlockEditor({
   const [selectorPosition, setSelectorPosition] = useState({ top: 0, left: 0 })
   const menuRef = useRef<HTMLDivElement>(null)
   const plusBtnRef = useRef<HTMLButtonElement>(null)
+  const hasInitialFocus = useRef(false)
 
   const editor = useEditor({
     extensions: [
@@ -1348,27 +1348,30 @@ function BlockEditor({
     }
   }, [block.content, editor])
 
-  // Focus this editor when isFocused becomes true
+  // Focus this editor ONLY on initial mount when isFocused is true
+  // Don't re-focus on every isFocused change to avoid breaking selection
   useEffect(() => {
-    if (isFocused && editor) {
-      // Small delay to ensure React render is complete
+    if (isFocused && editor && !hasInitialFocus.current) {
+      hasInitialFocus.current = true
       const timer = setTimeout(() => {
         editor.commands.focus('end')
-        // Report editor to parent for ghost text injection
         onEditorReady?.(editor)
       }, 10)
       return () => clearTimeout(timer)
+    }
+    // Report editor when focused changes
+    if (isFocused && editor) {
+      onEditorReady?.(editor)
     }
   }, [isFocused, editor, onEditorReady])
 
   // Handle Tab/Escape for ghost text acceptance/rejection
   useEffect(() => {
-    if (!ghostText || !editor) return
+    if (!ghostText) return
     
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault()
-        // Let parent handle insertion and tracking
         onAcceptGhost?.()
       }
       if (event.key === 'Escape') {
@@ -1377,11 +1380,9 @@ function BlockEditor({
       }
     }
     
-    // Listen on the editor's DOM element
-    const el = editor.view.dom
-    el.addEventListener('keydown', handleKeyDown)
-    return () => el.removeEventListener('keydown', handleKeyDown)
-  }, [ghostText, editor, onAcceptGhost, onRejectGhost])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [ghostText, onAcceptGhost, onRejectGhost])
 
   const handlePlusClick = () => {
     if (plusBtnRef.current) {
