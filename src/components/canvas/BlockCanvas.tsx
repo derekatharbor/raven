@@ -644,73 +644,114 @@ function IntelligenceHub({
   // Single container with animated width
   return (
     <div style={{
-      width: isCollapsed ? 48 : 340,
+      width: isCollapsed ? 44 : 380,
       flexShrink: 0,
       borderLeft: '1px solid #E5E7EB',
       background: 'white',
       display: 'flex',
+      flexDirection: 'column',
       transition: 'width 0.2s ease',
       overflow: 'hidden',
     }}>
-      {/* Vertical Icon Strip - always visible */}
-      <div style={{
-        width: 48,
-        minWidth: 48,
-        borderRight: isCollapsed ? 'none' : '1px solid #F3F4F6',
-        background: '#FAFAFA',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: 8,
-        gap: 4,
-      }}>
-        {tabs.map(tab => {
-          const Icon = tab.icon
-          const isActive = activeTab === tab.id
-          return (
+      {/* Collapsed state - just an expand button */}
+      {isCollapsed ? (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          paddingTop: 12,
+        }}>
+          <button
+            onClick={onToggleCollapse}
+            style={{
+              width: 32, height: 32, borderRadius: 6, border: 'none',
+              background: '#F3F4F6', color: '#374151', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            className="panel-expand-btn"
+          >
+            <PanelRight className="w-4 h-4" />
+          </button>
+          <div style={{
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+            transform: 'rotate(180deg)',
+            marginTop: 12,
+            fontSize: 11,
+            fontWeight: 500,
+            color: '#9CA3AF',
+            letterSpacing: '0.5px',
+          }}>
+            Research
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Header with title and collapse */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 12px',
+            borderBottom: '1px solid #F3F4F6',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Atom className="w-4 h-4" style={{ color: '#22C55E' }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>
+                Intelligence Hub
+              </span>
+            </div>
             <button
-              key={tab.id}
-              onClick={() => isCollapsed ? onToggleCollapse() : setActiveTab(tab.id)}
-              className="side-tab-btn"
+              onClick={onToggleCollapse}
+              className="panel-close-btn"
               style={{
-                width: 36, height: 36, borderRadius: 8, border: 'none',
-                background: isActive ? 'white' : 'transparent',
-                color: isActive ? '#111' : '#6B7280',
-                cursor: 'pointer',
+                width: 28, height: 28, borderRadius: 6, border: 'none',
+                background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
               }}
             >
-              <Icon className="w-[18px] h-[18px]" />
+              <PanelRightClose className="w-4 h-4" />
             </button>
-          )
-        })}
-        
-        {/* Collapse/Expand button at bottom */}
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={onToggleCollapse}
-          className="side-tab-btn"
-          style={{
-            width: 36, height: 36, borderRadius: 8, border: 'none',
-            background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 8,
-          }}
-        >
-          {isCollapsed ? <PanelRight className="w-[18px] h-[18px]" /> : <PanelRightClose className="w-[18px] h-[18px]" />}
-        </button>
-      </div>
+          </div>
 
-      {/* Tab Content - hidden when collapsed */}
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        overflow: 'hidden',
-        opacity: isCollapsed ? 0 : 1,
-        transition: 'opacity 0.15s ease',
-      }}>
+          {/* Tab row */}
+          <div style={{
+            display: 'flex',
+            gap: 4,
+            padding: '8px 12px',
+            borderBottom: '1px solid #F3F4F6',
+          }}>
+            {tabs.map(tab => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: isActive ? '#111' : 'transparent',
+                    color: isActive ? 'white' : '#6B7280',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                  className="hub-tab-btn"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Tab Content */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         {/* RESEARCH TAB - AI Chat */}
         {activeTab === 'research' && (
@@ -1118,7 +1159,9 @@ function IntelligenceHub({
             </div>
           </>
         )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -2182,6 +2225,8 @@ export default function BlockCanvas({
         .floating-toolbar-btn:hover { background: #F3F4F6 !important; }
         .block-option:hover { background: #F5F5F5 !important; }
         .panel-close-btn:hover { background: #F3F4F6 !important; color: #374151 !important; }
+        .panel-expand-btn:hover { background: #E5E7EB !important; }
+        .hub-tab-btn:hover { background: #F3F4F6 !important; }
         .sources-dropdown-btn:hover { background: #F3F4F6 !important; border-color: #D1D5DB !important; }
         .send-btn:hover { opacity: 0.9; }
         .mode-selector-btn:hover { background: #F3F4F6 !important; }
