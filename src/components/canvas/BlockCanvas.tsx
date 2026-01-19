@@ -442,16 +442,26 @@ function SelectionToolbar({ position, isVisible, editor, selectedText, onResearc
 // INTELLIGENCE HUB - Collapsible side panel with AI Research + Audit + Sources
 // ============================================================================
 
-function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapsed, onToggleCollapse }: {
+function IntelligenceHub({ 
+  selectedText, 
+  onClearSelection, 
+  auditMode, 
+  isCollapsed, 
+  onToggleCollapse,
+  onInsertText,
+  onTrackClaim,
+}: {
   selectedText: string
   onClearSelection: () => void
   auditMode: boolean
   isCollapsed: boolean
   onToggleCollapse: () => void
+  onInsertText: (text: string) => void
+  onTrackClaim: (claim: string, source?: string) => void
 }) {
   const [activeTab, setActiveTab] = useState<'research' | 'audit' | 'sources'>('research')
   const [query, setQuery] = useState('')
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string }>>([])
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; sources?: string[] }>>([])
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'ask' | 'verify'>('ask')
   const [webEnabled, setWebEnabled] = useState(false)
@@ -778,6 +788,100 @@ function IntelligenceHub({ selectedText, onClearSelection, auditMode, isCollapse
                           </div>
                         )}
                       </div>
+                      
+                      {/* Action buttons for assistant messages */}
+                      {msg.role === 'assistant' && (
+                        <div style={{ 
+                          display: 'flex', 
+                          gap: 6, 
+                          marginTop: 8,
+                          paddingLeft: 4,
+                        }}>
+                          <button
+                            onClick={() => {
+                              // Extract plain text from markdown for insertion
+                              const plainText = msg.content
+                                .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+                                .replace(/\*(.*?)\*/g, '$1') // Remove italic
+                                .replace(/`(.*?)`/g, '$1') // Remove code
+                                .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links
+                                .replace(/^#+\s*/gm, '') // Remove headers
+                                .replace(/^[-*]\s*/gm, '• ') // Convert list items
+                                .trim()
+                              onInsertText(plainText)
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              border: '1px solid #E5E7EB',
+                              background: 'white',
+                              color: '#374151',
+                              fontSize: 11,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                            }}
+                            className="action-btn"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Insert
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              // Extract first sentence or key finding for tracking
+                              const firstSentence = msg.content.split(/[.!?]/)[0]?.trim() || msg.content.slice(0, 100)
+                              const cleanClaim = firstSentence
+                                .replace(/\*\*/g, '')
+                                .replace(/^#+\s*/gm, '')
+                                .trim()
+                              onTrackClaim(cleanClaim)
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              border: '1px solid #E5E7EB',
+                              background: 'white',
+                              color: '#374151',
+                              fontSize: 11,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                            }}
+                            className="action-btn"
+                          >
+                            <Radio className="w-3 h-3" />
+                            Track
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.content)
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              border: '1px solid #E5E7EB',
+                              background: 'white',
+                              color: '#374151',
+                              fontSize: 11,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                            }}
+                            className="action-btn"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Copy
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {isLoading && (
@@ -1235,7 +1339,8 @@ export default function BlockCanvas({
     loading: docLoading,
     saving,
     updateContent, 
-    updateTitle 
+    updateTitle,
+    addClaim,
   } = useDocument(documentId !== 'new' ? documentId : null)
   
   // Local state for tabs (combines DB docs with local edits)
@@ -1350,24 +1455,29 @@ export default function BlockCanvas({
     ))
   }, [currentDoc, docLoading])
 
-  // Convert DB content (TipTap JSON) to our block format
+  // Convert DB content to our block format
+  // Handles both old TipTap JSON format and new html-blocks format
   function contentToBlocks(content: any): Block[] {
-    if (!content || !content.content) {
+    if (!content) {
+      return DEFAULT_BLOCKS
+    }
+    
+    // New format: html-blocks
+    if (content.format === 'html-blocks' && content.blocks) {
+      return content.blocks.map((block: any, index: number) => ({
+        id: block.id || `block-${index}`,
+        content: block.html || '',
+      }))
+    }
+    
+    // Legacy format: TipTap JSON
+    if (!content.content) {
       return DEFAULT_BLOCKS
     }
     
     return content.content.map((node: any, index: number) => {
-      let html = ''
-      if (node.type === 'heading') {
-        const level = node.attrs?.level || 1
-        const text = node.content?.map((c: any) => c.text || '').join('') || ''
-        html = `<h${level}>${text}</h${level}>`
-      } else if (node.type === 'paragraph') {
-        const text = node.content?.map((c: any) => c.text || '').join('') || ''
-        html = `<p>${text}</p>`
-      } else {
-        html = ''
-      }
+      // Convert TipTap node to HTML preserving formatting
+      const html = tiptapNodeToHtml(node)
       
       return {
         id: `block-${index}`,
@@ -1375,40 +1485,69 @@ export default function BlockCanvas({
       }
     })
   }
-
-  // Convert our blocks back to TipTap JSON for saving
-  function blocksToContent(blocks: Block[]): any {
-    const content = blocks.map(block => {
-      // Parse the HTML to extract type and text
-      const h1Match = block.content.match(/<h1>(.*?)<\/h1>/i)
-      const h2Match = block.content.match(/<h2>(.*?)<\/h2>/i)
-      const pMatch = block.content.match(/<p>(.*?)<\/p>/i)
-      
-      if (h1Match) {
-        return {
-          type: 'heading',
-          attrs: { level: 1 },
-          content: [{ type: 'text', text: h1Match[1] }]
-        }
-      } else if (h2Match) {
-        return {
-          type: 'heading',
-          attrs: { level: 2 },
-          content: [{ type: 'text', text: h2Match[1] }]
-        }
-      } else {
-        // Default to paragraph
-        const text = pMatch ? pMatch[1] : block.content.replace(/<[^>]*>/g, '')
-        return {
-          type: 'paragraph',
-          content: text ? [{ type: 'text', text }] : []
+  
+  // Convert a TipTap node to HTML, preserving marks (bold, italic, etc.)
+  function tiptapNodeToHtml(node: any): string {
+    if (!node) return ''
+    
+    // Handle text nodes with marks
+    if (node.type === 'text') {
+      let text = node.text || ''
+      // Apply marks in order
+      if (node.marks) {
+        for (const mark of node.marks) {
+          if (mark.type === 'bold') text = `<strong>${text}</strong>`
+          else if (mark.type === 'italic') text = `<em>${text}</em>`
+          else if (mark.type === 'underline') text = `<u>${text}</u>`
+          else if (mark.type === 'strike') text = `<s>${text}</s>`
+          else if (mark.type === 'code') text = `<code>${text}</code>`
+          else if (mark.type === 'link') text = `<a href="${mark.attrs?.href || ''}">${text}</a>`
         }
       }
-    }).filter(node => node.content && node.content.length > 0)
+      return text
+    }
+    
+    // Recursively convert children
+    const children = node.content?.map((child: any) => tiptapNodeToHtml(child)).join('') || ''
+    
+    // Wrap in appropriate tag
+    switch (node.type) {
+      case 'heading':
+        const level = node.attrs?.level || 1
+        return `<h${level}>${children}</h${level}>`
+      case 'paragraph':
+        return `<p>${children}</p>`
+      case 'bulletList':
+        return `<ul>${children}</ul>`
+      case 'orderedList':
+        return `<ol>${children}</ol>`
+      case 'listItem':
+        return `<li>${children}</li>`
+      case 'blockquote':
+        return `<blockquote>${children}</blockquote>`
+      case 'codeBlock':
+        return `<pre><code>${children}</code></pre>`
+      case 'horizontalRule':
+        return '<hr>'
+      case 'image':
+        return `<img src="${node.attrs?.src || ''}" alt="${node.attrs?.alt || ''}" />`
+      case 'hardBreak':
+        return '<br>'
+      default:
+        return children
+    }
+  }
 
+  // Convert our blocks back to content for saving
+  // Store as a simple format that preserves all HTML
+  function blocksToContent(blocks: Block[]): any {
     return {
       type: 'doc',
-      content: content.length > 0 ? content : [{ type: 'paragraph', content: [] }]
+      format: 'html-blocks',
+      blocks: blocks.map(block => ({
+        id: block.id,
+        html: block.content,
+      }))
     }
   }
 
@@ -1652,6 +1791,52 @@ export default function BlockCanvas({
     setToolbarState(prev => ({ ...prev, visible: false }))
   }, [])
 
+  // Insert text from research into document
+  const handleInsertText = useCallback((text: string) => {
+    // If we have a focused block, append to it
+    // Otherwise, create a new block with the text
+    if (focusedBlockId) {
+      const focusedBlock = blocks.find(b => b.id === focusedBlockId)
+      if (focusedBlock) {
+        // Append text to the focused block
+        const newContent = focusedBlock.content + `<p>${text}</p>`
+        updateBlock(focusedBlockId, newContent)
+        return
+      }
+    }
+    
+    // No focused block - add as new block at the end
+    const newBlock: Block = {
+      id: `block-${Date.now()}`,
+      content: `<p>${text}</p>`,
+    }
+    updateBlocks([...blocks, newBlock])
+  }, [focusedBlockId, blocks, updateBlock, updateBlocks])
+
+  // Track a claim from research
+  const handleTrackClaim = useCallback(async (claim: string, source?: string) => {
+    if (!documentId || documentId === 'new') {
+      alert('Please save the document first before tracking claims')
+      return
+    }
+    
+    // Generate a claim ID
+    const claimId = `RAV-${Date.now().toString(36).toUpperCase()}`
+    
+    const result = await addClaim({
+      claimId,
+      text: claim,
+      source: source || 'web',
+      cadence: 'daily',
+      category: 'general',
+    })
+    
+    if (result) {
+      // Show success feedback
+      alert(`✓ Claim tracked: "${claim.slice(0, 50)}${claim.length > 50 ? '...' : ''}"`)
+    }
+  }, [documentId, addClaim])
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'white' }}>
       <style>{`
@@ -1691,6 +1876,7 @@ export default function BlockCanvas({
         .mode-selector-btn:hover { background: #F3F4F6 !important; }
         .mode-option:hover { background: #F5F5F5 !important; }
         .dock-mode-btn:hover { background: rgba(0,0,0,0.04) !important; }
+        .action-btn:hover { background: #F3F4F6 !important; border-color: #D1D5DB !important; }
         .mode-tab-btn:hover { background: #F5F5F5 !important; }
         .side-tab-btn:hover { background: #F3F4F6 !important; }
         .folder-btn:hover { background: #F5F5F5 !important; }
@@ -1850,6 +2036,8 @@ export default function BlockCanvas({
           auditMode={auditMode}
           isCollapsed={panelCollapsed}
           onToggleCollapse={() => setPanelCollapsed(!panelCollapsed)}
+          onInsertText={handleInsertText}
+          onTrackClaim={handleTrackClaim}
         />
 
         {/* Floating Dock - Figma-style */}
