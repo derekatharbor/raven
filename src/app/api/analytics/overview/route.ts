@@ -31,38 +31,51 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all user's documents that have been published
-    const { data: documents, error: docsError } = await supabase
+    // Get user's documents first
+    const { data: userDocs, error: docsError } = await supabase
       .from('documents')
-      .select(`
-        id,
-        title,
-        published_links (
-          id,
-          slug,
-          is_active,
-          created_at
-        )
-      `)
+      .select('id, title')
       .eq('user_id', user.id)
-      .not('published_links', 'is', null)
 
     if (docsError) {
       console.error('Error fetching documents:', docsError)
       return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
     }
 
+    if (!userDocs || userDocs.length === 0) {
+      return NextResponse.json({
+        overview: { total_published: 0, total_views: 0, total_unique_viewers: 0, avg_completion: 0, total_questions: 0 },
+        documents: [],
+      })
+    }
+
+    const docIds = userDocs.map(d => d.id)
+    const docMap = new Map(userDocs.map(d => [d.id, d]))
+
+    // Get published links for user's documents
+    const { data: links, error: linksError } = await supabase
+      .from('published_links')
+      .select('id, document_id, slug, is_active, created_at')
+      .in('document_id', docIds)
+      .eq('is_active', true)
+
+    if (linksError) {
+      console.error('Error fetching links:', linksError)
+    }
+
+    if (!links || links.length === 0) {
+      return NextResponse.json({
+        overview: { total_published: 0, total_views: 0, total_unique_viewers: 0, avg_completion: 0, total_questions: 0 },
+        documents: [],
+      })
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tryraven.io'
-    
-    // Filter to only published docs and build response
-    const publishedDocs = (documents || []).filter(
-      (doc: any) => doc.published_links && doc.published_links.length > 0
-    )
 
     // Fetch stats for each published doc
     const docsWithStats = await Promise.all(
-      publishedDocs.map(async (doc: any) => {
-        const link = doc.published_links[0]
+      links.map(async (link: any) => {
+        const doc = docMap.get(link.document_id)
         
         // Get sessions for this link
         const { data: sessions } = await supabase
@@ -80,43 +93,60 @@ export async function GET(req: NextRequest) {
           ? allSessions.reduce((sum: number, s: any) => sum + (s.total_dwell_ms || 0), 0) / totalViews
           : 0
 
-        // Get questions for this link
-        const { data: questions } = await supabase
-          .from('document_questions')
-          .select('topic, created_at')
-          .eq('link_id', link.id)
-          .order('created_at', { ascending: false })
+        // Get questions for this link (gracefully handle if table doesn't exist)
+        let allQuestions: any[] = []
+        let questionTopics: { topic: string; count: number }[] = []
+        try {
+          const { data: questions } = await supabase
+            .from('document_questions')
+            .select('topic, created_at')
+            .eq('link_id', link.id)
+            .order('created_at', { ascending: false })
 
-        const allQuestions = questions || []
-        
-        // Aggregate by topic
-        const topicCounts = new Map<string, number>()
-        allQuestions.forEach((q: any) => {
-          const topic = q.topic || 'General'
-          topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1)
-        })
-        
-        const questionTopics = Array.from(topicCounts.entries())
-          .map(([topic, count]) => ({ topic, count }))
-          .sort((a, b) => b.count - a.count)
+          allQuestions = questions || []
+          
+          // Aggregate by topic
+          const topicCounts = new Map<string, number>()
+          allQuestions.forEach((q: any) => {
+            const topic = q.topic || 'General'
+            topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1)
+          })
+          
+          questionTopics = Array.from(topicCounts.entries())
+            .map(([topic, count]) => ({ topic, count }))
+            .sort((a, b) => b.count - a.count)
+        } catch {
+          // Table might not exist yet
+        }
 
         // Get current version
-        const { data: version } = await supabase
-          .from('published_versions')
-          .select('version_number, published_at')
-          .eq('document_id', doc.id)
-          .order('version_number', { ascending: false })
-          .limit(1)
-          .single()
+        let versionNumber = 1
+        let publishedAt = link.created_at
+        try {
+          const { data: version } = await supabase
+            .from('published_versions')
+            .select('version_number, published_at')
+            .eq('document_id', link.document_id)
+            .order('version_number', { ascending: false })
+            .limit(1)
+            .single()
+          
+          if (version) {
+            versionNumber = version.version_number
+            publishedAt = version.published_at
+          }
+        } catch {
+          // Use defaults
+        }
 
         return {
           id: link.id,
-          document_id: doc.id,
-          title: doc.title || 'Untitled',
+          document_id: link.document_id,
+          title: doc?.title || 'Untitled',
           slug: link.slug,
           url: `${baseUrl}/d/${link.slug}`,
-          published_at: version?.published_at || link.created_at,
-          version_number: version?.version_number || 1,
+          published_at: publishedAt,
+          version_number: versionNumber,
           stats: {
             total_views: totalViews,
             unique_viewers: uniqueViewers,
