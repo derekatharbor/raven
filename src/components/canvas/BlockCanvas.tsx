@@ -34,30 +34,34 @@ import { uploadImage } from '@/lib/storage/upload'
 
 const ghostTextPluginKey = new PluginKey('ghostText')
 
-interface GhostTextState {
-  text: string | null
-  source?: string
-}
-
 const GhostText = Extension.create({
   name: 'ghostText',
 
-  addStorage() {
-    return {
-      ghostText: null as string | null,
-      source: undefined as string | undefined,
-    }
-  },
-
   addProseMirrorPlugins() {
-    const extension = this
-
     return [
       new Plugin({
         key: ghostTextPluginKey,
+        state: {
+          init() {
+            return { ghostText: null as string | null, source: undefined as string | undefined }
+          },
+          apply(tr, value) {
+            // Check for meta to update ghost text
+            const meta = tr.getMeta(ghostTextPluginKey)
+            if (meta !== undefined) {
+              return meta
+            }
+            // Clear ghost text on document changes (user typing)
+            if (tr.docChanged) {
+              return { ghostText: null, source: undefined }
+            }
+            return value
+          },
+        },
         props: {
           decorations(state) {
-            const ghostText = extension.storage.ghostText
+            const pluginState = ghostTextPluginKey.getState(state)
+            const ghostText = pluginState?.ghostText
             if (!ghostText) return DecorationSet.empty
 
             // Get cursor position
@@ -68,12 +72,6 @@ const GhostText = Extension.create({
               const span = document.createElement('span')
               span.className = 'ghost-text-suggestion'
               span.textContent = ghostText
-              span.style.cssText = `
-                color: #9CA3AF;
-                opacity: 0.7;
-                pointer-events: none;
-                user-select: none;
-              `
               return span
             }, { side: 1 }) // side: 1 puts it after the cursor
 
@@ -81,24 +79,26 @@ const GhostText = Extension.create({
           },
           
           handleKeyDown(view, event) {
-            const ghostText = extension.storage.ghostText
+            const pluginState = ghostTextPluginKey.getState(view.state)
+            const ghostText = pluginState?.ghostText
             if (!ghostText) return false
 
             // Tab to accept
             if (event.key === 'Tab' && !event.shiftKey) {
               event.preventDefault()
               
+              const source = pluginState?.source
+              
               // Insert the ghost text at cursor
               const { from } = view.state.selection
-              const tr = view.state.tr.insertText(ghostText, from)
+              const tr = view.state.tr
+                .insertText(ghostText, from)
+                .setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
               view.dispatch(tr)
-              
-              // Clear ghost text
-              extension.storage.ghostText = null
               
               // Trigger custom event for tracking
               const customEvent = new CustomEvent('ghostTextAccepted', { 
-                detail: { text: ghostText, source: extension.storage.source } 
+                detail: { text: ghostText, source } 
               })
               document.dispatchEvent(customEvent)
               
@@ -108,16 +108,9 @@ const GhostText = Extension.create({
             // Escape to dismiss
             if (event.key === 'Escape') {
               event.preventDefault()
-              extension.storage.ghostText = null
-              extension.storage.source = undefined
-              view.dispatch(view.state.tr) // Force re-render
+              const tr = view.state.tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
+              view.dispatch(tr)
               return true
-            }
-
-            // Any other key dismisses ghost text
-            if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Delete') {
-              extension.storage.ghostText = null
-              extension.storage.source = undefined
             }
 
             return false
@@ -129,20 +122,21 @@ const GhostText = Extension.create({
 
   addCommands() {
     return {
-      setGhostText: (text: string, source?: string) => ({ editor }: { editor: any }) => {
-        this.storage.ghostText = text
-        this.storage.source = source
-        // Force decoration update
-        editor.view.dispatch(editor.view.state.tr)
+      setGhostText: (text: string, source?: string) => ({ tr, dispatch }: { tr: any; dispatch: any }) => {
+        if (dispatch) {
+          tr.setMeta(ghostTextPluginKey, { ghostText: text, source })
+          dispatch(tr)
+        }
         return true
       },
-      clearGhostText: () => ({ editor }: { editor: any }) => {
-        this.storage.ghostText = null
-        this.storage.source = undefined
-        editor.view.dispatch(editor.view.state.tr)
+      clearGhostText: () => ({ tr, dispatch }: { tr: any; dispatch: any }) => {
+        if (dispatch) {
+          tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
+          dispatch(tr)
+        }
         return true
       },
-    } as any // Cast to satisfy TipTap's RawCommands type
+    } as any
   },
 })
 
@@ -1403,6 +1397,7 @@ function BlockEditor({
   onAddBlockAfter, 
   onSelectionChange,
   ghostText,
+  ghostSource,
   onAcceptGhost,
   onRejectGhost,
   onEditorReady,
@@ -1417,6 +1412,7 @@ function BlockEditor({
   onAddBlockAfter: (type?: string) => void
   onSelectionChange: (visible: boolean, pos: { top: number; left: number } | null, editor: any, text?: string) => void
   ghostText?: string
+  ghostSource?: string
   onAcceptGhost?: () => void
   onRejectGhost?: () => void
   onEditorReady?: (editor: any) => void
@@ -1488,12 +1484,12 @@ function BlockEditor({
     
     if (ghostText) {
       // @ts-ignore - custom command
-      editor.commands.setGhostText(ghostText)
+      editor.commands.setGhostText(ghostText, ghostSource)
     } else {
       // @ts-ignore - custom command
       editor.commands.clearGhostText?.()
     }
-  }, [ghostText, editor])
+  }, [ghostText, ghostSource, editor])
 
   const handlePlusClick = () => {
     if (plusBtnRef.current) {
@@ -2443,6 +2439,7 @@ export default function BlockCanvas({
                   onAddBlockAfter={() => addBlock(block.id)} 
                   onSelectionChange={(visible, pos, editor, text) => setToolbarState({ visible, position: pos, editor, selectedText: text || '' })} 
                   ghostText={pendingGhostText?.blockId === block.id ? pendingGhostText.text : undefined}
+                  ghostSource={pendingGhostText?.blockId === block.id ? pendingGhostText.source : undefined}
                   onAcceptGhost={handleAcceptGhost}
                   onRejectGhost={handleRejectGhost}
                   onEditorReady={(editor) => { activeEditorRef.current = editor }}
