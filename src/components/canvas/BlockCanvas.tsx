@@ -7,13 +7,11 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useEditor, EditorContent, Extension } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
-import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import ReactMarkdown from 'react-markdown'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
@@ -27,109 +25,6 @@ import {
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
 import { uploadImage } from '@/lib/storage/upload'
-
-// ============================================================================
-// GHOST TEXT EXTENSION - Inline suggestions like Cursor
-// ============================================================================
-
-const ghostTextPluginKey = new PluginKey('ghostText')
-
-interface GhostTextPluginState {
-  ghostText: string | null
-  source: string | undefined
-}
-
-const GhostText = Extension.create({
-  name: 'ghostText',
-
-  addProseMirrorPlugins() {
-    return [
-      new Plugin<GhostTextPluginState>({
-        key: ghostTextPluginKey,
-        state: {
-          init(): GhostTextPluginState {
-            return { ghostText: null, source: undefined }
-          },
-          apply(tr, value): GhostTextPluginState {
-            const meta = tr.getMeta(ghostTextPluginKey)
-            if (meta !== undefined) {
-              return meta as GhostTextPluginState
-            }
-            if (tr.docChanged && value.ghostText) {
-              return { ghostText: null, source: undefined }
-            }
-            return value
-          },
-        },
-        props: {
-          decorations: (state) => {
-            const pluginState = ghostTextPluginKey.getState(state)
-            if (!pluginState?.ghostText) return undefined
-            
-            const { from } = state.selection
-            const widget = Decoration.widget(from, () => {
-              const span = document.createElement('span')
-              span.className = 'ghost-text-suggestion'
-              span.textContent = pluginState.ghostText!
-              return span
-            }, { side: 1, key: 'ghost-text' })
-
-            return DecorationSet.create(state.doc, [widget])
-          },
-          
-          handleKeyDown: (view, event) => {
-            const pluginState = ghostTextPluginKey.getState(view.state)
-            if (!pluginState?.ghostText) return false
-
-            if (event.key === 'Tab' && !event.shiftKey) {
-              event.preventDefault()
-              const { ghostText, source } = pluginState
-              const { from } = view.state.selection
-              
-              view.dispatch(
-                view.state.tr
-                  .insertText(ghostText!, from)
-                  .setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
-              )
-              
-              document.dispatchEvent(new CustomEvent('ghostTextAccepted', { 
-                detail: { text: ghostText, source } 
-              }))
-              return true
-            }
-
-            if (event.key === 'Escape') {
-              event.preventDefault()
-              view.dispatch(
-                view.state.tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined })
-              )
-              return true
-            }
-
-            return false
-          },
-        },
-      }),
-    ]
-  },
-
-  addCommands() {
-    return {
-      setGhostText: (text: string, source?: string) => ({ tr, dispatch }: { tr: any; dispatch: any }) => {
-        if (dispatch) {
-          dispatch(tr.setMeta(ghostTextPluginKey, { ghostText: text, source }))
-        }
-        return true
-      },
-      clearGhostText: () => ({ tr, dispatch }: { tr: any; dispatch: any }) => {
-        if (dispatch) {
-          dispatch(tr.setMeta(ghostTextPluginKey, { ghostText: null, source: undefined }))
-        }
-        return true
-      },
-    } as any
-  },
-})
 
 // ============================================================================
 // RAVEN SPINNER - Logo rotates 90 degrees at a time
@@ -1388,7 +1283,6 @@ function BlockEditor({
   onAddBlockAfter, 
   onSelectionChange,
   ghostText,
-  ghostSource,
   onAcceptGhost,
   onRejectGhost,
   onEditorReady,
@@ -1403,7 +1297,6 @@ function BlockEditor({
   onAddBlockAfter: (type?: string) => void
   onSelectionChange: (visible: boolean, pos: { top: number; left: number } | null, editor: any, text?: string) => void
   ghostText?: string
-  ghostSource?: string
   onAcceptGhost?: () => void
   onRejectGhost?: () => void
   onEditorReady?: (editor: any) => void
@@ -1429,7 +1322,6 @@ function BlockEditor({
         showOnlyWhenEditable: true, 
         showOnlyCurrent: true 
       }),
-      GhostText,
     ],
     content: block.content,
     editorProps: { attributes: { class: 'ghost-block-content' } },
@@ -1469,18 +1361,27 @@ function BlockEditor({
     }
   }, [isFocused, editor, onEditorReady])
 
-  // Sync ghostText prop with editor extension
+  // Handle Tab/Escape for ghost text acceptance/rejection
   useEffect(() => {
-    if (!editor) return
+    if (!ghostText || !editor) return
     
-    if (ghostText) {
-      // @ts-ignore - custom command
-      editor.commands.setGhostText(ghostText, ghostSource)
-    } else {
-      // @ts-ignore - custom command
-      editor.commands.clearGhostText?.()
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault()
+        // Let parent handle insertion and tracking
+        onAcceptGhost?.()
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onRejectGhost?.()
+      }
     }
-  }, [ghostText, ghostSource, editor])
+    
+    // Listen on the editor's DOM element
+    const el = editor.view.dom
+    el.addEventListener('keydown', handleKeyDown)
+    return () => el.removeEventListener('keydown', handleKeyDown)
+  }, [ghostText, editor, onAcceptGhost, onRejectGhost])
 
   const handlePlusClick = () => {
     if (plusBtnRef.current) {
@@ -1554,37 +1455,50 @@ function BlockEditor({
       <div style={{ flex: 1, minWidth: 0, paddingLeft: 12 }}>
         <EditorContent editor={editor} />
         
-        {/* Ghost text hint - Tab to accept, Escape to dismiss */}
+        {/* Ghost text preview - shows what will be inserted */}
         {ghostText && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 8, 
-            marginTop: 4,
-            fontSize: 11,
-            color: '#6B7280',
-          }}>
-            <span style={{ 
-              padding: '2px 6px',
-              background: '#DCFCE7',
-              borderRadius: 4,
-              fontFamily: 'monospace',
-              fontWeight: 500,
-              color: '#16A34A',
+          <div style={{ marginTop: 8 }}>
+            <div style={{
+              padding: '8px 12px',
+              background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%)',
+              borderLeft: '2px solid #22C55E',
+              borderRadius: '0 6px 6px 0',
+              color: '#374151',
+              fontSize: 14,
+              lineHeight: 1.5,
             }}>
-              Tab
-            </span>
-            <span>to accept</span>
-            <span style={{ color: '#D1D5DB' }}>•</span>
-            <span style={{ 
-              padding: '2px 6px',
-              background: '#F3F4F6',
-              borderRadius: 4,
-              fontFamily: 'monospace',
+              {ghostText}
+            </div>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              marginTop: 6,
+              fontSize: 11,
+              color: '#6B7280',
             }}>
-              Esc
-            </span>
-            <span>to dismiss</span>
+              <span style={{ 
+                padding: '2px 6px',
+                background: '#DCFCE7',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+                fontWeight: 500,
+                color: '#16A34A',
+              }}>
+                Tab
+              </span>
+              <span>to insert</span>
+              <span style={{ color: '#D1D5DB' }}>•</span>
+              <span style={{ 
+                padding: '2px 6px',
+                background: '#F3F4F6',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+              }}>
+                Esc
+              </span>
+              <span>to dismiss</span>
+            </div>
           </div>
         )}
       </div>
@@ -2201,34 +2115,6 @@ export default function BlockCanvas({
     setPendingGhostText(null)
   }, [])
 
-  // Listen for ghost text acceptance from TipTap extension
-  useEffect(() => {
-    const handleGhostAccepted = async (event: Event) => {
-      const customEvent = event as CustomEvent<{ text: string; source?: string }>
-      const { text, source } = customEvent.detail
-      
-      // Auto-track the inserted text as a verified claim
-      if (documentId && documentId !== 'new') {
-        const claimId = `RAV-${Date.now().toString(36).toUpperCase()}`
-        const claimText = text.split(/[.!?]/)[0]?.trim() || text.slice(0, 100)
-        
-        await addClaim({
-          claimId,
-          text: claimText,
-          source: source || 'web',
-          cadence: 'daily',
-          category: 'general',
-        })
-      }
-      
-      // Clear pending state
-      setPendingGhostText(null)
-    }
-    
-    document.addEventListener('ghostTextAccepted', handleGhostAccepted)
-    return () => document.removeEventListener('ghostTextAccepted', handleGhostAccepted)
-  }, [documentId, addClaim])
-
   // Track a claim from research
   const handleTrackClaim = useCallback(async (claim: string, source?: string) => {
     if (!documentId || documentId === 'new') {
@@ -2278,15 +2164,6 @@ export default function BlockCanvas({
         .ghost-block-content img.editor-image { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; cursor: pointer; }
         .ghost-block-content img.editor-image:hover { opacity: 0.95; }
         .ghost-block-content img.editor-image.ProseMirror-selectednode { outline: 2px solid #3B82F6; outline-offset: 2px; }
-        
-        /* Ghost text inline suggestion - like Cursor */
-        .ghost-text-suggestion {
-          color: #22C55E !important;
-          opacity: 0.6;
-          font-style: normal;
-          pointer-events: none;
-          user-select: none;
-        }
         
         /* Ensure text selection is visible */
         .ghost-block-content ::selection {
@@ -2438,7 +2315,6 @@ export default function BlockCanvas({
                   onAddBlockAfter={() => addBlock(block.id)} 
                   onSelectionChange={(visible, pos, editor, text) => setToolbarState({ visible, position: pos, editor, selectedText: text || '' })} 
                   ghostText={pendingGhostText?.blockId === block.id ? pendingGhostText.text : undefined}
-                  ghostSource={pendingGhostText?.blockId === block.id ? pendingGhostText.source : undefined}
                   onAcceptGhost={handleAcceptGhost}
                   onRejectGhost={handleRejectGhost}
                   onEditorReady={(editor) => { activeEditorRef.current = editor }}
