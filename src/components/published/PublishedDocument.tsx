@@ -480,7 +480,7 @@ export default function PublishedDocument({
       </header>
 
       {/* Document content */}
-      <main className="max-w-2xl mx-auto px-6 py-12">
+      <main className="max-w-2xl mx-auto px-6 pt-12 pb-28">
         <article className="published-content">
           {document.blocks.map((block, index) => (
             <TrackedBlock 
@@ -548,44 +548,33 @@ export default function PublishedDocument({
           </div>
         )}
 
-        {/* Input bar with frosted backdrop */}
-        <div className="relative">
-          {/* Frosted glass - fades upward */}
-          <div 
-            className="absolute -inset-x-4 -bottom-4 h-20 pointer-events-none -z-10"
-            style={{
-              background: 'linear-gradient(to top, rgba(250, 250, 250, 0.95) 0%, rgba(250, 250, 250, 0.8) 50%, transparent 100%)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}
+        {/* Input bar */}
+        <form 
+          onSubmit={handleChatSubmit}
+          className="bg-white rounded-full shadow-lg border border-gray-200 flex items-center gap-2 px-4 py-2 hover:border-gray-300 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input
+            ref={chatInputRef}
+            type="text"
+            value={chatQuestion}
+            onChange={(e) => setChatQuestion(e.target.value)}
+            onFocus={() => chatMessages.length > 0 && setChatOpen(true)}
+            placeholder="Ask this document anything..."
+            className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
           />
-          <form 
-            onSubmit={handleChatSubmit}
-            className="bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center gap-2 px-4 py-2 hover:border-gray-300 transition-colors"
+          <button
+            type="submit"
+            disabled={!chatQuestion.trim() || chatLoading}
+            className={`p-1.5 rounded-full transition-colors ${
+              chatQuestion.trim() && !chatLoading
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                : 'bg-gray-100 text-gray-400'
+            }`}
           >
-            <MessageCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <input
-              ref={chatInputRef}
-              type="text"
-              value={chatQuestion}
-              onChange={(e) => setChatQuestion(e.target.value)}
-              onFocus={() => chatMessages.length > 0 && setChatOpen(true)}
-              placeholder="Ask this document anything..."
-              className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
-            />
-            <button
-              type="submit"
-              disabled={!chatQuestion.trim() || chatLoading}
-              className={`p-1.5 rounded-full transition-colors ${
-                chatQuestion.trim() && !chatLoading
-                  ? 'bg-gray-900 text-white hover:bg-gray-800'
-                  : 'bg-gray-100 text-gray-400'
-              }`}
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </form>
-        </div>
+            <Send className="w-3.5 h-3.5" />
+          </button>
+        </form>
 
         {/* Powered by Raven */}
         <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-gray-400">
