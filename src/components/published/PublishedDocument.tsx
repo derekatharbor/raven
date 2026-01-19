@@ -492,42 +492,30 @@ export default function PublishedDocument({
         </article>
       </main>
 
-      {/* Chat widget - floating bottom with frosted glass */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
-        {/* Frosted glass backdrop */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(250, 250, 250, 0.8) 30%, rgba(250, 250, 250, 0.95) 100%)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-          }}
-        />
-        
-        {/* Content container */}
-        <div className="relative max-w-lg mx-auto px-4 pb-4 pt-6">
-          {/* Expanded chat panel */}
-          {chatOpen && chatMessages.length > 0 && (
-            <div className="mb-3 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-              {/* Chat header */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">Ask this document</span>
-                </div>
-                <button 
-                  onClick={() => setChatOpen(false)}
-                  className="p-1 hover:bg-gray-200 rounded transition-colors"
-                >
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                </button>
+      {/* Chat widget - floating bottom */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4">
+        {/* Expanded chat panel */}
+        {chatOpen && chatMessages.length > 0 && (
+          <div className="mb-3 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Ask this document</span>
               </div>
-              
-              {/* Messages */}
-              <div 
-                ref={chatMessagesRef}
-                className="max-h-64 overflow-y-auto p-4 space-y-3"
+              <button 
+                onClick={() => setChatOpen(false)}
+                className="p-1 hover:bg-gray-200 rounded transition-colors"
               >
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            
+            {/* Messages */}
+            <div 
+              ref={chatMessagesRef}
+              className="max-h-64 overflow-y-auto p-4 space-y-3"
+            >
               {chatMessages.map((msg, i) => (
                 <div 
                   key={i}
@@ -560,39 +548,49 @@ export default function PublishedDocument({
           </div>
         )}
 
-        {/* Input bar */}
-        <form 
-          onSubmit={handleChatSubmit}
-          className="bg-white rounded-full shadow-lg border border-gray-200 flex items-center gap-2 px-4 py-2 hover:border-gray-300 transition-colors"
-        >
-          <MessageCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input
-            ref={chatInputRef}
-            type="text"
-            value={chatQuestion}
-            onChange={(e) => setChatQuestion(e.target.value)}
-            onFocus={() => chatMessages.length > 0 && setChatOpen(true)}
-            placeholder="Ask this document anything..."
-            className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+        {/* Input bar with frosted backdrop */}
+        <div className="relative">
+          {/* Frosted glass - fades upward */}
+          <div 
+            className="absolute -inset-x-4 -bottom-4 h-20 pointer-events-none -z-10"
+            style={{
+              background: 'linear-gradient(to top, rgba(250, 250, 250, 0.95) 0%, rgba(250, 250, 250, 0.8) 50%, transparent 100%)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
           />
-          <button
-            type="submit"
-            disabled={!chatQuestion.trim() || chatLoading}
-            className={`p-1.5 rounded-full transition-colors ${
-              chatQuestion.trim() && !chatLoading
-                ? 'bg-gray-900 text-white hover:bg-gray-800'
-                : 'bg-gray-100 text-gray-400'
-            }`}
+          <form 
+            onSubmit={handleChatSubmit}
+            className="bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center gap-2 px-4 py-2 hover:border-gray-300 transition-colors"
           >
-            <Send className="w-3.5 h-3.5" />
-          </button>
-        </form>
+            <MessageCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <input
+              ref={chatInputRef}
+              type="text"
+              value={chatQuestion}
+              onChange={(e) => setChatQuestion(e.target.value)}
+              onFocus={() => chatMessages.length > 0 && setChatOpen(true)}
+              placeholder="Ask this document anything..."
+              className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+            />
+            <button
+              type="submit"
+              disabled={!chatQuestion.trim() || chatLoading}
+              className={`p-1.5 rounded-full transition-colors ${
+                chatQuestion.trim() && !chatLoading
+                  ? 'bg-gray-900 text-white hover:bg-gray-800'
+                  : 'bg-gray-100 text-gray-400'
+              }`}
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        </div>
 
         {/* Powered by Raven */}
         <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-gray-400">
           <img src="/images/raven-logo.png" alt="" className="w-3 h-3 opacity-50" />
           <span>Powered by <a href="https://tryraven.io?ref=doc-chat" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">Raven</a></span>
-        </div>
         </div>
       </div>
 
