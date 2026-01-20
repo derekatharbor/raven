@@ -1480,7 +1480,7 @@ function IntelligenceHub({
 // ============================================================================
 
 function BlockSelectorModal({ position, onSelect, onClose }: {
-  position: { top?: number; bottom?: number; left: number }
+  position: { top?: number; bottom?: number; left: number | string }
   onSelect: (type: string) => void
   onClose: () => void
 }) {
@@ -1526,15 +1526,18 @@ function BlockSelectorModal({ position, onSelect, onClose }: {
       ]
     },
   ]
+  
+  const isCentered = position.left === '50%'
 
   return (
     <div
       ref={modalRef}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: position.top,
         bottom: position.bottom,
         left: position.left,
+        transform: isCentered ? 'translateX(-50%)' : undefined,
         width: 320,
         maxHeight: 400,
         background: 'white',
@@ -2758,6 +2761,154 @@ export default function BlockCanvas({
               }}
             />
           </div>
+          
+          {/* Floating Dock - Figma-style - positioned inside editor pane */}
+          <div style={{
+            position: 'absolute',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: 10,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
+            zIndex: 20,
+          }}>
+            {/* Left section - Tools */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
+              <Tooltip label="Insert Block (+)">
+                <button
+                  onClick={() => setShowBlockTray(!showBlockTray)}
+                  className="dock-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    border: 'none',
+                    background: showBlockTray ? '#F3F4F6' : 'transparent',
+                    color: showBlockTray ? '#111' : '#6B7280',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus className="w-[18px] h-[18px]" />
+                </button>
+              </Tooltip>
+              
+              <Tooltip label="Research">
+                <button
+                  onClick={() => setPanelCollapsed(false)}
+                  className="dock-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
+                    border: 'none',
+                    background: !panelCollapsed ? '#DCFCE7' : 'transparent',
+                    color: !panelCollapsed ? '#22C55E' : '#6B7280',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Atom className="w-[18px] h-[18px]" />
+                </button>
+              </Tooltip>
+            </div>
+            
+            {/* Separator */}
+            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+            
+            {/* Center - Word count & Save status */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 12,
+              padding: '6px 16px',
+              fontSize: 12,
+              color: '#6B7280',
+            }}>
+              <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+            </div>
+            
+            {/* Separator */}
+            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+            
+            {/* Right section - Mode Switcher */}
+            <div style={{ padding: '6px 8px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#F3F4F6',
+                borderRadius: 6,
+                padding: 2,
+              }}>
+                <button
+                  onClick={() => setAuditMode(false)}
+                  className={!auditMode ? '' : 'dock-mode-btn'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '5px 10px',
+                    borderRadius: 4,
+                    border: 'none',
+                    background: !auditMode ? 'white' : 'transparent',
+                    color: !auditMode ? '#111' : '#6B7280',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    boxShadow: !auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  <PenLine className="w-3.5 h-3.5" />
+                  Drafting
+                </button>
+                <button
+                  onClick={() => setAuditMode(true)}
+                  className={auditMode ? '' : 'dock-mode-btn'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '5px 10px',
+                    borderRadius: 4,
+                    border: 'none',
+                    background: auditMode ? 'white' : 'transparent',
+                    color: auditMode ? '#111' : '#6B7280',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    boxShadow: auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Audit
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Block Tray Modal - opens ABOVE dock */}
+          {showBlockTray && (
+            <BlockSelectorModal
+              position={{ bottom: 80, left: '50%' }}
+              onSelect={(type) => {
+                addBlock(blocks[blocks.length - 1]?.id, type)
+                setShowBlockTray(false)
+              }}
+              onClose={() => setShowBlockTray(false)}
+            />
+          )}
         </div>
 
         {/* Intelligence Hub - Collapsible */}
@@ -2771,153 +2922,6 @@ export default function BlockCanvas({
           onTrackClaim={handleTrackClaim}
           onKeyFact={handleKeyFact}
         />
-
-        {/* Floating Dock - Figma-style */}
-        <div style={{
-          position: 'absolute',
-          bottom: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0,
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: 10,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
-        }}>
-          {/* Left section - Tools */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
-            <Tooltip label="Insert Block (+)">
-              <button
-                onClick={() => setShowBlockTray(!showBlockTray)}
-                className="dock-btn"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  border: 'none',
-                  background: showBlockTray ? '#F3F4F6' : 'transparent',
-                  color: showBlockTray ? '#111' : '#6B7280',
-                  cursor: 'pointer',
-                }}
-              >
-                <Plus className="w-[18px] h-[18px]" />
-              </button>
-            </Tooltip>
-            
-            <Tooltip label="Research (⌘K)">
-              <button
-                onClick={() => setPanelCollapsed(false)}
-                className="dock-btn"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  border: 'none',
-                  background: !panelCollapsed ? '#DCFCE7' : 'transparent',
-                  color: !panelCollapsed ? '#22C55E' : '#6B7280',
-                  cursor: 'pointer',
-                }}
-              >
-                <Atom className="w-[18px] h-[18px]" />
-              </button>
-            </Tooltip>
-          </div>
-          
-          {/* Separator */}
-          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
-          
-          {/* Center - Word count & Save status */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 12,
-            padding: '6px 16px',
-            fontSize: 12,
-            color: '#6B7280',
-          }}>
-            <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
-          </div>
-          
-          {/* Separator */}
-          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
-          
-          {/* Right section - Mode Switcher */}
-          <div style={{ padding: '6px 8px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: '#F3F4F6',
-              borderRadius: 6,
-              padding: 2,
-            }}>
-              <button
-                onClick={() => setAuditMode(false)}
-                className={!auditMode ? '' : 'dock-mode-btn'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '5px 10px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: !auditMode ? 'white' : 'transparent',
-                  color: !auditMode ? '#111' : '#6B7280',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  boxShadow: !auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                <PenLine className="w-3.5 h-3.5" />
-                Drafting
-              </button>
-              <button
-                onClick={() => setAuditMode(true)}
-                className={auditMode ? '' : 'dock-mode-btn'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '5px 10px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: auditMode ? 'white' : 'transparent',
-                  color: auditMode ? '#111' : '#6B7280',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  boxShadow: auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                Audit
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Block Tray Modal - opens ABOVE dock */}
-        {showBlockTray && (
-          <BlockSelectorModal
-            position={{ bottom: 80, left: window.innerWidth / 2 - 160 }}
-            onSelect={(type) => {
-              addBlock(blocks[blocks.length - 1]?.id, type)
-              setShowBlockTray(false)
-            }}
-            onClose={() => setShowBlockTray(false)}
-          />
-        )}
 
         {/* Selection Toolbar */}
         <SelectionToolbar 
