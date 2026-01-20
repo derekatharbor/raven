@@ -586,11 +586,16 @@ function IntelligenceHub({
 
   // Mock sources (will be replaced with real data)
   const sources = [
-    { id: 'sec-edgar', name: 'SEC EDGAR', status: 'connected' as const, icon: '🏛️' },
-    { id: 'web', name: 'Web Search', status: 'connected' as const, icon: '🌐' },
-    { id: 'drive', name: 'Google Drive', status: 'disconnected' as const, icon: '📁' },
+    { id: 'sec-edgar', name: 'SEC EDGAR', status: 'connected' as const, domain: 'sec.gov' },
+    { id: 'web', name: 'Web Search', status: 'connected' as const, domain: 'google.com' },
+    { id: 'drive', name: 'Google Drive', status: 'disconnected' as const, domain: 'drive.google.com' },
+    { id: 'reuters', name: 'Reuters', status: 'disconnected' as const, domain: 'reuters.com' },
   ]
   const connectedSources = sources.filter(s => s.status === 'connected')
+  
+  // Brandfetch logo URL helper
+  const getBrandfetchLogo = (domain: string) => 
+    `https://cdn.brandfetch.io/${domain}?c=1id1Fyz-h7an5-5KR_y`
 
   const integrityCards = [
     { id: 'ic-1', claim: 'Data center revenue of $14.51B', source: 'NVDA 10-Q', status: 'verified' as const },
@@ -692,7 +697,7 @@ function IntelligenceHub({
       console.error('Chat error:', error)
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: '⚠️ Sorry, I encountered an error. Please check that the API keys are configured correctly.' 
+        content: 'Sorry, I encountered an error. Please check that the API keys are configured correctly.' 
       }])
     } finally {
       setIsLoading(false)
@@ -1086,7 +1091,7 @@ function IntelligenceHub({
                     
                     <div style={{ 
                       display: 'flex', 
-                      flexWrap: 'wrap',
+                      flexDirection: 'column',
                       gap: 6, 
                     }}>
                       {connectedSources.map((source) => (
@@ -1095,17 +1100,35 @@ function IntelligenceHub({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 6,
-                            padding: '6px 10px',
-                            background: '#F5F5F5',
-                            borderRadius: 6,
-                            fontSize: 11,
-                            color: '#374151',
-                            fontWeight: 500,
+                            gap: 10,
+                            padding: '10px 12px',
+                            background: '#FAFAFA',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: 8,
                           }}
                         >
-                          <span>{source.icon}</span>
-                          {source.name}
+                          <img 
+                            src={getBrandfetchLogo(source.domain)} 
+                            alt={source.name}
+                            style={{ 
+                              width: 20, 
+                              height: 20, 
+                              borderRadius: 4,
+                              objectFit: 'contain',
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                          <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: '#374151' }}>
+                            {source.name}
+                          </span>
+                          <div style={{ 
+                            width: 6, 
+                            height: 6, 
+                            borderRadius: '50%', 
+                            background: '#22C55E',
+                          }} />
                         </div>
                       ))}
                     </div>
@@ -1371,7 +1394,7 @@ function IntelligenceHub({
                     {card.source}
                   </div>
                   {card.note && (
-                    <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 6 }}>⚠ {card.note}</div>
+                    <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 6 }}>Note: {card.note}</div>
                   )}
                 </div>
               ))}
@@ -1389,19 +1412,44 @@ function IntelligenceHub({
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
               {sources.map(source => (
-                <div key={source.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 12px', marginBottom: 6, background: '#FAFAFA',
-                  borderRadius: 8, border: '1px solid #E5E7EB',
-                }}>
-                  <span style={{ fontSize: 16 }}>{source.icon}</span>
-                  <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#111' }}>{source.name}</span>
+                <div 
+                  key={source.id} 
+                  className="source-card"
+                  style={{
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 12,
+                    padding: '12px 14px', 
+                    marginBottom: 8, 
+                    background: '#FAFAFA',
+                    borderRadius: 8, 
+                    border: '1px solid #E5E7EB',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <img 
+                    src={getBrandfetchLogo(source.domain)} 
+                    alt={source.name}
+                    style={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: 4,
+                      objectFit: 'contain',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>{source.name}</div>
+                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{source.domain}</div>
+                  </div>
                   <div style={{ 
                     fontSize: 10, 
-                    padding: '2px 6px',
+                    padding: '4px 8px',
                     borderRadius: 4,
-                    background: source.status === 'connected' ? '#DCFCE7' : '#FEF3C7',
-                    color: source.status === 'connected' ? '#166534' : '#92400E',
+                    background: source.status === 'connected' ? '#DCFCE7' : '#F3F4F6',
+                    color: source.status === 'connected' ? '#166534' : '#6B7280',
                     fontWeight: 500,
                   }}>
                     {source.status === 'connected' ? 'Connected' : 'Connect'}
@@ -1409,10 +1457,11 @@ function IntelligenceHub({
                 </div>
               ))}
               <button className="add-source-btn" style={{
-                width: '100%', padding: '10px', border: '1px dashed #D1D5DB',
+                width: '100%', padding: '12px', border: '1px dashed #D1D5DB',
                 borderRadius: 8, background: 'transparent', color: '#6B7280',
                 fontSize: 12, fontWeight: 500, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                marginTop: 4,
               }}>
                 <Plus className="w-4 h-4" /> Add Source
               </button>
@@ -2482,7 +2531,7 @@ export default function BlockCanvas({
     
     if (result) {
       // Show success feedback
-      alert(`✓ Claim tracked: "${claim.slice(0, 50)}${claim.length > 50 ? '...' : ''}"`)
+      alert(`Claim tracked: "${claim.slice(0, 50)}${claim.length > 50 ? '...' : ''}"`)
     }
   }, [documentId, addClaim])
 
@@ -2548,6 +2597,7 @@ export default function BlockCanvas({
         .dock-btn:hover { background: #F3F4F6 !important; color: #111 !important; }
         .web-toggle-btn:hover { background: #E5E7EB !important; }
         .history-item:hover { background: #F5F5F5 !important; border-color: #D1D5DB !important; }
+        .source-card:hover { background: #F5F5F5 !important; border-color: #D1D5DB !important; }
         
         /* Tab row hover states */
         .editor-tab:hover { background: #F3F4F6 !important; }
