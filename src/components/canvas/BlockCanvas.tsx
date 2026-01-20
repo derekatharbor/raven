@@ -11,6 +11,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
+import { InlineAutocomplete, autocompleteStyles } from '@/components/editor/extensions/InlineAutocomplete'
 import ReactMarkdown from 'react-markdown'
 import { 
   GripVertical, Plus, MoreHorizontal, Trash2, Copy, 
@@ -1328,6 +1329,8 @@ function BlockEditor({
   onAcceptGhost,
   onRejectGhost,
   onEditorReady,
+  enableAutocomplete = true,
+  recentResearch,
 }: {
   block: Block
   isFirst: boolean
@@ -1342,6 +1345,8 @@ function BlockEditor({
   onAcceptGhost?: () => void
   onRejectGhost?: () => void
   onEditorReady?: (editor: any) => void
+  enableAutocomplete?: boolean
+  recentResearch?: Array<{ text: string; source: string }>
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -1350,6 +1355,39 @@ function BlockEditor({
   const menuRef = useRef<HTMLDivElement>(null)
   const plusBtnRef = useRef<HTMLButtonElement>(null)
   const hasInitialFocus = useRef(false)
+  
+  // Stable reference for recent research
+  const recentResearchRef = useRef(recentResearch)
+  useEffect(() => {
+    recentResearchRef.current = recentResearch
+  }, [recentResearch])
+
+  // Autocomplete suggestion callback
+  const getSuggestion = useCallback(async ({ textBefore, fullDocument }: { textBefore: string; fullDocument: string; cursorPos: number }) => {
+    if (!enableAutocomplete) return null
+    
+    try {
+      const response = await fetch('/api/autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          textBefore,
+          fullDocument,
+          recentResearch: recentResearchRef.current,
+        }),
+      })
+      
+      if (!response.ok) return null
+      
+      const data = await response.json()
+      if (data.suggestion) {
+        return { text: data.suggestion, source: data.source }
+      }
+      return null
+    } catch {
+      return null
+    }
+  }, [enableAutocomplete])
 
   const editor = useEditor({
     extensions: [
@@ -1365,6 +1403,12 @@ function BlockEditor({
         showOnlyWhenEditable: true, 
         showOnlyCurrent: true 
       }),
+      ...(enableAutocomplete ? [
+        InlineAutocomplete.configure({
+          delay: 1500,
+          getSuggestion,
+        }),
+      ] : []),
     ],
     content: block.content,
     editorProps: { attributes: { class: 'ghost-block-content' } },
@@ -2288,6 +2332,22 @@ export default function BlockCanvas({
         
         .markdown-response p:last-child { margin-bottom: 0 !important; }
         .markdown-response ul:last-child, .markdown-response ol:last-child { margin-bottom: 0 !important; }
+        
+        /* Inline Autocomplete Ghost Text */
+        .inline-autocomplete-ghost {
+          color: #9CA3AF;
+          pointer-events: none;
+          user-select: none;
+        }
+        .inline-autocomplete-source {
+          font-size: 0.75em;
+          color: #6B7280;
+          margin-left: 4px;
+          padding: 1px 4px;
+          background: #F3F4F6;
+          border-radius: 3px;
+          font-family: 'SF Mono', Monaco, monospace;
+        }
         
         @media print {
           .gutter-btn, .tab-close-btn, .tab-add-btn { display: none !important; }
