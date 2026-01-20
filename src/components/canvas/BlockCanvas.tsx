@@ -20,7 +20,8 @@ import {
   Eye, Table, BarChart3, Link2, Variable, Radio, ImageIcon,
   Search, PenLine, Radar, ChevronDown, ChevronRight, ChevronLeft,
   Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
-  RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2, Layers
+  RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2, Layers,
+  Briefcase, Clock, Loader2
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
@@ -545,7 +546,7 @@ function IntelligenceHub({
   onTrackClaim: (claim: string, source?: string) => void
   onKeyFact: (keyFact: string, source?: string) => void
 }) {
-  const [activeTab, setActiveTab] = useState<'research' | 'audit' | 'sources'>('research')
+  const [activeTab, setActiveTab] = useState<'research' | 'jobs' | 'audit' | 'sources'>('research')
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; keyFact?: string; source?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -584,8 +585,27 @@ function IntelligenceHub({
   const [showAllHistory, setShowAllHistory] = useState(false)
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null)
 
+  // Jobs queue
+  interface ResearchJob {
+    id: string
+    query: string
+    sources: string[]
+    status: 'pending' | 'running' | 'complete' | 'failed' | 'cancelled'
+    current_step: string | null
+    steps_completed: number
+    steps_total: number
+    findings: Array<{ text: string; source: string; sourceUrl?: string; confidence?: number }>
+    synthesis: string | null
+    created_at: string
+    completed_at: string | null
+  }
+  const [jobs, setJobs] = useState<ResearchJob[]>([])
+  const [jobsLoading, setJobsLoading] = useState(false)
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
+
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
+    { id: 'jobs' as const, icon: Briefcase, label: 'Jobs' },
     { id: 'audit' as const, icon: BarChart3, label: 'Audit' },
     { id: 'sources' as const, icon: Folder, label: 'Sources' },
   ]
@@ -659,6 +679,79 @@ function IntelligenceHub({
       document.body.style.userSelect = ''
     }
   }, [isResizing])
+
+  // Fetch jobs
+  const fetchJobs = async () => {
+    try {
+      const response = await fetch('/api/jobs?limit=20')
+      if (response.ok) {
+        const data = await response.json()
+        setJobs(data.jobs || [])
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error)
+    }
+  }
+
+  // Submit background job
+  const submitBackgroundJob = async (jobQuery: string, jobSources: string[]) => {
+    try {
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: jobQuery, sources: jobSources }),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setJobs(prev => [data.job, ...prev])
+        setActiveTab('jobs')
+      }
+    } catch (error) {
+      console.error('Error creating job:', error)
+    }
+  }
+
+  // Cancel job
+  const cancelJob = async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      })
+      if (response.ok) {
+        fetchJobs()
+      }
+    } catch (error) {
+      console.error('Error cancelling job:', error)
+    }
+  }
+
+  // Delete job
+  const deleteJob = async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, { method: 'DELETE' })
+      if (response.ok) {
+        setJobs(prev => prev.filter(j => j.id !== jobId))
+        if (expandedJobId === jobId) setExpandedJobId(null)
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error)
+    }
+  }
+
+  // Initial fetch and polling for active jobs
+  useEffect(() => {
+    fetchJobs()
+  }, [])
+
+  useEffect(() => {
+    const hasActiveJobs = jobs.some(j => j.status === 'pending' || j.status === 'running')
+    if (!hasActiveJobs) return
+
+    const interval = setInterval(fetchJobs, 3000) // Poll every 3 seconds
+    return () => clearInterval(interval)
+  }, [jobs])
 
   const handleSubmit = async () => {
     if (!query.trim() && !selectedText) return
@@ -1189,6 +1282,30 @@ function IntelligenceHub({
                   )}
 
                   <div style={{ flex: 1 }} />
+
+                  {/* Background job button (when Deep Dive is ON) */}
+                  {deepDiveEnabled && (query.trim() || selectedText) && (
+                    <Tooltip label="Queue as background task">
+                      <button
+                        onClick={() => {
+                          const jobQuery = query.trim() || selectedText || ''
+                          if (jobQuery) {
+                            submitBackgroundJob(jobQuery, deepDiveSources)
+                            setQuery('')
+                          }
+                        }}
+                        style={{
+                          width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(147, 51, 234, 0.3)',
+                          background: 'rgba(147, 51, 234, 0.08)',
+                          color: '#9333EA',
+                          cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        <Briefcase className="w-3.5 h-3.5" />
+                      </button>
+                    </Tooltip>
+                  )}
 
                   {/* Send button */}
                   <button
@@ -1821,6 +1938,278 @@ function IntelligenceHub({
                   <div ref={messagesEndRef} />
                 </div>
               ) : null}
+            </div>
+          </>
+        )}
+
+        {/* JOBS TAB */}
+        {activeTab === 'jobs' && (
+          <>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Research Jobs
+              </span>
+              <button
+                onClick={fetchJobs}
+                style={{
+                  padding: '4px 8px', borderRadius: 4, border: '1px solid #E5E7EB',
+                  background: 'white', color: '#6B7280', fontSize: 11, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                <RefreshCw className="w-3 h-3" />
+                Refresh
+              </button>
+            </div>
+
+            {/* New Job Input */}
+            <div style={{ padding: '12px', borderBottom: '1px solid #F3F4F6' }}>
+              <div style={{ background: '#F5F5F5', borderRadius: 8, padding: '10px 12px' }}>
+                <input
+                  type="text"
+                  placeholder="Enter research task..."
+                  style={{
+                    width: '100%', border: 'none', outline: 'none',
+                    fontSize: 13, color: '#111', background: 'transparent',
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      submitBackgroundJob(e.currentTarget.value.trim(), deepDiveSources)
+                      e.currentTarget.value = ''
+                    }
+                  }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>
+                    Sources: {deepDiveSources.join(', ')}
+                  </span>
+                  <div style={{ flex: 1 }} />
+                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>
+                    Press Enter to queue
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Jobs List */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+              {jobs.length === 0 ? (
+                <div style={{ 
+                  padding: '24px', 
+                  textAlign: 'center', 
+                  color: '#9CA3AF', 
+                  fontSize: 12,
+                  background: '#F9FAFB',
+                  borderRadius: 8,
+                  border: '1px dashed #E5E7EB',
+                }}>
+                  No research jobs yet. Queue a task above or use "Run in Background" from Research.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {jobs.map(job => (
+                    <div
+                      key={job.id}
+                      style={{
+                        background: '#FAFAFA',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {/* Job Header */}
+                      <div
+                        onClick={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+                        style={{
+                          padding: '10px 12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                        }}
+                      >
+                        {/* Status indicator */}
+                        <div style={{ marginTop: 2 }}>
+                          {job.status === 'pending' && <Clock className="w-4 h-4" style={{ color: '#9CA3AF' }} />}
+                          {job.status === 'running' && <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#9333EA' }} />}
+                          {job.status === 'complete' && <Check className="w-4 h-4" style={{ color: '#22C55E' }} />}
+                          {job.status === 'failed' && <XCircle className="w-4 h-4" style={{ color: '#EF4444' }} />}
+                          {job.status === 'cancelled' && <X className="w-4 h-4" style={{ color: '#9CA3AF' }} />}
+                        </div>
+
+                        {/* Job info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ 
+                            fontSize: 12, 
+                            fontWeight: 500, 
+                            color: '#111',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}>
+                            {job.query}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                            <span style={{ 
+                              fontSize: 10, 
+                              fontWeight: 600,
+                              color: job.status === 'running' ? '#9333EA' : 
+                                     job.status === 'complete' ? '#22C55E' : 
+                                     job.status === 'failed' ? '#EF4444' : '#9CA3AF',
+                              textTransform: 'uppercase',
+                            }}>
+                              {job.status === 'running' ? `Step ${job.steps_completed}/${job.steps_total}` : job.status}
+                            </span>
+                            {job.status === 'complete' && job.findings.length > 0 && (
+                              <span style={{ fontSize: 10, color: '#6B7280' }}>
+                                {job.findings.length} findings
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {(job.status === 'pending' || job.status === 'running') && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); cancelJob(job.id); }}
+                              style={{
+                                padding: '4px 6px', borderRadius: 4, border: '1px solid #E5E7EB',
+                                background: 'white', color: '#6B7280', fontSize: 10, cursor: 'pointer',
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          {(job.status === 'complete' || job.status === 'failed' || job.status === 'cancelled') && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteJob(job.id); }}
+                              style={{
+                                padding: '4px 6px', borderRadius: 4, border: '1px solid #E5E7EB',
+                                background: 'white', color: '#6B7280', fontSize: 10, cursor: 'pointer',
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
+                          <ChevronRight 
+                            className="w-4 h-4" 
+                            style={{ 
+                              color: '#9CA3AF',
+                              transform: expandedJobId === job.id ? 'rotate(90deg)' : 'none',
+                              transition: 'transform 0.15s ease',
+                            }} 
+                          />
+                        </div>
+                      </div>
+
+                      {/* Expanded Content */}
+                      {expandedJobId === job.id && (
+                        <div style={{ 
+                          padding: '12px', 
+                          borderTop: '1px solid #E5E7EB',
+                          background: 'white',
+                        }}>
+                          {/* Progress for running jobs */}
+                          {job.status === 'running' && job.current_step && (
+                            <div style={{ marginBottom: 12 }}>
+                              <div style={{ 
+                                fontSize: 11, color: '#9333EA', fontWeight: 500,
+                                display: 'flex', alignItems: 'center', gap: 6,
+                              }}>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                {job.current_step === 'decompose' && 'Analyzing query...'}
+                                {job.current_step === 'search' && 'Searching sources...'}
+                                {job.current_step === 'analyze' && 'Analyzing findings...'}
+                                {job.current_step === 'synthesize' && 'Synthesizing...'}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Findings */}
+                          {job.findings.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {job.findings.map((finding, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    padding: '8px 10px',
+                                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.06) 0%, rgba(34, 197, 94, 0.02) 100%)',
+                                    border: '1px solid rgba(34, 197, 94, 0.15)',
+                                    borderRadius: 6,
+                                  }}
+                                >
+                                  <div style={{ fontSize: 12, color: '#111', lineHeight: 1.5 }}>
+                                    {finding.text}
+                                  </div>
+                                  <div style={{ 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    marginTop: 6 
+                                  }}>
+                                    <span style={{ fontSize: 10, color: '#6B7280' }}>
+                                      {finding.source}
+                                    </span>
+                                    <button
+                                      onClick={() => onInsertText(finding.text)}
+                                      style={{
+                                        padding: '2px 6px',
+                                        borderRadius: 3,
+                                        border: '1px solid rgba(34, 197, 94, 0.3)',
+                                        background: 'rgba(34, 197, 94, 0.08)',
+                                        color: '#22C55E',
+                                        fontSize: 10,
+                                        fontWeight: 500,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Insert
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Synthesis */}
+                          {job.synthesis && (
+                            <div style={{
+                              marginTop: 12,
+                              padding: '10px',
+                              background: 'rgba(147, 51, 234, 0.04)',
+                              border: '1px solid rgba(147, 51, 234, 0.12)',
+                              borderRadius: 6,
+                            }}>
+                              <div style={{ 
+                                fontSize: 10, fontWeight: 600, color: '#9333EA', 
+                                textTransform: 'uppercase', marginBottom: 4 
+                              }}>
+                                Synthesis
+                              </div>
+                              <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                                {job.synthesis}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* No findings message */}
+                          {job.status === 'complete' && job.findings.length === 0 && (
+                            <div style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center', padding: '12px' }}>
+                              No findings extracted from this research.
+                            </div>
+                          )}
+
+                          {/* Error message */}
+                          {job.status === 'failed' && (
+                            <div style={{ fontSize: 12, color: '#EF4444', padding: '8px', background: '#FEF2F2', borderRadius: 6 }}>
+                              Job failed. Please try again.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}
