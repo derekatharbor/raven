@@ -20,7 +20,7 @@ import {
   Eye, Table, BarChart3, Link2, Variable, Radio, ImageIcon,
   Search, PenLine, Radar, ChevronDown, ChevronRight, ChevronLeft,
   Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
-  RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2
+  RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2, Layers
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
@@ -161,11 +161,10 @@ function InsertableFinding({ children, text, onInsert }: {
           }}
           style={{
             position: 'absolute',
-            right: -28,
+            right: -44,
             top: '50%',
             transform: 'translateY(-50%)',
-            width: 22,
-            height: 22,
+            padding: '3px 8px',
             borderRadius: 4,
             border: '1px solid #D1D5DB',
             background: 'white',
@@ -176,11 +175,13 @@ function InsertableFinding({ children, text, onInsert }: {
             justifyContent: 'center',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             transition: 'all 0.1s ease',
+            fontSize: 11,
+            fontWeight: 500,
           }}
           className="finding-insert-btn"
-          title="Insert into document (Tab to accept)"
+          title="Insert into document"
         >
-          <Plus className="w-3 h-3" />
+          Insert
         </button>
       )}
     </div>
@@ -550,9 +551,21 @@ function IntelligenceHub({
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'ask' | 'verify'>('ask')
   const [webEnabled, setWebEnabled] = useState(true)
+  const [deepDiveEnabled, setDeepDiveEnabled] = useState(false)
+  const [deepDiveSources, setDeepDiveSources] = useState<string[]>(['web', 'sec'])
+  const [deepDiveProgress, setDeepDiveProgress] = useState<{
+    isActive: boolean
+    query: string
+    steps: Array<{ id: string; label: string; status: 'pending' | 'running' | 'complete'; result?: string }>
+    findings: Array<{ text: string; source: string; sourceUrl?: string; confidence?: number }>
+    synthesis?: string
+    complete: boolean
+  } | null>(null)
   const [showModeDropdown, setShowModeDropdown] = useState(false)
+  const [showSourcesDropdown, setShowSourcesDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const modeDropdownRef = useRef<HTMLDivElement>(null)
+  const sourcesDropdownRef = useRef<HTMLDivElement>(null)
   
   // Panel width & resize
   const [panelWidth, setPanelWidth] = useState(380)
@@ -612,6 +625,9 @@ function IntelligenceHub({
       if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
         setShowModeDropdown(false)
       }
+      if (sourcesDropdownRef.current && !sourcesDropdownRef.current.contains(e.target as Node)) {
+        setShowSourcesDropdown(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -647,9 +663,136 @@ function IntelligenceHub({
   const handleSubmit = async () => {
     if (!query.trim() && !selectedText) return
 
+    const currentQuery = query || selectedText || ''
+    
+    // Deep Dive mode - multi-step research with SSE
+    if (deepDiveEnabled) {
+      setQuery('')
+      setDeepDiveProgress({
+        isActive: true,
+        query: currentQuery,
+        steps: [
+          { id: 'decompose', label: 'Analyzing query', status: 'pending' },
+          { id: 'search', label: 'Searching sources', status: 'pending' },
+          { id: 'analyze', label: 'Analyzing findings', status: 'pending' },
+          { id: 'synthesize', label: 'Synthesizing insights', status: 'pending' },
+        ],
+        findings: [],
+        complete: false,
+      })
+
+      // Real Deep Dive with SSE
+      try {
+        const response = await fetch('/api/deep-dive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: currentQuery,
+            sources: deepDiveSources,
+            context: selectedText,
+          }),
+        })
+
+        if (!response.ok) throw new Error('Deep dive request failed')
+
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+
+        if (!reader) throw new Error('No response stream')
+
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          
+          // SSE events are separated by double newlines
+          const events = buffer.split('\n\n')
+          buffer = events.pop() || '' // Keep incomplete event in buffer
+
+          for (const event of events) {
+            if (!event.trim()) continue
+            
+            const lines = event.split('\n')
+            let eventType = ''
+            let eventData = ''
+
+            for (const line of lines) {
+              if (line.startsWith('event: ')) {
+                eventType = line.slice(7)
+              } else if (line.startsWith('data: ')) {
+                eventData = line.slice(6)
+              }
+            }
+
+            if (!eventType || !eventData) continue
+
+            try {
+              const data = JSON.parse(eventData)
+
+              switch (eventType) {
+                case 'step':
+                  setDeepDiveProgress(prev => prev ? {
+                    ...prev,
+                    steps: prev.steps.map(s => 
+                      s.id === data.id ? { ...s, status: data.status, result: data.result } : s
+                    )
+                  } : null)
+                  break
+
+                case 'finding':
+                  setDeepDiveProgress(prev => prev ? {
+                    ...prev,
+                    findings: [...prev.findings, data]
+                  } : null)
+                  break
+
+                case 'synthesis':
+                  setDeepDiveProgress(prev => prev ? {
+                    ...prev,
+                    synthesis: data.text
+                  } : null)
+                  break
+
+                case 'complete':
+                  setDeepDiveProgress(prev => prev ? {
+                    ...prev,
+                    complete: true
+                  } : null)
+                  break
+
+                case 'error':
+                  console.error('Deep dive error:', data.message)
+                  setDeepDiveProgress(prev => prev ? {
+                    ...prev,
+                    complete: true,
+                    steps: prev.steps.map(s => 
+                      s.status === 'running' ? { ...s, status: 'complete', result: 'Error' } : s
+                    )
+                  } : null)
+                  break
+              }
+            } catch (e) {
+              // Skip malformed JSON
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Deep dive error:', error)
+        setDeepDiveProgress(prev => prev ? {
+          ...prev,
+          complete: true,
+          steps: prev.steps.map(s => ({ ...s, status: 'complete' as const }))
+        } : null)
+      }
+      return
+    }
+
+    // Normal flow
     const userMessage = { role: 'user' as const, content: query || 'Analyze this text', context: selectedText || undefined }
     setMessages(prev => [...prev, userMessage])
-    const currentQuery = query
     setQuery('')
     setIsLoading(true)
     
@@ -957,6 +1100,93 @@ function IntelligenceHub({
                     </button>
                   </Tooltip>
 
+                  {/* Deep Dive toggle */}
+                  <Tooltip label={deepDiveEnabled ? 'Deep Dive ON - Multi-step research' : 'Enable Deep Dive'}>
+                    <button
+                      onClick={() => setDeepDiveEnabled(!deepDiveEnabled)}
+                      className="deep-dive-toggle-btn"
+                      style={{
+                        width: 28, height: 28, borderRadius: 4, border: 'none',
+                        background: deepDiveEnabled ? 'rgba(147, 51, 234, 0.15)' : 'white',
+                        color: deepDiveEnabled ? '#9333EA' : '#9CA3AF',
+                        cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Layers className="w-4 h-4" />
+                    </button>
+                  </Tooltip>
+
+                  {/* Sources dropdown (only when Deep Dive is ON) */}
+                  {deepDiveEnabled && (
+                    <div style={{ position: 'relative' }} ref={sourcesDropdownRef}>
+                      <button
+                        onClick={() => setShowSourcesDropdown(!showSourcesDropdown)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          padding: '4px 8px', borderRadius: 4, border: 'none',
+                          background: 'rgba(147, 51, 234, 0.08)',
+                          color: '#9333EA',
+                          cursor: 'pointer',
+                          fontSize: 11, fontWeight: 500,
+                        }}
+                      >
+                        {deepDiveSources.length} sources
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+
+                      {showSourcesDropdown && (
+                        <div style={{
+                          position: 'absolute', bottom: '100%', left: 0, marginBottom: 4,
+                          background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 180, zIndex: 100,
+                          padding: '8px 0',
+                        }}>
+                          <div style={{ padding: '4px 12px 8px', fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase' }}>
+                            Search Sources
+                          </div>
+                          {[
+                            { id: 'web', label: 'Web Search', icon: '🌐' },
+                            { id: 'sec', label: 'SEC EDGAR', icon: '📊' },
+                          ].map(source => (
+                            <button
+                              key={source.id}
+                              onClick={() => {
+                                setDeepDiveSources(prev => 
+                                  prev.includes(source.id) 
+                                    ? prev.filter(s => s !== source.id)
+                                    : [...prev, source.id]
+                                )
+                              }}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                                padding: '8px 12px', border: 'none',
+                                background: 'transparent',
+                                cursor: 'pointer', textAlign: 'left',
+                              }}
+                            >
+                              <div style={{
+                                width: 16, height: 16, borderRadius: 4,
+                                border: deepDiveSources.includes(source.id) ? '2px solid #9333EA' : '2px solid #D1D5DB',
+                                background: deepDiveSources.includes(source.id) ? '#9333EA' : 'transparent',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                {deepDiveSources.includes(source.id) && (
+                                  <Check className="w-2.5 h-2.5" style={{ color: 'white' }} />
+                                )}
+                              </div>
+                              <span style={{ fontSize: 12, color: '#111' }}>{source.icon} {source.label}</span>
+                            </button>
+                          ))}
+                          <div style={{ borderTop: '1px solid #E5E7EB', margin: '8px 0' }} />
+                          <div style={{ padding: '4px 12px', fontSize: 10, color: '#9CA3AF' }}>
+                            More sources coming soon
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ flex: 1 }} />
 
                   {/* Send button */}
@@ -980,8 +1210,247 @@ function IntelligenceHub({
 
             {/* Main content area */}
             <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+              {/* Deep Dive Progress UI */}
+              {deepDiveProgress?.isActive && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Header */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.08) 0%, rgba(147, 51, 234, 0.04) 100%)',
+                    border: '1px solid rgba(147, 51, 234, 0.2)',
+                    borderRadius: 8,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Layers className="w-4 h-4" style={{ color: '#9333EA' }} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#9333EA', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Deep Dive
+                      </span>
+                    </div>
+                    {!deepDiveProgress.complete && (
+                      <button
+                        onClick={() => setDeepDiveProgress(null)}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: 4,
+                          border: '1px solid #E5E7EB',
+                          background: 'white',
+                          color: '#6B7280',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Stop
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Query */}
+                  <div style={{
+                    padding: '8px 12px',
+                    background: '#F9FAFB',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    color: '#374151',
+                    fontStyle: 'italic',
+                  }}>
+                    "{deepDiveProgress.query}"
+                  </div>
+                  
+                  {/* Progress Steps */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {deepDiveProgress.steps.map((step, idx) => (
+                      <div
+                        key={step.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '8px 10px',
+                          background: step.status === 'running' ? 'rgba(147, 51, 234, 0.04)' : 'transparent',
+                          borderRadius: 6,
+                          transition: 'background 0.2s ease',
+                        }}
+                      >
+                        <div style={{ marginTop: 2 }}>
+                          {step.status === 'pending' && (
+                            <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #E5E7EB' }} />
+                          )}
+                          {step.status === 'running' && (
+                            <div style={{ width: 14, height: 14 }}>
+                              <RavenSpinner size={14} />
+                            </div>
+                          )}
+                          {step.status === 'complete' && (
+                            <div style={{ 
+                              width: 14, height: 14, borderRadius: '50%', 
+                              background: '#22C55E', 
+                              display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                            }}>
+                              <Check className="w-2.5 h-2.5" style={{ color: 'white' }} />
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ 
+                            fontSize: 12, 
+                            fontWeight: 500, 
+                            color: step.status === 'pending' ? '#9CA3AF' : '#374151' 
+                          }}>
+                            {step.label}
+                          </div>
+                          {step.result && (
+                            <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                              {step.result}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Findings */}
+                  {deepDiveProgress.findings.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ 
+                        fontSize: 11, fontWeight: 600, color: '#6B7280', 
+                        textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 
+                      }}>
+                        {deepDiveProgress.findings.length} Key Findings
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {deepDiveProgress.findings.map((finding, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: '10px 12px',
+                              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%)',
+                              border: '1px solid rgba(34, 197, 94, 0.2)',
+                              borderRadius: 8,
+                            }}
+                          >
+                            <div style={{ fontSize: 13, fontWeight: 500, color: '#111', lineHeight: 1.5 }}>
+                              {finding.text}
+                            </div>
+                            <div style={{ 
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              marginTop: 8 
+                            }}>
+                              <div style={{ 
+                                display: 'flex', alignItems: 'center', gap: 6,
+                                fontSize: 11, color: '#6B7280' 
+                              }}>
+                                <img 
+                                  src={getBrandfetchLogo(finding.sourceUrl?.replace('https://', '').replace(/\/.*/, '') || 'sec.gov')} 
+                                  alt=""
+                                  style={{ width: 12, height: 12, borderRadius: 2 }}
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                />
+                                {finding.source}
+                                {finding.confidence && (
+                                  <span style={{ 
+                                    padding: '1px 4px', 
+                                    background: finding.confidence > 0.7 ? '#DCFCE7' : '#FEF9C3',
+                                    borderRadius: 3,
+                                    fontSize: 9,
+                                    fontWeight: 600,
+                                  }}>
+                                    {Math.round(finding.confidence * 100)}%
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => onInsertText(finding.text)}
+                                style={{
+                                  padding: '3px 8px',
+                                  borderRadius: 4,
+                                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                                  background: 'rgba(34, 197, 94, 0.08)',
+                                  color: '#22C55E',
+                                  fontSize: 11,
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Insert
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Synthesis */}
+                  {deepDiveProgress.synthesis && (
+                    <div style={{
+                      marginTop: 12,
+                      padding: '12px',
+                      background: 'rgba(147, 51, 234, 0.04)',
+                      border: '1px solid rgba(147, 51, 234, 0.15)',
+                      borderRadius: 8,
+                    }}>
+                      <div style={{ 
+                        fontSize: 10, fontWeight: 600, color: '#9333EA', 
+                        textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 
+                      }}>
+                        Synthesis
+                      </div>
+                      <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
+                        {deepDiveProgress.synthesis}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Complete state */}
+                  {deepDiveProgress.complete && (
+                    <div style={{ 
+                      display: 'flex', gap: 8, marginTop: 8,
+                      paddingTop: 12, borderTop: '1px solid #E5E7EB'
+                    }}>
+                      <button
+                        onClick={() => {
+                          // Insert all findings
+                          deepDiveProgress.findings.forEach(f => onInsertText(f.text + '\n\n'))
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          border: '1px solid #E5E7EB',
+                          background: 'white',
+                          color: '#374151',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Insert All
+                      </button>
+                      <button
+                        onClick={() => setDeepDiveProgress(null)}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 6,
+                          border: 'none',
+                          background: '#9333EA',
+                          color: 'white',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        New Research
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Show conversation if active, otherwise show home state */}
-              {messages.length === 0 && !isLoading ? (
+              {!deepDiveProgress?.isActive && messages.length === 0 && !isLoading ? (
                 // HOME STATE - History + Sources
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {/* Recent Research */}
@@ -1134,7 +1603,7 @@ function IntelligenceHub({
                     </div>
                   </div>
                 </div>
-              ) : (
+              ) : !deepDiveProgress?.isActive ? (
                 // CONVERSATION STATE
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {/* Back/Clear button when in conversation */}
@@ -1284,33 +1753,30 @@ function IntelligenceHub({
                           marginTop: 8,
                           paddingLeft: 4,
                         }}>
-                          <button
-                            onClick={() => {
-                              const claimText = msg.keyFact || msg.content.split(/[.!?]/)[0]?.trim() || msg.content.slice(0, 100)
-                              const cleanClaim = claimText
-                                .replace(/\*\*/g, '')
-                                .replace(/^#+\s*/gm, '')
-                                .trim()
-                              onTrackClaim(cleanClaim, msg.source)
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              padding: '4px 8px',
-                              borderRadius: 4,
-                              border: '1px solid #E5E7EB',
-                              background: 'white',
-                              color: '#374151',
-                              fontSize: 11,
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                            }}
-                            className="action-btn"
-                          >
-                            <Radio className="w-3 h-3" />
-                            Track
-                          </button>
+                          {/* Insert button - explicit alternative to Tab */}
+                          {msg.keyFact && (
+                            <button
+                              onClick={() => {
+                                onInsertText(msg.keyFact!)
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '4px 8px',
+                                borderRadius: 4,
+                                border: '1px solid rgba(34, 197, 94, 0.3)',
+                                background: 'rgba(34, 197, 94, 0.08)',
+                                color: '#22C55E',
+                                fontSize: 11,
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                              }}
+                              className="action-btn"
+                            >
+                              Insert
+                            </button>
+                          )}
                           
                           <button
                             onClick={() => {
@@ -1353,7 +1819,7 @@ function IntelligenceHub({
                   )}
                   <div ref={messagesEndRef} />
                 </div>
-              )}
+              ) : null}
             </div>
           </>
         )}
