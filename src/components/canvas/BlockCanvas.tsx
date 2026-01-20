@@ -1137,7 +1137,7 @@ function IntelligenceHub({
 
                       {showSourcesDropdown && (
                         <div style={{
-                          position: 'absolute', bottom: '100%', left: 0, marginBottom: 4,
+                          position: 'absolute', top: '100%', left: 0, marginTop: 4,
                           background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
                           boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 180, zIndex: 100,
                           padding: '8px 0',
@@ -1146,8 +1146,8 @@ function IntelligenceHub({
                             Search Sources
                           </div>
                           {[
-                            { id: 'web', label: 'Web Search', icon: '🌐' },
-                            { id: 'sec', label: 'SEC EDGAR', icon: '📊' },
+                            { id: 'web', label: 'Web Search', icon: Globe },
+                            { id: 'sec', label: 'SEC EDGAR', icon: Database },
                           ].map(source => (
                             <button
                               key={source.id}
@@ -1175,7 +1175,8 @@ function IntelligenceHub({
                                   <Check className="w-2.5 h-2.5" style={{ color: 'white' }} />
                                 )}
                               </div>
-                              <span style={{ fontSize: 12, color: '#111' }}>{source.icon} {source.label}</span>
+                              <source.icon className="w-3.5 h-3.5" style={{ color: '#6B7280' }} />
+                              <span style={{ fontSize: 12, color: '#111' }}>{source.label}</span>
                             </button>
                           ))}
                           <div style={{ borderTop: '1px solid #E5E7EB', margin: '8px 0' }} />
