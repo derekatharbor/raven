@@ -549,10 +549,27 @@ function IntelligenceHub({
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; keyFact?: string; source?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'ask' | 'verify'>('ask')
-  const [webEnabled, setWebEnabled] = useState(true) // Default to on
+  const [webEnabled, setWebEnabled] = useState(true)
   const [showModeDropdown, setShowModeDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const modeDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Panel width & resize
+  const [panelWidth, setPanelWidth] = useState(380)
+  const [isResizing, setIsResizing] = useState(false)
+  const minWidth = 300
+  const maxWidth = 600
+  
+  // Research history
+  const [researchHistory, setResearchHistory] = useState<Array<{
+    id: string
+    query: string
+    timestamp: Date
+    keyFact?: string
+    source?: string
+  }>>([])
+  const [showAllHistory, setShowAllHistory] = useState(false)
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null)
 
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
@@ -567,12 +584,13 @@ function IntelligenceHub({
 
   const currentMode = modes[mode]
 
-  // Mock data
+  // Mock sources (will be replaced with real data)
   const sources = [
-    { id: 'sec-edgar', name: 'SEC EDGAR', status: 'connected' as const, count: 3 },
-    { id: 'bloomberg', name: 'Bloomberg', status: 'connected' as const, count: 2 },
-    { id: 'internal', name: 'Internal Docs', status: 'syncing' as const, count: 1 },
+    { id: 'sec-edgar', name: 'SEC EDGAR', status: 'connected' as const, icon: '🏛️' },
+    { id: 'web', name: 'Web Search', status: 'connected' as const, icon: '🌐' },
+    { id: 'drive', name: 'Google Drive', status: 'disconnected' as const, icon: '📁' },
   ]
+  const connectedSources = sources.filter(s => s.status === 'connected')
 
   const integrityCards = [
     { id: 'ic-1', claim: 'Data center revenue of $14.51B', source: 'NVDA 10-Q', status: 'verified' as const },
@@ -593,14 +611,46 @@ function IntelligenceHub({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+  
+  // Resize handlers
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      const newWidth = window.innerWidth - e.clientX
+      setPanelWidth(Math.min(maxWidth, Math.max(minWidth, newWidth)))
+    }
+    
+    const handleMouseUp = () => {
+      setIsResizing(false)
+    }
+    
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing])
 
   const handleSubmit = async () => {
     if (!query.trim() && !selectedText) return
 
     const userMessage = { role: 'user' as const, content: query || 'Analyze this text', context: selectedText || undefined }
     setMessages(prev => [...prev, userMessage])
+    const currentQuery = query
     setQuery('')
     setIsLoading(true)
+    
+    // Create history entry
+    const historyId = `research-${Date.now()}`
+    setActiveHistoryId(historyId)
 
     try {
       const response = await fetch('/api/chat', {
@@ -619,7 +669,6 @@ function IntelligenceHub({
 
       const data = await response.json()
       
-      // Store message with keyFact if available
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: data.message,
@@ -627,7 +676,15 @@ function IntelligenceHub({
         source: data.source,
       }])
       
-      // If we got a keyFact, inject it as ghost text at cursor
+      // Add to history
+      setResearchHistory(prev => [{
+        id: historyId,
+        query: currentQuery || selectedText?.slice(0, 50) + '...' || 'Research',
+        timestamp: new Date(),
+        keyFact: data.keyFact,
+        source: data.source,
+      }, ...prev].slice(0, 20)) // Keep last 20
+      
       if (data.keyFact) {
         onKeyFact(data.keyFact, data.source)
       }
@@ -641,19 +698,56 @@ function IntelligenceHub({
       setIsLoading(false)
     }
   }
+  
+  const clearConversation = () => {
+    setMessages([])
+    setActiveHistoryId(null)
+  }
+  
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    
+    if (diffMins < 1) return 'now'
+    if (diffMins < 60) return `${diffMins}m`
+    if (diffHours < 24) return `${diffHours}h`
+    return `${diffDays}d`
+  }
 
   // Single container with animated width
   return (
     <div style={{
-      width: isCollapsed ? 44 : 380,
+      width: isCollapsed ? 44 : panelWidth,
       flexShrink: 0,
       borderLeft: '1px solid #E5E7EB',
       background: '#FBF9F7',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'width 0.2s ease',
+      transition: isResizing ? 'none' : 'width 0.2s ease',
       overflow: 'hidden',
+      position: 'relative',
     }}>
+      {/* Resize handle */}
+      {!isCollapsed && (
+        <div
+          onMouseDown={() => setIsResizing(true)}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            cursor: 'col-resize',
+            zIndex: 10,
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
+          onMouseLeave={(e) => { if (!isResizing) e.currentTarget.style.background = 'transparent' }}
+        />
+      )}
+      
       {/* Collapsed state - just an expand button */}
       {isCollapsed ? (
         <div style={{
@@ -879,14 +973,172 @@ function IntelligenceHub({
               </div>
             </div>
 
-            {/* Messages */}
+            {/* Main content area */}
             <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
-              {messages.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 16px', color: '#9CA3AF', fontSize: 13 }}>
-                  Research the web or your connected sources
+              {/* Show conversation if active, otherwise show home state */}
+              {messages.length === 0 && !isLoading ? (
+                // HOME STATE - History + Sources
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Recent Research */}
+                  <div>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      marginBottom: 10,
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Recent
+                      </span>
+                      {researchHistory.length > 3 && (
+                        <button 
+                          onClick={() => setShowAllHistory(!showAllHistory)}
+                          className="action-btn"
+                          style={{ 
+                            fontSize: 11, color: '#6B7280', background: 'none', border: 'none', 
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                          }}
+                        >
+                          {showAllHistory ? 'Show less' : 'See all'}
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    {researchHistory.length === 0 ? (
+                      <div style={{ 
+                        padding: '20px', 
+                        textAlign: 'center', 
+                        color: '#9CA3AF', 
+                        fontSize: 12,
+                        background: '#F9FAFB',
+                        borderRadius: 8,
+                        border: '1px dashed #E5E7EB',
+                      }}>
+                        Your research history will appear here
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {(showAllHistory ? researchHistory : researchHistory.slice(0, 3)).map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => {
+                              // Could reload the conversation
+                              setQuery(item.query)
+                            }}
+                            className="history-item"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              padding: '10px 12px',
+                              background: '#FAFAFA',
+                              border: '1px solid #E5E7EB',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              width: '100%',
+                            }}
+                          >
+                            <Search className="w-3.5 h-3.5" style={{ color: '#9CA3AF', flexShrink: 0 }} />
+                            <span style={{ 
+                              flex: 1, 
+                              fontSize: 12, 
+                              color: '#374151',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {item.query}
+                            </span>
+                            <span style={{ fontSize: 10, color: '#9CA3AF', flexShrink: 0 }}>
+                              {formatTimeAgo(item.timestamp)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Connected Sources */}
+                  <div>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      marginBottom: 10,
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Sources ({connectedSources.length})
+                      </span>
+                      <button 
+                        onClick={() => setActiveTab('sources')}
+                        className="action-btn"
+                        style={{ 
+                          fontSize: 11, color: '#6B7280', background: 'none', border: 'none', 
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                        }}
+                      >
+                        See all
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap',
+                      gap: 6, 
+                    }}>
+                      {connectedSources.map((source) => (
+                        <div
+                          key={source.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '6px 10px',
+                            background: '#F5F5F5',
+                            borderRadius: 6,
+                            fontSize: 11,
+                            color: '#374151',
+                            fontWeight: 500,
+                          }}
+                        >
+                          <span>{source.icon}</span>
+                          {source.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : (
+                // CONVERSATION STATE
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Back/Clear button when in conversation */}
+                  {messages.length > 0 && (
+                    <button
+                      onClick={clearConversation}
+                      className="action-btn"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '6px 10px',
+                        background: 'transparent',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: 11,
+                        color: '#6B7280',
+                        fontWeight: 500,
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      <ChevronLeft className="w-3 h-3" />
+                      New research
+                    </button>
+                  )}
+                  
                   {messages.map((msg, i) => (
                     <div key={i}>
                       {msg.context && (
@@ -1011,7 +1263,6 @@ function IntelligenceHub({
                         }}>
                           <button
                             onClick={() => {
-                              // Track the keyFact if available, otherwise first sentence
                               const claimText = msg.keyFact || msg.content.split(/[.!?]/)[0]?.trim() || msg.content.slice(0, 100)
                               const cleanClaim = claimText
                                 .replace(/\*\*/g, '')
@@ -1143,10 +1394,18 @@ function IntelligenceHub({
                   padding: '10px 12px', marginBottom: 6, background: '#FAFAFA',
                   borderRadius: 8, border: '1px solid #E5E7EB',
                 }}>
-                  <Database className="w-4 h-4" style={{ color: '#6B7280' }} />
+                  <span style={{ fontSize: 16 }}>{source.icon}</span>
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: '#111' }}>{source.name}</span>
-                  <span style={{ fontSize: 11, color: '#6B7280' }}>{source.count} docs</span>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: source.status === 'connected' ? '#22C55E' : '#F59E0B' }} />
+                  <div style={{ 
+                    fontSize: 10, 
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    background: source.status === 'connected' ? '#DCFCE7' : '#FEF3C7',
+                    color: source.status === 'connected' ? '#166534' : '#92400E',
+                    fontWeight: 500,
+                  }}>
+                    {source.status === 'connected' ? 'Connected' : 'Connect'}
+                  </div>
                 </div>
               ))}
               <button className="add-source-btn" style={{
@@ -2288,6 +2547,7 @@ export default function BlockCanvas({
         .add-source-btn:hover { background: #F5F5F5 !important; border-color: #9CA3AF !important; }
         .dock-btn:hover { background: #F3F4F6 !important; color: #111 !important; }
         .web-toggle-btn:hover { background: #E5E7EB !important; }
+        .history-item:hover { background: #F5F5F5 !important; border-color: #D1D5DB !important; }
         
         /* Tab row hover states */
         .editor-tab:hover { background: #F3F4F6 !important; }
