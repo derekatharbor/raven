@@ -1,12 +1,11 @@
-// Path: src/app/(dashboard)/dashboard/page.tsx
 // src/app/(dashboard)/dashboard/page.tsx
 // Dashboard - Home view with document preview cards
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Clock, FileText } from 'lucide-react'
+import { Plus, Clock, FileText, MoreHorizontal, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useDocuments } from '@/lib/hooks/useDocument'
 import Sidebar from '@/components/layout/Sidebar'
@@ -60,15 +59,32 @@ function extractPreview(content: any): { title: string; body: string } {
 
 // Document Preview Card with gradient overlay
 function DocumentCard({ 
-  document, 
-  onClick 
+  document: doc, 
+  onClick,
+  onDelete,
 }: { 
   document: { id: string; title: string; content: any; updated_at: string }
-  onClick: () => void 
+  onClick: () => void
+  onDelete: () => void
 }) {
-  const preview = extractPreview(document.content)
-  const displayTitle = document.title || preview.title || 'Untitled'
+  const preview = extractPreview(doc.content)
+  const displayTitle = doc.title || preview.title || 'Untitled'
   const displayBody = preview.body || 'Start writing...'
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    if (menuOpen) {
+      window.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => window.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
 
   return (
     <div 
@@ -94,6 +110,35 @@ function DocumentCard({
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
+      {/* Three-dot menu */}
+      <div 
+        ref={menuRef}
+        className="absolute top-3 right-3 z-20"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="p-1.5 rounded-lg bg-white/80 hover:bg-white border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+        >
+          <MoreHorizontal className="w-4 h-4 text-gray-500" />
+        </button>
+        
+        {menuOpen && (
+          <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]">
+            <button
+              onClick={() => {
+                setMenuOpen(false)
+                onDelete()
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Document Preview Window - positioned at bottom */}
       <div style={{
         position: 'absolute',
@@ -184,6 +229,7 @@ function DocumentCard({
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
+          paddingRight: 32, // Make room for menu button
         }}>
           {displayTitle}
         </h3>
@@ -192,7 +238,7 @@ function DocumentCard({
           fontSize: 13,
           fontWeight: 400,
         }}>
-          {formatRelativeTime(document.updated_at)}
+          {formatRelativeTime(doc.updated_at)}
         </span>
       </div>
     </div>
@@ -249,8 +295,10 @@ function NewDocumentCard({ onClick }: { onClick: () => void }) {
 export default function DashboardPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const { documents, loading: docsLoading, createDocument } = useDocuments()
+  const { documents, loading: docsLoading, createDocument, deleteDocument } = useDocuments()
   const [greeting] = useState(getGreeting())
+  const [deleteModal, setDeleteModal] = useState<{ id: string; title: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -268,6 +316,14 @@ export default function DashboardPage() {
 
   const handleOpenDocument = (docId: string) => {
     router.push(`/workspace?doc=${docId}`)
+  }
+
+  const handleDeleteDocument = async () => {
+    if (!deleteModal) return
+    setDeleting(true)
+    await deleteDocument(deleteModal.id)
+    setDeleting(false)
+    setDeleteModal(null)
   }
 
   // Loading state
@@ -329,6 +385,7 @@ export default function DashboardPage() {
                   key={doc.id}
                   document={doc}
                   onClick={() => handleOpenDocument(doc.id)}
+                  onDelete={() => setDeleteModal({ id: doc.id, title: doc.title || 'Untitled' })}
                 />
               ))}
             </div>
@@ -350,6 +407,7 @@ export default function DashboardPage() {
               </p>
               <button
                 onClick={handleNewDocument}
+                className="cursor-pointer"
                 style={{
                   background: '#18181B',
                   color: 'white',
@@ -358,7 +416,6 @@ export default function DashboardPage() {
                   border: 'none',
                   fontSize: 14,
                   fontWeight: 500,
-                  cursor: 'pointer',
                 }}
               >
                 Create Document
@@ -367,6 +424,51 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => !deleting && setDeleteModal(null)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Delete document?</h3>
+                <button 
+                  onClick={() => !deleting && setDeleteModal(null)}
+                  className="p-1 hover:bg-gray-100 rounded-lg cursor-pointer"
+                  disabled={deleting}
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">
+                Are you sure you want to delete "<span className="font-medium">{deleteModal.title}</span>"? This action cannot be undone.
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setDeleteModal(null)}
+                  disabled={deleting}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteDocument}
+                  disabled={deleting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

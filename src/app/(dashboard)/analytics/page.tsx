@@ -247,7 +247,7 @@ function DocumentRow({
           target="_blank"
           rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
         >
           <ExternalLink className="w-4 h-4 text-gray-400" />
         </a>
@@ -294,7 +294,7 @@ function DocumentRow({
           <div className="flex items-center gap-4 mt-6 pt-4 border-t border-gray-200">
             <button 
               onClick={onOpenEditor}
-              className="text-xs text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              className="text-xs text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer"
             >
               Open in editor
             </button>
@@ -303,7 +303,7 @@ function DocumentRow({
               href={doc.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              className="text-xs text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer"
             >
               View published
             </a>
