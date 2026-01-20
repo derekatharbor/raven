@@ -23,6 +23,7 @@ export interface AutocompleteStorage {
   source: string | null
   isLoading: boolean
   decorationPos: number | null
+  userTypedSinceLastSuggestion: boolean
 }
 
 export const autocompletePluginKey = new PluginKey('inlineAutocomplete')
@@ -44,6 +45,7 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
       source: null,
       isLoading: false,
       decorationPos: null,
+      userTypedSinceLastSuggestion: true, // Start true so first suggestion can trigger
     }
   },
 
@@ -61,10 +63,14 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
           // Call onAccept callback
           this.options.onAccept?.(suggestion, source || undefined)
           
-          // Clear suggestion
+          // Clear suggestion state
           this.storage.suggestion = null
           this.storage.source = null
           this.storage.decorationPos = null
+          this.storage.userTypedSinceLastSuggestion = false // Prevent immediate re-trigger
+          
+          // Force view update to clear decoration
+          this.editor.view.dispatch(this.editor.state.tr)
           
           return true
         }
@@ -96,11 +102,18 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
           init() {
             return DecorationSet.empty
           },
-          apply(tr, oldDecorations) {
+          apply(tr, oldDecorations, oldState, newState) {
             // If suggestion exists, create decoration
             const { suggestion, source, decorationPos } = extension.storage
             
             if (suggestion && decorationPos !== null) {
+              // Verify position is still valid in current doc
+              if (decorationPos > newState.doc.content.size) {
+                extension.storage.suggestion = null
+                extension.storage.decorationPos = null
+                return DecorationSet.empty
+              }
+              
               // Create ghost text decoration at cursor position
               const widget = document.createElement('span')
               widget.className = 'inline-autocomplete-ghost'
@@ -108,7 +121,7 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
               if (source) {
                 const sourceTag = document.createElement('span')
                 sourceTag.className = 'inline-autocomplete-source'
-                sourceTag.textContent = `[${source}]`
+                sourceTag.textContent = ` [${source}]`
                 widget.appendChild(sourceTag)
               }
               
@@ -117,7 +130,7 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
                 key: 'autocomplete-ghost',
               })
               
-              return DecorationSet.create(tr.doc, [decoration])
+              return DecorationSet.create(newState.doc, [decoration])
             }
             
             return DecorationSet.empty
@@ -130,18 +143,27 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
           },
           
           handleKeyDown(view, event) {
-            // Any key except Tab/Escape clears the suggestion
-            if (extension.storage.suggestion && 
-                event.key !== 'Tab' && 
-                event.key !== 'Escape' &&
-                event.key !== 'Shift' &&
-                event.key !== 'Control' &&
-                event.key !== 'Alt' &&
-                event.key !== 'Meta') {
+            // Tab and Escape are handled by keyboard shortcuts
+            if (event.key === 'Tab' || event.key === 'Escape') {
+              return false
+            }
+            
+            // Modifier keys don't count as typing
+            if (event.key === 'Shift' || event.key === 'Control' || 
+                event.key === 'Alt' || event.key === 'Meta') {
+              return false
+            }
+            
+            // Any other key = user is typing
+            extension.storage.userTypedSinceLastSuggestion = true
+            
+            // Clear existing suggestion when user types
+            if (extension.storage.suggestion) {
               extension.storage.suggestion = null
               extension.storage.source = null
               extension.storage.decorationPos = null
             }
+            
             return false
           },
         },
@@ -156,6 +178,11 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
               
               // Don't trigger if already have suggestion or loading
               if (extension.storage.suggestion || extension.storage.isLoading) {
+                return
+              }
+              
+              // Don't trigger if user hasn't typed since last suggestion
+              if (!extension.storage.userTypedSinceLastSuggestion) {
                 return
               }
               
@@ -182,7 +209,9 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
               
               // Debounce the API call
               debounceTimer = setTimeout(async () => {
+                // Re-check conditions (might have changed during debounce)
                 if (extension.storage.suggestion || extension.storage.isLoading) return
+                if (!extension.storage.userTypedSinceLastSuggestion) return
                 
                 extension.storage.isLoading = true
                 
@@ -195,12 +224,16 @@ export const InlineAutocomplete = Extension.create<AutocompleteOptions, Autocomp
                   })
                   
                   if (result && result.text) {
-                    extension.storage.suggestion = result.text
-                    extension.storage.source = result.source || null
-                    extension.storage.decorationPos = from
-                    
-                    // Force view update to show decoration
-                    view.dispatch(state.tr)
+                    // Verify cursor is still at same position
+                    const currentFrom = view.state.selection.from
+                    if (currentFrom === from) {
+                      extension.storage.suggestion = result.text
+                      extension.storage.source = result.source || null
+                      extension.storage.decorationPos = from
+                      
+                      // Force view update to show decoration
+                      view.dispatch(view.state.tr)
+                    }
                   }
                 } catch (err) {
                   console.error('Autocomplete error:', err)
