@@ -2678,46 +2678,48 @@ export default function BlockCanvas({
         onTabRename={handleTabRename}
       />
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-        {/* Main editor area */}
-        <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
-          <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px 120px' }}>
-            {/* Document title */}
-            <div style={{ marginBottom: 32, paddingLeft: 64 }}>
-              <textarea 
-                ref={titleRef}
-                value={title} 
-                onChange={(e) => {
-                  handleTitleUpdate(e.target.value)
-                  // Auto-resize
-                  e.target.style.height = 'auto'
-                  e.target.style.height = e.target.scrollHeight + 'px'
-                }} 
-                onInput={(e) => {
-                  // Auto-resize on input too
-                  const target = e.target as HTMLTextAreaElement
-                  target.style.height = 'auto'
-                  target.style.height = target.scrollHeight + 'px'
-                }}
-                placeholder="Untitled" 
-                className="doc-title-input"
-                rows={1}
-                style={{ 
-                  width: '100%', 
-                  fontSize: 32, 
-                  fontWeight: 600, 
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", 
-                  color: title ? '#111' : '#9CA3AF', 
-                  border: 'none', 
-                  outline: 'none', 
-                  background: 'transparent',
-                  letterSpacing: '-0.02em',
-                  resize: 'none',
-                  overflow: 'hidden',
-                  lineHeight: 1.2,
-                }} 
-              />
-            </div>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Main editor area - wrapper for scroll + dock */}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+          {/* Scrollable content */}
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 32px 120px' }}>
+              {/* Document title */}
+              <div style={{ marginBottom: 32, paddingLeft: 64 }}>
+                <textarea 
+                  ref={titleRef}
+                  value={title} 
+                  onChange={(e) => {
+                    handleTitleUpdate(e.target.value)
+                    // Auto-resize
+                    e.target.style.height = 'auto'
+                    e.target.style.height = e.target.scrollHeight + 'px'
+                  }} 
+                  onInput={(e) => {
+                    // Auto-resize on input too
+                    const target = e.target as HTMLTextAreaElement
+                    target.style.height = 'auto'
+                    target.style.height = target.scrollHeight + 'px'
+                  }}
+                  placeholder="Untitled" 
+                  className="doc-title-input"
+                  rows={1}
+                  style={{ 
+                    width: '100%', 
+                    fontSize: 32, 
+                    fontWeight: 600, 
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", 
+                    color: title ? '#111' : '#9CA3AF', 
+                    border: 'none', 
+                    outline: 'none', 
+                    background: 'transparent',
+                    letterSpacing: '-0.02em',
+                    resize: 'none',
+                    overflow: 'hidden',
+                    lineHeight: 1.2,
+                  }} 
+                />
+              </div>
 
             {/* Blocks */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -2761,23 +2763,24 @@ export default function BlockCanvas({
               }}
             />
           </div>
+        </div>
           
-          {/* Floating Dock - Figma-style - positioned inside editor pane */}
-          <div style={{
-            position: 'absolute',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0,
-            background: 'rgba(255, 255, 255, 0.92)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: 10,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
-            zIndex: 20,
-          }}>
+        {/* Floating Dock - Figma-style - positioned at bottom of editor pane */}
+        <div style={{
+          position: 'absolute',
+          bottom: 24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0,
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: 10,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
+          zIndex: 20,
+        }}>
             {/* Left section - Tools */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
               <Tooltip label="Insert Block (+)">
