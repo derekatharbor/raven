@@ -3700,6 +3700,7 @@ export default function BlockCanvas({
             padding: '6px 12px',
             fontSize: 11,
             color: '#9CA3AF',
+            whiteSpace: 'nowrap',
           }}>
             {wordCount} words
           </div>
