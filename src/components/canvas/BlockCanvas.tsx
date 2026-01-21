@@ -3598,30 +3598,24 @@ export default function BlockCanvas({
           </div>
         </div>
           
-        {/* Floating Dock - Figma-style - positioned at bottom of editor pane */}
+        {/* Floating Dock - Single unified bar */}
         <div style={{
           position: 'absolute',
           bottom: 24,
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          gap: 6,
+          gap: 0,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: 10,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
           zIndex: 20,
         }}>
-          {/* Search Bar - Part of dock */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '6px 12px',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: 8,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
-          }}>
+          {/* Search input */}
+          <div style={{ display: 'flex', alignItems: 'center', padding: '6px 12px', gap: 8 }}>
             <input
               type="text"
               placeholder="Research topics, verify claims, or ask questions..."
@@ -3635,7 +3629,7 @@ export default function BlockCanvas({
                 }
               }}
               style={{
-                width: 340,
+                width: 300,
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
@@ -3657,11 +3651,11 @@ export default function BlockCanvas({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 28,
-                height: 28,
-                borderRadius: 6,
+                width: 26,
+                height: 26,
+                borderRadius: 5,
                 border: 'none',
-                background: dockQuery.trim() ? '#22C55E' : '#F3F4F6',
+                background: dockQuery.trim() ? '#22C55E' : 'transparent',
                 color: dockQuery.trim() ? 'white' : '#9CA3AF',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -3670,114 +3664,102 @@ export default function BlockCanvas({
               <Atom className="w-3.5 h-3.5" />
             </button>
           </div>
+          
+          {/* Separator */}
+          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
 
-          {/* Toolbar */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0,
-            background: 'rgba(255, 255, 255, 0.92)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: 8,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
+          {/* Tools */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
+            <Tooltip label="Insert Block (+)">
+              <button
+                onClick={() => setShowBlockTray(!showBlockTray)}
+                className="dock-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 28,
+                  height: 28,
+                  borderRadius: 5,
+                  border: 'none',
+                  background: showBlockTray ? '#F3F4F6' : 'transparent',
+                  color: showBlockTray ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          </div>
+          
+          {/* Separator */}
+          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+          
+          {/* Word count */}
+          <div style={{ 
+            padding: '6px 12px',
+            fontSize: 11,
+            color: '#9CA3AF',
           }}>
-            {/* Left section - Tools */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '4px 6px' }}>
-              <Tooltip label="Insert Block (+)">
-                <button
-                  onClick={() => setShowBlockTray(!showBlockTray)}
-                  className="dock-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 28,
-                    height: 28,
-                    borderRadius: 5,
-                    border: 'none',
-                    background: showBlockTray ? '#F3F4F6' : 'transparent',
-                    color: showBlockTray ? '#111' : '#6B7280',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </Tooltip>
-            </div>
-            
-            {/* Separator */}
-            <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
-            
-            {/* Center - Word count */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8,
-              padding: '4px 12px',
-              fontSize: 11,
-              color: '#9CA3AF',
+            {wordCount} words
+          </div>
+          
+          {/* Separator */}
+          <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+          
+          {/* Mode Switcher */}
+          <div style={{ padding: '6px 8px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: '#F3F4F6',
+              borderRadius: 5,
+              padding: 2,
             }}>
-              <span>{wordCount} words</span>
-            </div>
-            
-            {/* Separator */}
-            <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
-            
-            {/* Right section - Mode Switcher */}
-            <div style={{ padding: '4px 6px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: '#F3F4F6',
-                borderRadius: 5,
-                padding: 2,
-              }}>
-                <button
-                  onClick={() => setAuditMode(false)}
-                  className={!auditMode ? '' : 'dock-mode-btn'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '4px 8px',
-                    borderRadius: 3,
-                    border: 'none',
-                    background: !auditMode ? 'white' : 'transparent',
-                    color: !auditMode ? '#111' : '#6B7280',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                    fontWeight: 500,
-                    boxShadow: !auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                    transition: 'all 0.12s ease',
-                  }}
-                >
-                  <PenLine className="w-3 h-3" />
-                  Drafting
-                </button>
-                <button
-                  onClick={() => setAuditMode(true)}
-                  className={auditMode ? '' : 'dock-mode-btn'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '4px 8px',
-                    borderRadius: 3,
-                    border: 'none',
-                    background: auditMode ? 'white' : 'transparent',
-                    color: auditMode ? '#111' : '#6B7280',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                    fontWeight: 500,
-                    boxShadow: auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                    transition: 'all 0.12s ease',
-                  }}
-                >
-                  <Eye className="w-3 h-3" />
-                  Audit
-                </button>
-              </div>
+              <button
+                onClick={() => setAuditMode(false)}
+                className={!auditMode ? '' : 'dock-mode-btn'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 8px',
+                  borderRadius: 3,
+                  border: 'none',
+                  background: !auditMode ? 'white' : 'transparent',
+                  color: !auditMode ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  boxShadow: !auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.12s ease',
+                }}
+              >
+                <PenLine className="w-3 h-3" />
+                Drafting
+              </button>
+              <button
+                onClick={() => setAuditMode(true)}
+                className={auditMode ? '' : 'dock-mode-btn'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 8px',
+                  borderRadius: 3,
+                  border: 'none',
+                  background: auditMode ? 'white' : 'transparent',
+                  color: auditMode ? '#111' : '#6B7280',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  boxShadow: auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.12s ease',
+                }}
+              >
+                <Eye className="w-3 h-3" />
+                Audit
+              </button>
             </div>
           </div>
         </div>
@@ -3785,7 +3767,7 @@ export default function BlockCanvas({
           {/* Block Tray Modal - opens ABOVE dock */}
           {showBlockTray && (
             <BlockSelectorModal
-              position={{ bottom: 110, left: '50%' }}
+              position={{ bottom: 70, left: '50%' }}
               onSelect={(type) => {
                 addBlock(blocks[blocks.length - 1]?.id, type)
                 setShowBlockTray(false)
