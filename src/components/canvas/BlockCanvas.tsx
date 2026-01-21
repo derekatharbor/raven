@@ -569,10 +569,10 @@ function IntelligenceHub({
   const sourcesDropdownRef = useRef<HTMLDivElement>(null)
   
   // Panel width & resize
-  const [panelWidth, setPanelWidth] = useState(380)
+  const [panelWidth, setPanelWidth] = useState(340)
   const [isResizing, setIsResizing] = useState(false)
-  const minWidth = 300
-  const maxWidth = 600
+  const minWidth = 280
+  const maxWidth = 500
   
   // Research history
   const [researchHistory, setResearchHistory] = useState<Array<{
@@ -961,10 +961,10 @@ function IntelligenceHub({
   // Single container with animated width
   return (
     <div style={{
-      width: isCollapsed ? 44 : panelWidth,
+      width: isCollapsed ? 36 : panelWidth,
       flexShrink: 0,
       borderLeft: '1px solid #E5E7EB',
-      background: '#FBF9F7',
+      background: 'white',
       display: 'flex',
       flexDirection: 'column',
       transition: isResizing ? 'none' : 'width 0.2s ease',
@@ -995,12 +995,12 @@ function IntelligenceHub({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          paddingTop: 12,
+          paddingTop: 10,
         }}>
           <button
             onClick={onToggleCollapse}
             style={{
-              width: 32, height: 32, borderRadius: 6, border: 'none',
+              width: 28, height: 28, borderRadius: 4, border: 'none',
               background: 'transparent', color: '#6B7280', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
@@ -1008,18 +1008,6 @@ function IntelligenceHub({
           >
             <PanelRight className="w-4 h-4" />
           </button>
-          <div style={{
-            writingMode: 'vertical-rl',
-            textOrientation: 'mixed',
-            transform: 'rotate(180deg)',
-            marginTop: 12,
-            fontSize: 11,
-            fontWeight: 500,
-            color: '#9CA3AF',
-            letterSpacing: '0.5px',
-          }}>
-            Research
-          </div>
         </div>
       ) : (
         <>
@@ -1029,19 +1017,16 @@ function IntelligenceHub({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '10px 12px',
-            borderBottom: '1px solid #F3F4F6',
+            borderBottom: '1px solid #E5E7EB',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Atom className="w-4 h-4" style={{ color: '#22C55E' }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>
-                Intelligence Hub
-              </span>
-            </div>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#111' }}>
+              Research
+            </span>
             <button
               onClick={onToggleCollapse}
               className="panel-close-btn"
               style={{
-                width: 28, height: 28, borderRadius: 6, border: 'none',
+                width: 24, height: 24, borderRadius: 4, border: 'none',
                 background: 'transparent', color: '#9CA3AF', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
@@ -1050,12 +1035,11 @@ function IntelligenceHub({
             </button>
           </div>
 
-          {/* Tab row */}
+          {/* Tab row - underline style */}
           <div style={{
             display: 'flex',
-            gap: 4,
-            padding: '8px 12px',
-            borderBottom: '1px solid #F3F4F6',
+            gap: 0,
+            borderBottom: '1px solid #E5E7EB',
           }}>
             {tabs.map(tab => {
               const Icon = tab.icon
@@ -1067,13 +1051,14 @@ function IntelligenceHub({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 10px',
-                    borderRadius: 6,
+                    gap: 5,
+                    padding: '8px 12px',
                     border: 'none',
-                    background: isActive ? '#111' : 'transparent',
-                    color: isActive ? 'white' : '#6B7280',
-                    fontSize: 12,
+                    borderBottom: isActive ? '2px solid #111' : '2px solid transparent',
+                    marginBottom: '-1px',
+                    background: 'transparent',
+                    color: isActive ? '#111' : '#6B7280',
+                    fontSize: 11,
                     fontWeight: 500,
                     cursor: 'pointer',
                   }}
@@ -1093,46 +1078,45 @@ function IntelligenceHub({
         {activeTab === 'research' && (
           <>
             {/* Input area at TOP */}
-            <div style={{ padding: '12px', borderBottom: '1px solid #F3F4F6' }}>
+            <div style={{ padding: '10px 12px', borderBottom: '1px solid #E5E7EB' }}>
               {/* Context badge */}
               {selectedText && (
-                <div style={{ marginBottom: 10 }}>
+                <div style={{ marginBottom: 8 }}>
                   <div style={{ 
-                    display: 'inline-flex', alignItems: 'center', gap: 6, 
-                    padding: '4px 10px', background: '#DCFCE7', borderRadius: 999,
-                    fontSize: 11, color: '#166534', fontWeight: 500,
+                    display: 'inline-flex', alignItems: 'center', gap: 5, 
+                    padding: '3px 8px', background: '#F3F4F6', borderRadius: 4,
+                    fontSize: 11, color: '#374151',
                   }}>
-                    <Atom className="w-3 h-3" style={{ color: '#22C55E' }} />
-                    <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {selectedText.length > 30 ? selectedText.slice(0, 30) + '...' : selectedText}
+                    <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {selectedText.length > 40 ? selectedText.slice(0, 40) + '...' : selectedText}
                     </span>
                     <button onClick={onClearSelection} style={{ 
-                      width: 14, height: 14, borderRadius: '50%', border: 'none',
-                      background: 'rgba(0,0,0,0.1)', color: '#166534', cursor: 'pointer',
+                      width: 14, height: 14, borderRadius: 2, border: 'none',
+                      background: 'transparent', color: '#6B7280', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                     }}>
-                      <X className="w-2.5 h-2.5" />
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Input container */}
-              <div style={{ background: '#F5F5F5', borderRadius: 8, padding: '10px 12px' }}>
+              {/* Input container - clean, no background */}
+              <div>
                 <textarea
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-                  placeholder="Research anything..."
-                  rows={2}
+                  placeholder="Ask anything..."
+                  rows={1}
                   style={{
                     width: '100%', border: 'none', outline: 'none', resize: 'none',
                     fontSize: 13, lineHeight: 1.5, color: '#111', background: 'transparent',
                   }}
                 />
                 
-                {/* Bottom row: Mode selector + Globe + Send */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                {/* Bottom row: Mode selector + toggles + Send */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
                   {/* Mode dropdown */}
                   <div style={{ position: 'relative' }} ref={modeDropdownRef}>
                     <button
@@ -1140,12 +1124,13 @@ function IntelligenceHub({
                       className="mode-selector-btn"
                       style={{
                         display: 'flex', alignItems: 'center', gap: 4,
-                        padding: '4px 8px', borderRadius: 4, border: 'none',
+                        padding: '3px 6px', borderRadius: 4, 
+                        border: '1px solid #E5E7EB',
                         background: 'white', color: '#374151', cursor: 'pointer',
-                        fontSize: 12, fontWeight: 500,
+                        fontSize: 11, fontWeight: 500,
                       }}
                     >
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: currentMode.color }} />
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: currentMode.color }} />
                       {currentMode.label}
                       <ChevronDown className="w-3 h-3" style={{ color: '#9CA3AF' }} />
                     </button>
@@ -1153,8 +1138,8 @@ function IntelligenceHub({
                     {showModeDropdown && (
                       <div style={{
                         position: 'absolute', bottom: '100%', left: 0, marginBottom: 4,
-                        background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 140, zIndex: 100,
+                        background: 'white', border: '1px solid #E5E7EB', borderRadius: 4,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 100, zIndex: 100,
                       }}>
                         {Object.entries(modes).map(([key, m]) => (
                           <button
@@ -1162,14 +1147,14 @@ function IntelligenceHub({
                             onClick={() => { setMode(key as typeof mode); setShowModeDropdown(false); }}
                             className="mode-option"
                             style={{
-                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                              padding: '8px 12px', border: 'none',
+                              display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                              padding: '6px 10px', border: 'none',
                               background: mode === key ? '#F5F5F5' : 'transparent',
                               cursor: 'pointer', textAlign: 'left',
                             }}
                           >
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: m.color }} />
-                            <span style={{ fontSize: 12, color: '#111' }}>{m.label}</span>
+                            <div style={{ width: 5, height: 5, borderRadius: '50%', background: m.color }} />
+                            <span style={{ fontSize: 11, color: '#111' }}>{m.label}</span>
                           </button>
                         ))}
                       </div>
@@ -1177,38 +1162,38 @@ function IntelligenceHub({
                   </div>
 
                   {/* Web toggle */}
-                  <Tooltip label={webEnabled ? 'Web search ON' : 'Enable web search'}>
-                    <button
-                      onClick={() => setWebEnabled(!webEnabled)}
-                      className="web-toggle-btn"
-                      style={{
-                        width: 28, height: 28, borderRadius: 4, border: 'none',
-                        background: webEnabled ? '#DBEAFE' : 'white',
-                        color: webEnabled ? '#3B82F6' : '#9CA3AF',
-                        cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <Globe className="w-4 h-4" />
-                    </button>
-                  </Tooltip>
+                  <button
+                    onClick={() => setWebEnabled(!webEnabled)}
+                    className="web-toggle-btn"
+                    style={{
+                      width: 24, height: 24, borderRadius: 4, 
+                      border: webEnabled ? '1px solid #3B82F6' : '1px solid #E5E7EB',
+                      background: webEnabled ? '#EFF6FF' : 'white',
+                      color: webEnabled ? '#3B82F6' : '#9CA3AF',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                    title={webEnabled ? 'Web search ON' : 'Enable web search'}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                  </button>
 
                   {/* Deep Dive toggle */}
-                  <Tooltip label={deepDiveEnabled ? 'Deep Dive ON - Multi-step research' : 'Enable Deep Dive'}>
-                    <button
-                      onClick={() => setDeepDiveEnabled(!deepDiveEnabled)}
-                      className="deep-dive-toggle-btn"
-                      style={{
-                        width: 28, height: 28, borderRadius: 4, border: 'none',
-                        background: deepDiveEnabled ? 'rgba(147, 51, 234, 0.15)' : 'white',
-                        color: deepDiveEnabled ? '#9333EA' : '#9CA3AF',
-                        cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <Layers className="w-4 h-4" />
-                    </button>
-                  </Tooltip>
+                  <button
+                    onClick={() => setDeepDiveEnabled(!deepDiveEnabled)}
+                    className="deep-dive-toggle-btn"
+                    style={{
+                      width: 24, height: 24, borderRadius: 4, 
+                      border: deepDiveEnabled ? '1px solid #9333EA' : '1px solid #E5E7EB',
+                      background: deepDiveEnabled ? '#FAF5FF' : 'white',
+                      color: deepDiveEnabled ? '#9333EA' : '#9CA3AF',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                    title={deepDiveEnabled ? 'Deep Dive ON' : 'Enable Deep Dive'}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                  </button>
 
                   {/* Sources dropdown (only when Deep Dive is ON) */}
                   {deepDiveEnabled && (
@@ -1216,27 +1201,27 @@ function IntelligenceHub({
                       <button
                         onClick={() => setShowSourcesDropdown(!showSourcesDropdown)}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          padding: '4px 8px', borderRadius: 4, border: 'none',
-                          background: 'rgba(147, 51, 234, 0.08)',
+                          display: 'flex', alignItems: 'center', gap: 3,
+                          padding: '3px 6px', borderRadius: 4, 
+                          border: '1px solid #9333EA',
+                          background: '#FAF5FF',
                           color: '#9333EA',
                           cursor: 'pointer',
-                          fontSize: 11, fontWeight: 500,
+                          fontSize: 10, fontWeight: 500,
                         }}
                       >
                         {deepDiveSources.length} sources
-                        <ChevronDown className="w-3 h-3" />
+                        <ChevronDown className="w-2.5 h-2.5" />
                       </button>
 
                       {showSourcesDropdown && (
                         <div style={{
                           position: 'absolute', top: '100%', left: 0, marginTop: 4,
-                          background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 180, zIndex: 100,
-                          padding: '8px 0',
+                          background: 'white', border: '1px solid #E5E7EB', borderRadius: 4,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 160, zIndex: 100,
                         }}>
-                          <div style={{ padding: '4px 12px 8px', fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase' }}>
-                            Search Sources
+                          <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', borderBottom: '1px solid #E5E7EB' }}>
+                            Sources
                           </div>
                           {[
                             { id: 'web', label: 'Web Search', icon: Globe },
@@ -1252,30 +1237,26 @@ function IntelligenceHub({
                                 )
                               }}
                               style={{
-                                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                                padding: '8px 12px', border: 'none',
+                                display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+                                padding: '6px 10px', border: 'none',
                                 background: 'transparent',
                                 cursor: 'pointer', textAlign: 'left',
                               }}
                             >
                               <div style={{
-                                width: 16, height: 16, borderRadius: 4,
-                                border: deepDiveSources.includes(source.id) ? '2px solid #9333EA' : '2px solid #D1D5DB',
+                                width: 14, height: 14, borderRadius: 3,
+                                border: deepDiveSources.includes(source.id) ? '1px solid #9333EA' : '1px solid #D1D5DB',
                                 background: deepDiveSources.includes(source.id) ? '#9333EA' : 'transparent',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                               }}>
                                 {deepDiveSources.includes(source.id) && (
-                                  <Check className="w-2.5 h-2.5" style={{ color: 'white' }} />
+                                  <Check className="w-2 h-2" style={{ color: 'white' }} />
                                 )}
                               </div>
-                              <source.icon className="w-3.5 h-3.5" style={{ color: '#6B7280' }} />
-                              <span style={{ fontSize: 12, color: '#111' }}>{source.label}</span>
+                              <source.icon className="w-3 h-3" style={{ color: '#6B7280' }} />
+                              <span style={{ fontSize: 11, color: '#374151' }}>{source.label}</span>
                             </button>
                           ))}
-                          <div style={{ borderTop: '1px solid #E5E7EB', margin: '8px 0' }} />
-                          <div style={{ padding: '4px 12px', fontSize: 10, color: '#9CA3AF' }}>
-                            More sources coming soon
-                          </div>
                         </div>
                       )}
                     </div>
@@ -1289,14 +1270,14 @@ function IntelligenceHub({
                     disabled={!query.trim() && !selectedText}
                     className="send-btn"
                     style={{
-                      width: 28, height: 28, borderRadius: 6, border: 'none',
-                      background: (query.trim() || selectedText) ? currentMode.color : '#E5E7EB',
+                      width: 24, height: 24, borderRadius: 4, border: 'none',
+                      background: (query.trim() || selectedText) ? '#111' : '#E5E7EB',
                       color: (query.trim() || selectedText) ? 'white' : '#9CA3AF',
                       cursor: (query.trim() || selectedText) ? 'pointer' : 'default',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
-                    <ArrowUp className="w-4 h-4" />
+                    <ArrowUp className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -1553,9 +1534,9 @@ function IntelligenceHub({
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'space-between',
-                      marginBottom: 10,
+                      marginBottom: 8,
                     }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                         Recent
                       </span>
                       {researchHistory.length > 3 && (
@@ -1563,8 +1544,8 @@ function IntelligenceHub({
                           onClick={() => setShowAllHistory(!showAllHistory)}
                           className="action-btn"
                           style={{ 
-                            fontSize: 11, color: '#6B7280', background: 'none', border: 'none', 
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                            fontSize: 10, color: '#6B7280', background: 'none', border: 'none', 
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2,
                           }}
                         >
                           {showAllHistory ? 'Show less' : 'See all'}
@@ -1575,18 +1556,15 @@ function IntelligenceHub({
                     
                     {researchHistory.length === 0 ? (
                       <div style={{ 
-                        padding: '20px', 
+                        padding: '16px 12px', 
                         textAlign: 'center', 
                         color: '#9CA3AF', 
-                        fontSize: 12,
-                        background: '#F9FAFB',
-                        borderRadius: 8,
-                        border: '1px dashed #E5E7EB',
+                        fontSize: 11,
                       }}>
-                        Your research history will appear here
+                        Research history will appear here
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {(showAllHistory ? researchHistory : researchHistory.slice(0, 3)).map((item) => (
                           <button
                             key={item.id}
@@ -1598,20 +1576,20 @@ function IntelligenceHub({
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 10,
-                              padding: '10px 12px',
-                              background: '#FAFAFA',
+                              gap: 8,
+                              padding: '8px 10px',
+                              background: 'transparent',
                               border: '1px solid #E5E7EB',
-                              borderRadius: 8,
+                              borderRadius: 4,
                               cursor: 'pointer',
                               textAlign: 'left',
                               width: '100%',
                             }}
                           >
-                            <Search className="w-3.5 h-3.5" style={{ color: '#9CA3AF', flexShrink: 0 }} />
+                            <Search className="w-3 h-3" style={{ color: '#9CA3AF', flexShrink: 0 }} />
                             <span style={{ 
                               flex: 1, 
-                              fontSize: 12, 
+                              fontSize: 11, 
                               color: '#374151',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -1634,17 +1612,17 @@ function IntelligenceHub({
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'space-between',
-                      marginBottom: 10,
+                      marginBottom: 8,
                     }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                         Sources ({connectedSources.length})
                       </span>
                       <button 
                         onClick={() => setActiveTab('sources')}
                         className="action-btn"
                         style={{ 
-                          fontSize: 11, color: '#6B7280', background: 'none', border: 'none', 
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                          fontSize: 10, color: '#6B7280', background: 'none', border: 'none', 
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2,
                         }}
                       >
                         See all
@@ -1655,7 +1633,7 @@ function IntelligenceHub({
                     <div style={{ 
                       display: 'flex', 
                       flexDirection: 'column',
-                      gap: 6, 
+                      gap: 2, 
                     }}>
                       {connectedSources.map((source) => (
                         <div
@@ -1663,32 +1641,31 @@ function IntelligenceHub({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 10,
-                            padding: '10px 12px',
-                            background: '#FAFAFA',
+                            gap: 8,
+                            padding: '8px 10px',
                             border: '1px solid #E5E7EB',
-                            borderRadius: 8,
+                            borderRadius: 4,
                           }}
                         >
                           <img 
                             src={getBrandfetchLogo(source.domain)} 
                             alt={source.name}
                             style={{ 
-                              width: 20, 
-                              height: 20, 
-                              borderRadius: 4,
+                              width: 16, 
+                              height: 16, 
+                              borderRadius: 3,
                               objectFit: 'contain',
                             }}
                             onError={(e) => {
                               e.currentTarget.style.display = 'none'
                             }}
                           />
-                          <span style={{ flex: 1, fontSize: 12, fontWeight: 500, color: '#374151' }}>
+                          <span style={{ flex: 1, fontSize: 11, fontWeight: 500, color: '#374151' }}>
                             {source.name}
                           </span>
                           <div style={{ 
-                            width: 6, 
-                            height: 6, 
+                            width: 5, 
+                            height: 5, 
                             borderRadius: '50%', 
                             background: '#22C55E',
                           }} />
