@@ -2,28 +2,11 @@
 // Fetches detailed analytics for a single document
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
-
-async function getAuthClient() {
-  const cookieStore = await cookies()
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          cookie: cookieStore.toString(),
-        },
-      },
-    }
-  )
-  return supabase
-}
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await getAuthClient()
+    const supabase = await createClient()
     
     // Check auth
     const { data: { user }, error: authError } = await supabase.auth.getUser()
