@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Plus, ChevronDown, ChevronRight, FileText, X, MoreHorizontal, GripVertical,
   Loader2, MessageSquare, ArrowUp, Copy, PanelRightOpen, ExternalLink, Table2, List,
-  CheckCircle2, AlertCircle, Eye, Link2, BookOpen, Quote, Info
+  CheckCircle2, AlertCircle, Eye, Link2, BookOpen, Quote, Info, Upload, Building2, Search
 } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -340,8 +340,8 @@ export default function SearchPage() {
   const { user, loading: authLoading } = useAuth()
   
   const [columns, setColumns] = useState<MatrixColumn[]>(MOCK_COLUMNS)
-  const [matrixData, setMatrixData] = useState<MatrixRow[]>(MOCK_MATRIX_DATA)
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES)
+  const [matrixData, setMatrixData] = useState<MatrixRow[]>([])  // Start empty
+  const [messages, setMessages] = useState<Message[]>([])  // Start empty
   const [query, setQuery] = useState('')
   const [showEditorPane, setShowEditorPane] = useState(false)
   const [editorWidth, setEditorWidth] = useState(400)
@@ -358,6 +358,18 @@ export default function SearchPage() {
   const [chatHeight, setChatHeight] = useState(280)
   const [isResizingChat, setIsResizingChat] = useState(false)
   const [stepsExpanded, setStepsExpanded] = useState(false)
+  
+  // Upload modal state
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [uploadTab, setUploadTab] = useState<'upload' | 'edgar'>('upload')
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [edgarTicker, setEdgarTicker] = useState('')
+  const [edgarFormTypes, setEdgarFormTypes] = useState<string[]>(['10-K'])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const tableRef = useRef<HTMLDivElement>(null)
 
@@ -488,6 +500,137 @@ export default function SearchPage() {
     
     setNewColumnQuestion('')
     setShowAddColumnModal(false)
+  }
+
+  // Handle file drop
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    const validFiles = files.filter(f => 
+      f.type === 'application/pdf' || 
+      f.type === 'text/plain' ||
+      f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      f.name.endsWith('.txt') ||
+      f.name.endsWith('.md')
+    )
+    
+    if (validFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...validFiles])
+      setUploadError(null)
+    } else {
+      setUploadError('Please upload PDF, DOCX, TXT, or MD files')
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      setUploadedFiles(prev => [...prev, ...files])
+      setUploadError(null)
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleUploadSubmit = async () => {
+    if (uploadTab === 'upload' && uploadedFiles.length === 0) return
+    if (uploadTab === 'edgar' && !edgarTicker.trim()) return
+    
+    setIsUploading(true)
+    setUploadError(null)
+    
+    try {
+      if (uploadTab === 'upload') {
+        // Upload files
+        const formData = new FormData()
+        uploadedFiles.forEach(file => formData.append('files', file))
+        
+        const response = await fetch('/api/ranger/documents', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        if (!response.ok) {
+          throw new Error('Upload failed')
+        }
+        
+        const result = await response.json()
+        
+        // Add uploaded docs to matrix
+        const newRows: MatrixRow[] = result.documents.map((doc: { id: string; name: string; type: string }) => ({
+          id: doc.id,
+          documentName: doc.name,
+          documentType: doc.type || 'Document',
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          cells: columns.reduce((acc, col) => ({
+            ...acc,
+            [col.id]: {
+              id: `cell-${doc.id}-${col.id}`,
+              value: 'Pending extraction...',
+              status: 'loading' as const,
+              sourceDocId: doc.id,
+            }
+          }), {})
+        }))
+        
+        setMatrixData(prev => [...prev, ...newRows])
+        
+      } else {
+        // Import from SEC EDGAR
+        const response = await fetch('/api/ranger/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'sec-edgar',
+            ticker: edgarTicker.toUpperCase(),
+            formTypes: edgarFormTypes,
+            limit: 5,
+          }),
+        })
+        
+        if (!response.ok) {
+          throw new Error('SEC import failed')
+        }
+        
+        const result = await response.json()
+        
+        // Add imported docs to matrix
+        const newRows: MatrixRow[] = result.documents.map((doc: { id: string; name: string; type: string }) => ({
+          id: doc.id,
+          documentName: doc.name,
+          documentType: doc.type || '10-K',
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          logoUrl: 'https://logo.clearbit.com/sec.gov',
+          cells: columns.reduce((acc, col) => ({
+            ...acc,
+            [col.id]: {
+              id: `cell-${doc.id}-${col.id}`,
+              value: 'Pending extraction...',
+              status: 'loading' as const,
+              sourceDocId: doc.id,
+            }
+          }), {})
+        }))
+        
+        setMatrixData(prev => [...prev, ...newRows])
+      }
+      
+      // Reset and close
+      setUploadedFiles([])
+      setEdgarTicker('')
+      setShowUploadModal(false)
+      
+      // TODO: Trigger actual Ranger extraction for the new documents
+      
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Something went wrong')
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleCellClick = (cell: Cell) => {
@@ -730,8 +873,11 @@ export default function SearchPage() {
                   Display
                 </button>
                 <div className="flex items-center gap-2">
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
-                    <FileText className="w-4 h-4" />
+                  <button 
+                    onClick={() => setShowUploadModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700"
+                  >
+                    <Plus className="w-4 h-4" />
                     Add documents
                   </button>
                   <button onClick={() => setShowAddColumnModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
@@ -1163,6 +1309,191 @@ export default function SearchPage() {
             <div className="px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
               <button onClick={() => setShowAddColumnModal(false)} className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer">Cancel</button>
               <button onClick={handleAddColumn} disabled={!newColumnQuestion.trim()} className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-medium cursor-pointer disabled:cursor-not-allowed">Add Column</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Documents Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !isUploading && setShowUploadModal(false)} />
+          <div className="relative w-full max-w-lg rounded-xl bg-white shadow-2xl">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Add Documents</h2>
+              <p className="text-sm text-gray-500 mt-1">Upload files or import from SEC EDGAR</p>
+            </div>
+            
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => setUploadTab('upload')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                  uploadTab === 'upload' 
+                    ? 'text-gray-900 border-b-2 border-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Upload className="w-4 h-4" />
+                Upload Files
+              </button>
+              <button
+                onClick={() => setUploadTab('edgar')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                  uploadTab === 'edgar' 
+                    ? 'text-gray-900 border-b-2 border-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                SEC EDGAR
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="px-6 py-6">
+              {uploadTab === 'upload' ? (
+                <div>
+                  {/* Drop Zone */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`
+                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+                      ${isDragging 
+                        ? 'border-gray-900 bg-gray-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                      }
+                    `}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.docx,.txt,.md"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center mx-auto mb-4">
+                      <Upload className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">
+                      Drop files here or click to browse
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      PDF, DOCX, TXT, MD up to 50MB each
+                    </p>
+                  </div>
+                  
+                  {/* File List */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {uploadedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                            <span className="text-xs text-gray-400 flex-shrink-0">
+                              {(file.size / 1024 / 1024).toFixed(1)}MB
+                            </span>
+                          </div>
+                          <button 
+                            onClick={() => removeFile(idx)}
+                            className="p-1 hover:bg-gray-200 rounded cursor-pointer"
+                          >
+                            <X className="w-4 h-4 text-gray-400" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Ticker Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Ticker
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={edgarTicker}
+                        onChange={(e) => setEdgarTicker(e.target.value.toUpperCase())}
+                        placeholder="e.g., NVDA, AAPL, MSFT"
+                        className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:border-gray-400 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Form Types */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Filing Types
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {['10-K', '10-Q', '8-K', 'DEF 14A'].map(form => (
+                        <button
+                          key={form}
+                          onClick={() => {
+                            setEdgarFormTypes(prev => 
+                              prev.includes(form) 
+                                ? prev.filter(f => f !== form)
+                                : [...prev, form]
+                            )
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                            edgarFormTypes.includes(form)
+                              ? 'bg-gray-900 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {form}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+                    <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-600">
+                      SEC EDGAR filings are publicly available. We&apos;ll import the most recent filings matching your criteria.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Error */}
+              {uploadError && (
+                <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-700">{uploadError}</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Footer */}
+            <div className="px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                disabled={isUploading}
+                className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUploadSubmit}
+                disabled={isUploading || (uploadTab === 'upload' ? uploadedFiles.length === 0 : !edgarTicker.trim())}
+                className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-medium cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {uploadTab === 'upload' ? 'Upload' : 'Import'}
+              </button>
             </div>
           </div>
         </div>
