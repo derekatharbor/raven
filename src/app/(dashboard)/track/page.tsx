@@ -196,7 +196,7 @@ function SourceLogo({ domain, size = 20 }: { domain: string; size?: number }) {
   
   return (
     <img
-      src={`https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}?c=1id_MqBVYAAqaciBwi1`}
+      src={`https://cdn.brandfetch.io/${domain}?c=1id1Fyz-h7an5-5KR_y`}
       alt={domain}
       width={size}
       height={size}
