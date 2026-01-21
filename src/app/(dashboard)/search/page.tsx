@@ -444,7 +444,7 @@ export default function SearchPage() {
   }
 
   const handleCellClick = (cell: Cell) => {
-    if (cell.status === 'complete' && cell.value && cell.status !== 'empty') {
+    if (cell.status === 'complete' && cell.value) {
       if (expandedCell === cell.id) {
         setExpandedCell(null)
       } else {
