@@ -544,6 +544,8 @@ export default function SearchPage() {
     setUploadError(null)
     
     try {
+      let importedDocs: { id: string; name: string; type: string; content?: string }[] = []
+      
       if (uploadTab === 'upload') {
         // Upload files
         const formData = new FormData()
@@ -559,25 +561,7 @@ export default function SearchPage() {
         }
         
         const result = await response.json()
-        
-        // Add uploaded docs to matrix
-        const newRows: MatrixRow[] = result.documents.map((doc: { id: string; name: string; type: string }) => ({
-          id: doc.id,
-          documentName: doc.name,
-          documentType: doc.type || 'Document',
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          cells: columns.reduce((acc, col) => ({
-            ...acc,
-            [col.id]: {
-              id: `cell-${doc.id}-${col.id}`,
-              value: 'Pending extraction...',
-              status: 'loading' as const,
-              sourceDocId: doc.id,
-            }
-          }), {})
-        }))
-        
-        setMatrixData(prev => [...prev, ...newRows])
+        importedDocs = result.documents
         
       } else {
         // Import from SEC EDGAR
@@ -597,34 +581,75 @@ export default function SearchPage() {
         }
         
         const result = await response.json()
-        
-        // Add imported docs to matrix
-        const newRows: MatrixRow[] = result.documents.map((doc: { id: string; name: string; type: string }) => ({
-          id: doc.id,
-          documentName: doc.name,
-          documentType: doc.type || '10-K',
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          logoUrl: 'https://logo.clearbit.com/sec.gov',
-          cells: columns.reduce((acc, col) => ({
-            ...acc,
-            [col.id]: {
-              id: `cell-${doc.id}-${col.id}`,
-              value: 'Pending extraction...',
-              status: 'loading' as const,
-              sourceDocId: doc.id,
-            }
-          }), {})
-        }))
-        
-        setMatrixData(prev => [...prev, ...newRows])
+        importedDocs = result.documents
       }
       
-      // Reset and close
+      // Add docs to matrix with loading state
+      const newRows: MatrixRow[] = importedDocs.map((doc) => ({
+        id: doc.id,
+        documentName: doc.name,
+        documentType: doc.type || (uploadTab === 'edgar' ? '10-K' : 'Document'),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        logoUrl: uploadTab === 'edgar' ? 'https://logo.clearbit.com/sec.gov' : undefined,
+        cells: columns.reduce((acc, col) => ({
+          ...acc,
+          [col.id]: {
+            id: `cell-${doc.id}-${col.id}`,
+            value: 'Extracting...',
+            status: 'loading' as const,
+            sourceDocId: doc.id,
+          }
+        }), {})
+      }))
+      
+      setMatrixData(prev => [...prev, ...newRows])
+      
+      // Reset and close modal
       setUploadedFiles([])
       setEdgarTicker('')
       setShowUploadModal(false)
       
-      // TODO: Trigger actual Ranger extraction for the new documents
+      // Run extraction for each column (in background)
+      for (const col of columns) {
+        try {
+          const response = await fetch('/api/ranger', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: col.question,
+              documents: importedDocs.map(d => ({
+                id: d.id,
+                name: d.name,
+                content: d.content || '',
+              })),
+            }),
+          })
+          
+          if (response.ok) {
+            const result = await response.json()
+            
+            // Update cells with extraction results
+            setMatrixData(prev => prev.map(row => {
+              const cell = result.cells[row.id]
+              if (cell) {
+                return {
+                  ...row,
+                  cells: {
+                    ...row.cells,
+                    [col.id]: {
+                      ...cell,
+                      id: `cell-${row.id}-${col.id}`,
+                    }
+                  }
+                }
+              }
+              return row
+            }))
+          }
+        } catch (err) {
+          console.error(`Extraction failed for column ${col.id}:`, err)
+        }
+      }
       
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Something went wrong')
@@ -1321,7 +1346,7 @@ export default function SearchPage() {
           <div className="relative w-full max-w-xl rounded-xl bg-gray-50 shadow-2xl">
             {/* Header */}
             <div className="px-6 py-4 flex items-center gap-3">
-              <img src="/images/raven-logo.png" alt="Raven" className="w-8 h-8 p-1.5 bg-gray-900 rounded" />
+              <img src="/images/raven-logo.png" alt="Raven" className="w-7 h-7" />
               <div className="flex items-center gap-3">
                 <h2 className="text-base font-semibold text-gray-900">Upload files</h2>
                 <span className="text-sm text-gray-500">All documents are private and fully encrypted</span>
