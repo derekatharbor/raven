@@ -3056,6 +3056,7 @@ export default function BlockCanvas({
   
   // Research panel state
   const [researchText, setResearchText] = useState('')
+  const [dockQuery, setDockQuery] = useState('')
   
   // Audit mode state
   const [auditMode, setAuditMode] = useState(false)
@@ -3604,15 +3605,84 @@ export default function BlockCanvas({
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: 0,
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: 10,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
+          gap: 8,
           zIndex: 20,
         }}>
+          {/* Search Bar - Above dock */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            width: 480,
+            padding: '10px 16px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: 10,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
+          }}>
+            <input
+              type="text"
+              placeholder="Research topics, verify claims, or ask a question..."
+              value={dockQuery}
+              onChange={(e) => setDockQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && dockQuery.trim()) {
+                  setResearchText(dockQuery)
+                  setPanelCollapsed(false)
+                  setDockQuery('')
+                }
+              }}
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: 14,
+                color: '#111',
+              }}
+            />
+            <button
+              onClick={() => {
+                if (dockQuery.trim()) {
+                  setResearchText(dockQuery)
+                  setPanelCollapsed(false)
+                  setDockQuery('')
+                } else {
+                  setPanelCollapsed(false)
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                border: 'none',
+                background: dockQuery.trim() ? '#22C55E' : '#F3F4F6',
+                color: dockQuery.trim() ? 'white' : '#9CA3AF',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Atom className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Toolbar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0,
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: 10,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
+          }}>
             {/* Left section - Tools */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
               <Tooltip label="Insert Block (+)">
@@ -3633,27 +3703,6 @@ export default function BlockCanvas({
                   }}
                 >
                   <Plus className="w-[18px] h-[18px]" />
-                </button>
-              </Tooltip>
-              
-              <Tooltip label="Research">
-                <button
-                  onClick={() => setPanelCollapsed(false)}
-                  className="dock-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 32,
-                    height: 32,
-                    borderRadius: 6,
-                    border: 'none',
-                    background: !panelCollapsed ? '#DCFCE7' : 'transparent',
-                    color: !panelCollapsed ? '#22C55E' : '#6B7280',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Atom className="w-[18px] h-[18px]" />
                 </button>
               </Tooltip>
             </div>
@@ -3732,11 +3781,12 @@ export default function BlockCanvas({
               </div>
             </div>
           </div>
+        </div>
 
           {/* Block Tray Modal - opens ABOVE dock */}
           {showBlockTray && (
             <BlockSelectorModal
-              position={{ bottom: 80, left: '50%' }}
+              position={{ bottom: 140, left: '50%' }}
               onSelect={(type) => {
                 addBlock(blocks[blocks.length - 1]?.id, type)
                 setShowBlockTray(false)
