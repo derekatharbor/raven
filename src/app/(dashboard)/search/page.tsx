@@ -68,6 +68,8 @@ interface Message {
   sources?: SourceReference[]
   stepsCompleted?: number
   isSearching?: boolean
+  query?: string  // Original question (for "Add as column")
+  extractedCells?: Record<string, Cell>  // Cells extracted for this query
 }
 
 // Mock data with full cell structure
@@ -339,9 +341,189 @@ export default function SearchPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   
-  const [columns, setColumns] = useState<MatrixColumn[]>(MOCK_COLUMNS)
-  const [matrixData, setMatrixData] = useState<MatrixRow[]>([])  // Start empty
-  const [messages, setMessages] = useState<Message[]>([])  // Start empty
+  const [columns, setColumns] = useState<MatrixColumn[]>([
+    { id: 'col-1', question: 'Key Findings' },
+    { id: 'col-2', question: 'Client Recommendations' },
+  ])
+  const [matrixData, setMatrixData] = useState<MatrixRow[]>([
+    {
+      id: 'doc-1',
+      documentName: 'McKinsey Digital Transformation Report',
+      documentType: 'Industry Report',
+      date: 'Dec 12, 2024',
+      logoUrl: 'https://logo.clearbit.com/mckinsey.com',
+      cells: {
+        'col-1': {
+          id: 'cell-1-1',
+          value: '73% of enterprise digital transformations fail to deliver expected ROI. Primary drivers include lack of executive alignment and insufficient change management.',
+          status: 'complete',
+          sourceDocId: 'doc-1',
+          sourceLocation: 'Page 14, Executive Summary',
+          sourceSnippet: '"Our analysis of 1,200 transformation initiatives reveals that 73% fail to meet projected returns, with organizational resistance cited as the leading factor."',
+          reasoning: 'Extracted from executive summary as primary quantitative finding with clear attribution.',
+          confidence: 0.94,
+        },
+        'col-2': {
+          id: 'cell-1-2',
+          value: 'Establish transformation office with C-suite sponsorship. Implement 90-day sprint cycles with measurable KPIs tied to business outcomes.',
+          status: 'complete',
+          sourceDocId: 'doc-1',
+          sourceLocation: 'Page 42, Recommendations',
+          sourceSnippet: '"Organizations achieving top-quartile results consistently maintained dedicated transformation offices with direct CEO reporting lines."',
+          reasoning: 'Recommendation directly stated in conclusions section.',
+          confidence: 0.91,
+        },
+      }
+    },
+    {
+      id: 'doc-2',
+      documentName: 'Acme Corp Interview Transcripts',
+      documentType: 'Client Materials',
+      date: 'Jan 8, 2025',
+      logoUrl: 'https://logo.clearbit.com/zoom.us',
+      cells: {
+        'col-1': {
+          id: 'cell-2-1',
+          value: 'Current tech stack is fragmented across 14 different systems with no unified data layer. Engineering team spending 40% of time on integration maintenance.',
+          status: 'complete',
+          sourceDocId: 'doc-2',
+          sourceLocation: 'Interview 3, CTO Discussion',
+          sourceSnippet: '"We have fourteen different systems that don\'t talk to each other. My team spends almost half their time just keeping the integrations running."',
+          reasoning: 'Direct quote from CTO interview highlighting core technical challenge.',
+          confidence: 0.96,
+          verified: true,
+          verifiedBy: 'Sarah Chen'
+        },
+        'col-2': {
+          id: 'cell-2-2',
+          value: 'Prioritize API gateway implementation in Q1. Consider Mulesoft or Kong for enterprise integration layer before any new system additions.',
+          status: 'complete',
+          sourceDocId: 'doc-2',
+          sourceLocation: 'Interview 5, VP Engineering',
+          sourceSnippet: '"If I had to pick one thing, it would be getting a proper API layer in place. Everything else is downstream of that."',
+          reasoning: 'Synthesized from multiple engineering interviews pointing to integration as priority.',
+          confidence: 0.88,
+        },
+      }
+    },
+    {
+      id: 'doc-3',
+      documentName: 'Competitor Analysis - TechFlow Inc',
+      documentType: 'Competitive Intel',
+      date: 'Jan 3, 2025',
+      logoUrl: 'https://logo.clearbit.com/crunchbase.com',
+      cells: {
+        'col-1': {
+          id: 'cell-3-1',
+          value: 'TechFlow raised $45M Series C at $280M valuation. Expanding aggressively into mid-market with 60% YoY growth in SMB segment.',
+          status: 'complete',
+          sourceDocId: 'doc-3',
+          sourceLocation: 'Page 3, Funding Overview',
+          sourceSnippet: '"TechFlow announced $45M Series C led by Sequoia, valuing the company at $280M. CEO cited mid-market expansion as primary use of funds."',
+          reasoning: 'Key competitive intelligence on funding and strategic direction.',
+          confidence: 0.92,
+        },
+        'col-2': {
+          id: 'cell-3-2',
+          value: 'Accelerate enterprise feature roadmap to differentiate from TechFlow\'s SMB focus. Consider strategic partnership with Salesforce for distribution.',
+          status: 'complete',
+          sourceDocId: 'doc-3',
+          sourceLocation: 'Page 8, Strategic Implications',
+          sourceSnippet: '"TechFlow\'s mid-market pivot creates opportunity for competitors to own the enterprise segment."',
+          reasoning: 'Strategic recommendation derived from competitive positioning analysis.',
+          confidence: 0.85,
+        },
+      }
+    },
+    {
+      id: 'doc-4',
+      documentName: 'Workshop Notes - Strategy Offsite',
+      documentType: 'Internal Notes',
+      date: 'Jan 15, 2025',
+      logoUrl: 'https://logo.clearbit.com/miro.com',
+      cells: {
+        'col-1': {
+          id: 'cell-4-1',
+          value: 'Leadership aligned on three strategic pillars: operational efficiency, customer experience, and talent development. Budget reallocation of $2.4M approved.',
+          status: 'complete',
+          sourceDocId: 'doc-4',
+          sourceLocation: 'Session 2, Strategic Priorities',
+          sourceSnippet: '"After extensive discussion, the executive team agreed to reallocate $2.4M from legacy system maintenance to the three identified strategic pillars."',
+          reasoning: 'Key decision point from strategy workshop with budget implications.',
+          confidence: 0.97,
+          verified: true,
+          verifiedBy: 'Mike Torres'
+        },
+        'col-2': {
+          id: 'cell-4-2',
+          value: 'Draft 100-day implementation plan with clear ownership. Schedule monthly steering committee reviews with CEO and CFO.',
+          status: 'complete',
+          sourceDocId: 'doc-4',
+          sourceLocation: 'Session 4, Next Steps',
+          sourceSnippet: '"Action item: consulting team to deliver 100-day plan by EOW with named owners for each workstream."',
+          reasoning: 'Explicit next steps captured from workshop closing session.',
+          confidence: 0.93,
+        },
+      }
+    },
+    {
+      id: 'doc-5',
+      documentName: 'Gartner Hype Cycle 2024',
+      documentType: 'Industry Report',
+      date: 'Nov 28, 2024',
+      logoUrl: 'https://logo.clearbit.com/gartner.com',
+      cells: {
+        'col-1': {
+          id: 'cell-5-1',
+          value: 'Generative AI moving from "Peak of Inflated Expectations" toward "Trough of Disillusionment." Enterprise adoption at 24%, up from 8% in 2023.',
+          status: 'complete',
+          sourceDocId: 'doc-5',
+          sourceLocation: 'Page 18, AI Analysis',
+          sourceSnippet: '"Generative AI has begun its descent from the Peak, with enterprise adoption reaching 24%. We expect the Trough within 18-24 months."',
+          reasoning: 'Key market timing insight from authoritative industry source.',
+          confidence: 0.95,
+        },
+        'col-2': {
+          id: 'cell-5-2',
+          value: 'Focus AI investments on proven use cases with clear ROI. Avoid experimental initiatives until technology matures past Trough phase.',
+          status: 'complete',
+          sourceDocId: 'doc-5',
+          sourceLocation: 'Page 31, Recommendations',
+          sourceSnippet: '"Organizations should prioritize AI use cases with demonstrated 6-month payback periods rather than speculative long-term bets."',
+          reasoning: 'Direct recommendation from Gartner on AI investment strategy.',
+          confidence: 0.89,
+        },
+      }
+    },
+  ])
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'msg-1',
+      role: 'user',
+      content: 'What are the main technology challenges facing Acme Corp?'
+    },
+    {
+      id: 'msg-2',
+      role: 'assistant',
+      content: 'Based on my analysis of the interview transcripts and workshop notes, Acme Corp faces several critical technology challenges:\n\n**System Fragmentation**\nThe organization operates 14 disconnected systems with no unified data layer. This creates significant operational overhead, with the engineering team dedicating approximately 40% of their capacity to integration maintenance rather than value-adding work [1].\n\n**Technical Debt**\nLegacy system maintenance is consuming resources that leadership wants to redirect toward strategic initiatives. The recent strategy offsite approved reallocating $2.4M away from legacy maintenance [2].\n\n**Integration Architecture**\nMultiple engineering leaders identified API gateway implementation as the critical first step before any new system additions can be effective [1].',
+      sources: [
+        { cellId: 'cell-2-1', label: '1' },
+        { cellId: 'cell-4-1', label: '2' },
+      ],
+      stepsCompleted: 5,
+      query: 'What are the main technology challenges facing Acme Corp?',
+      extractedCells: {
+        'doc-2': {
+          id: 'cell-2-1',
+          value: 'Current tech stack is fragmented across 14 different systems with no unified data layer.',
+          status: 'complete',
+          sourceDocId: 'doc-2',
+          sourceLocation: 'Interview 3, CTO Discussion',
+          confidence: 0.96,
+        }
+      }
+    }
+  ])
   const [query, setQuery] = useState('')
   const [showEditorPane, setShowEditorPane] = useState(false)
   const [editorWidth, setEditorWidth] = useState(400)
@@ -584,22 +766,14 @@ export default function SearchPage() {
         importedDocs = result.documents
       }
       
-      // Add docs to matrix with loading state
+      // Add docs to matrix with loading state (cells only for existing columns)
       const newRows: MatrixRow[] = importedDocs.map((doc) => ({
         id: doc.id,
         documentName: doc.name,
         documentType: doc.type || (uploadTab === 'edgar' ? '10-K' : 'Document'),
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         logoUrl: uploadTab === 'edgar' ? 'https://logo.clearbit.com/sec.gov' : undefined,
-        cells: columns.reduce((acc, col) => ({
-          ...acc,
-          [col.id]: {
-            id: `cell-${doc.id}-${col.id}`,
-            value: 'Extracting...',
-            status: 'loading' as const,
-            sourceDocId: doc.id,
-          }
-        }), {})
+        cells: {}  // Start with no cells - columns are added via chat
       }))
       
       setMatrixData(prev => [...prev, ...newRows])
@@ -609,45 +783,47 @@ export default function SearchPage() {
       setEdgarTicker('')
       setShowUploadModal(false)
       
-      // Run extraction for each column (in background)
-      for (const col of columns) {
-        try {
-          const response = await fetch('/api/ranger', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              query: col.question,
-              documents: importedDocs.map(d => ({
-                id: d.id,
-                name: d.name,
-                content: d.content || '',
-              })),
-            }),
-          })
-          
-          if (response.ok) {
-            const result = await response.json()
+      // If there are existing columns, run extraction for the new docs
+      if (columns.length > 0) {
+        for (const col of columns) {
+          try {
+            const response = await fetch('/api/ranger', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                query: col.question,
+                documents: importedDocs.map(d => ({
+                  id: d.id,
+                  name: d.name,
+                  content: d.content || '',
+                })),
+              }),
+            })
             
-            // Update cells with extraction results
-            setMatrixData(prev => prev.map(row => {
-              const cell = result.cells[row.id]
-              if (cell) {
-                return {
-                  ...row,
-                  cells: {
-                    ...row.cells,
-                    [col.id]: {
-                      ...cell,
-                      id: `cell-${row.id}-${col.id}`,
+            if (response.ok) {
+              const result = await response.json()
+              
+              // Update cells with extraction results
+              setMatrixData(prev => prev.map(row => {
+                const cell = result.cells[row.id]
+                if (cell) {
+                  return {
+                    ...row,
+                    cells: {
+                      ...row.cells,
+                      [col.id]: {
+                        ...cell,
+                        id: `cell-${row.id}-${col.id}`,
+                      }
                     }
                   }
                 }
-              }
-              return row
-            }))
+                return row
+              }))
+            }
+          } catch (err) {
+            console.error(`Extraction failed for column ${col.id}:`, err)
           }
-        } catch (err) {
-          console.error(`Extraction failed for column ${col.id}:`, err)
         }
       }
       
@@ -670,27 +846,100 @@ export default function SearchPage() {
     setShowEditorPane(true)
   }
 
-  const handleSubmitQuery = () => {
+  const handleSubmitQuery = async () => {
     if (!query.trim()) return
+    if (matrixData.length === 0) {
+      // No documents to search
+      setMessages(prev => [...prev, 
+        { id: `msg-${Date.now()}`, role: 'user', content: query },
+        { id: `msg-${Date.now() + 1}`, role: 'assistant', content: 'Please upload some documents first so I can search through them.' }
+      ])
+      setQuery('')
+      return
+    }
     
-    setMessages(prev => [...prev, { id: `msg-${Date.now()}`, role: 'user', content: query }])
+    const userQuery = query
+    setMessages(prev => [...prev, { id: `msg-${Date.now()}`, role: 'user', content: userQuery }])
     setQuery('')
     setIsProcessing(true)
     
-    // Simulate Ranger searching
-    setTimeout(() => {
+    try {
+      // Call Ranger API
+      const response = await fetch('/api/ranger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: userQuery,
+          documents: matrixData.map(row => ({
+            id: row.id,
+            name: row.documentName,
+            content: '', // Content should be fetched from store or passed differently
+          })),
+        }),
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        
+        setMessages(prev => [...prev, {
+          id: `msg-${Date.now() + 1}`,
+          role: 'assistant',
+          content: result.summary || 'I analyzed the documents and found relevant information.',
+          sources: result.sources || [],
+          stepsCompleted: Object.keys(result.cells || {}).length,
+          query: userQuery,
+          extractedCells: result.cells,
+        }])
+      } else {
+        setMessages(prev => [...prev, {
+          id: `msg-${Date.now() + 1}`,
+          role: 'assistant',
+          content: 'Sorry, I encountered an error while searching. Please try again.',
+        }])
+      }
+    } catch (error) {
+      console.error('Query failed:', error)
       setMessages(prev => [...prev, {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: 'Based on my analysis of the selected documents, I found several relevant findings. The key points have been extracted and linked to their source cells below.',
-        sources: [
-          { cellId: 'cell-1-1', label: '1' },
-          { cellId: 'cell-2-2', label: '2' },
-        ],
-        stepsCompleted: 8
+        content: 'Sorry, something went wrong. Please try again.',
       }])
+    } finally {
       setIsProcessing(false)
-    }, 2000)
+    }
+  }
+
+  // Add a chat response as a new column
+  const addAsColumn = (message: Message) => {
+    if (!message.query || !message.extractedCells) return
+    
+    const newColId = `col-${Date.now()}`
+    const newCol: MatrixColumn = {
+      id: newColId,
+      question: message.query,
+    }
+    
+    setColumns(prev => [...prev, newCol])
+    
+    // Add cells to each row
+    setMatrixData(prev => prev.map(row => {
+      const extractedCell = message.extractedCells?.[row.id]
+      return {
+        ...row,
+        cells: {
+          ...row.cells,
+          [newColId]: extractedCell ? {
+            ...extractedCell,
+            id: `cell-${row.id}-${newColId}`,
+          } : {
+            id: `cell-${row.id}-${newColId}`,
+            value: 'Not found in document',
+            status: 'empty' as const,
+            sourceDocId: row.id,
+          }
+        }
+      }
+    }))
   }
 
   const getConfidenceColor = (confidence: number) => {
@@ -717,10 +966,34 @@ export default function SearchPage() {
     return null
   }
 
-  // Render message content with clickable source pills
+  // Render message content with clickable source pills and bold text
   const renderMessageContent = (message: Message) => {
+    // Helper to parse bold markdown in a string
+    const parseBold = (text: string, keyPrefix: string): React.ReactNode[] => {
+      const parts: React.ReactNode[] = []
+      const boldRegex = /\*\*(.+?)\*\*/g
+      let lastIdx = 0
+      let match
+      let partIdx = 0
+      
+      while ((match = boldRegex.exec(text)) !== null) {
+        // Add text before bold
+        if (match.index > lastIdx) {
+          parts.push(<span key={`${keyPrefix}-t${partIdx++}`}>{text.slice(lastIdx, match.index)}</span>)
+        }
+        // Add bold text
+        parts.push(<strong key={`${keyPrefix}-b${partIdx++}`} className="font-semibold">{match[1]}</strong>)
+        lastIdx = match.index + match[0].length
+      }
+      // Add remaining text
+      if (lastIdx < text.length) {
+        parts.push(<span key={`${keyPrefix}-t${partIdx++}`}>{text.slice(lastIdx)}</span>)
+      }
+      return parts.length > 0 ? parts : [<span key={`${keyPrefix}-plain`}>{text}</span>]
+    }
+
     if (!message.sources || message.sources.length === 0) {
-      return <div className="text-sm text-gray-900 whitespace-pre-wrap">{message.content}</div>
+      return <div className="text-sm text-gray-900 whitespace-pre-wrap">{parseBold(message.content, 'msg')}</div>
     }
 
     // Replace [N] with clickable pills
@@ -733,11 +1006,9 @@ export default function SearchPage() {
       const index = content.indexOf(pattern, lastIndex)
       
       if (index !== -1) {
-        // Add text before the reference
+        // Add text before the reference (with bold parsing)
         if (index > lastIndex) {
-          elements.push(
-            <span key={`text-${lastIndex}`}>{content.slice(lastIndex, index)}</span>
-          )
+          elements.push(...parseBold(content.slice(lastIndex, index), `text-${lastIndex}`))
         }
         
         // Add clickable pill
@@ -755,9 +1026,9 @@ export default function SearchPage() {
       }
     })
     
-    // Add remaining text
+    // Add remaining text (with bold parsing)
     if (lastIndex < content.length) {
-      elements.push(<span key={`text-final`}>{content.slice(lastIndex)}</span>)
+      elements.push(...parseBold(content.slice(lastIndex), 'text-final'))
     }
 
     return <div className="text-sm text-gray-900 whitespace-pre-wrap">{elements}</div>
@@ -771,8 +1042,8 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">First Screen Project Alpha</span>
-            <span className="text-xs text-gray-400">Saved at 10:49am</span>
+            <span className="text-sm font-semibold text-gray-900">Acme Corp Digital Transformation</span>
+            <span className="text-xs text-gray-400">Saved at 2:34pm</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -843,6 +1114,16 @@ export default function SearchPage() {
                                 </button>
                               )}
                               {renderMessageContent(msg)}
+                              {/* Add as column button for assistant messages with extractions */}
+                              {msg.role === 'assistant' && msg.query && msg.extractedCells && (
+                                <button
+                                  onClick={() => addAsColumn(msg)}
+                                  className="mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer text-xs text-gray-600 hover:text-gray-900 transition-colors"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  Add as column
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
