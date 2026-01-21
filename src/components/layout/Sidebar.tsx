@@ -14,6 +14,7 @@ import {
   Check,
   Home,
   BarChart3,
+  Radar,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -81,6 +82,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               <BarChart3 className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Analytics</span>
             </Link>
+            <Link 
+              href="/track"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/track') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+            >
+              <Radar className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] text-gray-900">Track</span>
+            </Link>
           </div>
         ) : (
           <div className="space-y-0.5">
@@ -104,6 +112,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               title="Analytics"
             >
               <BarChart3 className="w-4 h-4 text-gray-500" />
+            </Link>
+            <Link 
+              href="/track"
+              className={`flex items-center justify-center p-2 rounded ${isActive('/track') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+              title="Track"
+            >
+              <Radar className="w-4 h-4 text-gray-500" />
             </Link>
           </div>
         )}
