@@ -343,8 +343,11 @@ export default function SearchPage() {
   const [newColumnQuestion, setNewColumnQuestion] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const [expandedCell, setExpandedCell] = useState<string | null>(null)
+  const [selectedCell, setSelectedCell] = useState<Cell | null>(null)
   const [highlightedCell, setHighlightedCell] = useState<string | null>(null)
+  const [chatExpanded, setChatExpanded] = useState(true)
+  const [chatHeight, setChatHeight] = useState(280)
+  const [isResizingChat, setIsResizingChat] = useState(false)
   const [stepsExpanded, setStepsExpanded] = useState(false)
 
   const tableRef = useRef<HTMLDivElement>(null)
@@ -380,6 +383,36 @@ export default function SearchPage() {
     }
   }, [isResizing])
 
+  // Chat section resize
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingChat) return
+      const container = document.getElementById('search-main-container')
+      if (container) {
+        const containerTop = container.getBoundingClientRect().top
+        const newHeight = e.clientY - containerTop
+        setChatHeight(Math.max(100, Math.min(500, newHeight)))
+      }
+    }
+    
+    const handleMouseUp = () => setIsResizingChat(false)
+    
+    if (isResizingChat) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'row-resize'
+      document.body.style.userSelect = 'none'
+    } else {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizingChat])
+
   // Clear highlight after delay
   useEffect(() => {
     if (highlightedCell) {
@@ -389,12 +422,17 @@ export default function SearchPage() {
   }, [highlightedCell])
 
   const handleSourceClick = (cellId: string) => {
-    setHighlightedCell(cellId)
-    setExpandedCell(cellId)
-    // Scroll to cell in table
-    const cellElement = document.getElementById(`cell-${cellId}`)
-    if (cellElement) {
-      cellElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const cell = findCell(cellId)
+    if (cell) {
+      setSelectedCell(cell)
+      setHighlightedCell(cellId)
+      // Scroll to cell in table
+      const cellElement = document.getElementById(`cell-${cellId}`)
+      if (cellElement) {
+        cellElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      // Clear highlight after animation
+      setTimeout(() => setHighlightedCell(null), 2000)
     }
   }
 
@@ -445,11 +483,7 @@ export default function SearchPage() {
 
   const handleCellClick = (cell: Cell) => {
     if (cell.status === 'complete' && cell.value) {
-      if (expandedCell === cell.id) {
-        setExpandedCell(null)
-      } else {
-        setExpandedCell(cell.id)
-      }
+      setSelectedCell(cell)
     }
   }
 
@@ -576,73 +610,110 @@ export default function SearchPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Main */}
+        <div id="search-main-container" className="flex-1 flex overflow-hidden">
+          {/* Main content area */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Chat */}
-            <div className="border-b border-gray-200">
-              <div className="max-w-3xl mx-auto px-6 py-5">
-                <div className="space-y-5 mb-5 max-h-80 overflow-auto">
-                  {messages.map(msg => (
-                    <div key={msg.id} className="flex gap-3">
-                      {msg.role === 'user' ? (
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                          <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-gray-900">
-                          <Sparkles className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <div className="text-xs font-medium text-gray-500 mb-1">
-                          {msg.role === 'user' ? 'You' : 'Ranger'}
-                        </div>
-                        {msg.role === 'assistant' && msg.stepsCompleted && (
-                          <button 
-                            onClick={() => setStepsExpanded(!stepsExpanded)}
-                            className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer text-sm text-gray-600"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                            {msg.stepsCompleted} steps completed
-                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${stepsExpanded ? 'rotate-180' : ''}`} />
-                          </button>
-                        )}
-                        {renderMessageContent(msg)}
-                      </div>
-                    </div>
-                  ))}
-                  {isProcessing && (
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 bg-gray-900">
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-xs font-medium text-gray-500 mb-1">Ranger</div>
-                        <span className="text-sm text-gray-500">Searching documents...</span>
-                      </div>
-                    </div>
+            {/* Chat Section - Collapsible */}
+            <div className="flex-shrink-0 border-b border-gray-200">
+              {/* Chat Header */}
+              <button 
+                onClick={() => setChatExpanded(!chatExpanded)}
+                className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${chatExpanded ? '' : '-rotate-90'}`} />
+                  <span className="text-xs font-medium text-gray-600">Ranger Chat</span>
+                  {messages.length > 0 && (
+                    <span className="text-xs text-gray-400">{messages.length} messages</span>
                   )}
                 </div>
-                
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200">
-                  <MessageSquare className="w-4 h-4 text-gray-300" />
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSubmitQuery()}
-                    placeholder="Ask anything..."
-                    className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-400"
-                  />
-                  <button onClick={handleSubmitQuery} disabled={!query.trim()} className="p-1 text-gray-300 hover:text-gray-500 disabled:text-gray-200 cursor-pointer">
-                    <ArrowUp className="w-4 h-4" />
-                  </button>
+                {!chatExpanded && messages.length > 0 && (
+                  <span className="text-xs text-gray-400 truncate max-w-xs">
+                    {messages[messages.length - 1].content.slice(0, 50)}...
+                  </span>
+                )}
+              </button>
+              
+              {/* Chat Content */}
+              {chatExpanded && (
+                <div style={{ height: chatHeight }}>
+                  <div className="h-full flex flex-col">
+                    <div className="flex-1 overflow-auto px-6 py-4">
+                      <div className="max-w-3xl mx-auto space-y-4">
+                        {messages.map(msg => (
+                          <div key={msg.id} className="flex gap-3">
+                            {msg.role === 'user' ? (
+                              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0">
+                                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-gray-900">
+                                <Sparkles className="w-3.5 h-3.5 text-white" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium text-gray-500 mb-1">
+                                {msg.role === 'user' ? 'You' : 'Ranger'}
+                              </div>
+                              {msg.role === 'assistant' && msg.stepsCompleted && (
+                                <button 
+                                  onClick={() => setStepsExpanded(!stepsExpanded)}
+                                  className="flex items-center gap-2 mb-2 px-2.5 py-1 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer text-xs text-gray-600"
+                                >
+                                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                                  {msg.stepsCompleted} steps
+                                  <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${stepsExpanded ? 'rotate-180' : ''}`} />
+                                </button>
+                              )}
+                              {renderMessageContent(msg)}
+                            </div>
+                          </div>
+                        ))}
+                        {isProcessing && (
+                          <div className="flex gap-3">
+                            <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-gray-900">
+                              <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-xs font-medium text-gray-500 mb-1">Ranger</div>
+                              <span className="text-xs text-gray-500">Searching documents...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Input */}
+                    <div className="flex-shrink-0 px-6 pb-3">
+                      <div className="max-w-3xl mx-auto flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white">
+                        <MessageSquare className="w-4 h-4 text-gray-300" />
+                        <input
+                          type="text"
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSubmitQuery()}
+                          placeholder="Ask anything..."
+                          className="flex-1 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-400"
+                        />
+                        <button onClick={handleSubmitQuery} disabled={!query.trim()} className="p-1 text-gray-300 hover:text-gray-500 disabled:text-gray-200 cursor-pointer">
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+              
+              {/* Resize Handle */}
+              {chatExpanded && (
+                <div 
+                  onMouseDown={() => setIsResizingChat(true)}
+                  className="h-1 bg-gray-100 hover:bg-blue-200 cursor-row-resize transition-colors"
+                />
+              )}
             </div>
 
-            {/* Table */}
+            {/* Table Section */}
             <div ref={tableRef} className="flex-1 overflow-auto">
               <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50">
                 <button className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
@@ -707,14 +778,14 @@ export default function SearchPage() {
                       {columns.map(col => {
                         const cell = row.cells[col.id]
                         const isEmpty = cell?.status === 'empty'
-                        const isExpanded = expandedCell === cell?.id
+                        const isSelected = selectedCell?.id === cell?.id
                         const isHighlighted = highlightedCell === cell?.id
                         
                         return (
                           <td key={col.id} className="px-3 py-2.5 align-top">
                             <div 
                               id={`cell-${cell?.id}`}
-                              className={`rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-blue-400 bg-blue-50' : ''}`}
+                              className={`rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-blue-400 bg-blue-50' : ''} ${isSelected ? 'ring-2 ring-gray-900 bg-gray-50' : ''}`}
                             >
                               {cell?.status === 'loading' ? (
                                 <div className="flex items-center gap-2 text-gray-400 p-2">
@@ -722,100 +793,36 @@ export default function SearchPage() {
                                   <span className="text-xs">Ranger is extracting...</span>
                                 </div>
                               ) : (
-                                <div>
-                                  {/* Cell Content */}
-                                  <button 
-                                    onClick={() => handleCellClick(cell)}
-                                    className={`text-left w-full p-2 rounded-lg transition-colors ${
-                                      isEmpty 
-                                        ? 'text-gray-400 italic cursor-default' 
-                                        : 'text-gray-700 hover:bg-gray-50 cursor-pointer'
-                                    }`}
-                                  >
-                                    <div className="flex items-start gap-2">
-                                      <span className="text-sm flex-1">{cell?.value}</span>
-                                      {!isEmpty && cell?.confidence && (
-                                        <div className={`flex-shrink-0 text-xs ${getConfidenceColor(cell.confidence)}`}>
-                                          {Math.round(cell.confidence * 100)}%
-                                        </div>
-                                      )}
-                                    </div>
-                                    {!isEmpty && (
-                                      <div className="flex items-center gap-2 mt-1">
-                                        {cell?.sourceLocation && (
-                                          <span className="text-xs text-gray-400">{cell.sourceLocation}</span>
-                                        )}
-                                        {cell?.verified && (
-                                          <span className="inline-flex items-center gap-1 text-xs text-green-600">
-                                            <CheckCircle2 className="w-3 h-3" />
-                                            Verified
-                                          </span>
-                                        )}
+                                <button 
+                                  onClick={() => handleCellClick(cell)}
+                                  disabled={isEmpty}
+                                  className={`text-left w-full p-2 rounded-lg transition-colors ${
+                                    isEmpty 
+                                      ? 'text-gray-400 italic cursor-default' 
+                                      : 'text-gray-700 hover:bg-gray-50 cursor-pointer'
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-sm flex-1 line-clamp-3">{cell?.value}</span>
+                                    {!isEmpty && cell?.confidence && (
+                                      <div className={`flex-shrink-0 text-xs ${getConfidenceColor(cell.confidence)}`}>
+                                        {Math.round(cell.confidence * 100)}%
                                       </div>
                                     )}
-                                  </button>
-                                  
-                                  {/* Expanded Cell Details */}
-                                  {isExpanded && !isEmpty && (
-                                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
-                                      {/* Source Snippet */}
-                                      {cell?.sourceSnippet && (
-                                        <div>
-                                          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1">
-                                            <Quote className="w-3 h-3" />
-                                            Source Text
-                                          </div>
-                                          <p className="text-xs text-gray-600 italic bg-white p-2 rounded border border-gray-100">
-                                            {cell.sourceSnippet}
-                                          </p>
-                                        </div>
+                                  </div>
+                                  {!isEmpty && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {cell?.sourceLocation && (
+                                        <span className="text-xs text-gray-400">{cell.sourceLocation}</span>
                                       )}
-                                      
-                                      {/* Reasoning */}
-                                      {cell?.reasoning && (
-                                        <div>
-                                          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1">
-                                            <Info className="w-3 h-3" />
-                                            How Ranger Found This
-                                          </div>
-                                          <p className="text-xs text-gray-600">{cell.reasoning}</p>
-                                        </div>
+                                      {cell?.verified && (
+                                        <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                                          <CheckCircle2 className="w-3 h-3" />
+                                        </span>
                                       )}
-                                      
-                                      {/* Confidence & Related */}
-                                      <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                                        <div className="flex items-center gap-3">
-                                          {cell?.confidence && (
-                                            <span className={`text-xs font-medium ${getConfidenceColor(cell.confidence)}`}>
-                                              {getConfidenceLabel(cell.confidence)} confidence ({Math.round(cell.confidence * 100)}%)
-                                            </span>
-                                          )}
-                                          {cell?.relatedCells && cell.relatedCells.length > 0 && (
-                                            <span className="text-xs text-gray-400">
-                                              {cell.relatedCells.length} related cells
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                          <button 
-                                            onClick={() => insertToEditor(cell)}
-                                            className="p-1.5 rounded hover:bg-gray-200 cursor-pointer text-gray-400 hover:text-gray-600"
-                                            title="Insert to editor"
-                                          >
-                                            <ExternalLink className="w-3.5 h-3.5" />
-                                          </button>
-                                          <button 
-                                            onClick={() => navigator.clipboard.writeText(cell.value)}
-                                            className="p-1.5 rounded hover:bg-gray-200 cursor-pointer text-gray-400 hover:text-gray-600"
-                                            title="Copy"
-                                          >
-                                            <Copy className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                      </div>
                                     </div>
                                   )}
-                                </div>
+                                </button>
                               )}
                             </div>
                           </td>
@@ -831,6 +838,155 @@ export default function SearchPage() {
               </button>
             </div>
           </div>
+
+          {/* Cell Detail Pane */}
+          {selectedCell && (
+            <>
+              <div className="w-px bg-gray-200" />
+              <div className="w-80 flex flex-col bg-white border-l border-gray-200">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900">Cell Details</span>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedCell(null)}
+                    className="p-1 rounded hover:bg-gray-100 cursor-pointer text-gray-400"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 overflow-auto p-4 space-y-4">
+                  {/* Extracted Value */}
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 mb-2">Extracted Answer</div>
+                    <div className="text-sm text-gray-900 leading-relaxed">{selectedCell.value}</div>
+                  </div>
+                  
+                  {/* Confidence */}
+                  {selectedCell.confidence && (
+                    <div className="flex items-center gap-2">
+                      <div className={`text-xs font-medium ${getConfidenceColor(selectedCell.confidence)}`}>
+                        {getConfidenceLabel(selectedCell.confidence)} confidence
+                      </div>
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full ${
+                            selectedCell.confidence >= 0.8 ? 'bg-green-500' :
+                            selectedCell.confidence >= 0.6 ? 'bg-yellow-500' : 'bg-orange-500'
+                          }`}
+                          style={{ width: `${selectedCell.confidence * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500">{Math.round(selectedCell.confidence * 100)}%</span>
+                    </div>
+                  )}
+                  
+                  {/* Source Location */}
+                  {selectedCell.sourceLocation && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-500 mb-2">Source Location</div>
+                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                        <FileText className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-700">{selectedCell.sourceLocation}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Source Snippet */}
+                  {selectedCell.sourceSnippet && (
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
+                        <Quote className="w-3 h-3" />
+                        Source Text
+                      </div>
+                      <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
+                        <p className="text-sm text-gray-700 italic leading-relaxed">
+                          {selectedCell.sourceSnippet}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Reasoning */}
+                  {selectedCell.reasoning && (
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-2">
+                        <Info className="w-3 h-3" />
+                        How Ranger Found This
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">{selectedCell.reasoning}</p>
+                    </div>
+                  )}
+                  
+                  {/* Related Cells */}
+                  {selectedCell.relatedCells && selectedCell.relatedCells.length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-gray-500 mb-2">Related Cells</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedCell.relatedCells.map(cellId => (
+                          <button 
+                            key={cellId}
+                            onClick={() => {
+                              const cell = findCell(cellId)
+                              if (cell) {
+                                setSelectedCell(cell)
+                                setHighlightedCell(cellId)
+                                const cellElement = document.getElementById(`cell-${cellId}`)
+                                if (cellElement) {
+                                  cellElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                }
+                              }
+                            }}
+                            className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 cursor-pointer"
+                          >
+                            {cellId}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Verification Status */}
+                  {selectedCell.verified && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-100 rounded-lg">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <div>
+                        <div className="text-sm font-medium text-green-800">Verified</div>
+                        {selectedCell.verifiedBy && (
+                          <div className="text-xs text-green-600">by {selectedCell.verifiedBy}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Actions */}
+                <div className="flex-shrink-0 p-4 border-t border-gray-200 space-y-2">
+                  <button 
+                    onClick={() => {
+                      insertToEditor(selectedCell)
+                      setSelectedCell(null)
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Insert to Editor
+                  </button>
+                  <button 
+                    onClick={() => navigator.clipboard.writeText(selectedCell.value)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 cursor-pointer"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Editor Pane */}
           {showEditorPane && (
