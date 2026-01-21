@@ -68,14 +68,17 @@ export function detectDomain(content: string): EmbeddingDomain {
 
 export class EmbeddingService {
   private providers: Map<string, EmbeddingProvider> = new Map()
-  private defaultProvider: EmbeddingProvider
+  private defaultProvider!: EmbeddingProvider
   
   constructor() {
+    let hasProvider = false
+    
     // Initialize providers based on available API keys
     if (process.env.VOYAGE_API_KEY) {
       const voyage = createVoyageProvider()
       this.providers.set('voyage', voyage)
       this.defaultProvider = voyage
+      hasProvider = true
     }
     
     if (process.env.OPENAI_API_KEY) {
@@ -83,12 +86,13 @@ export class EmbeddingService {
       this.providers.set('openai', openai)
       
       // Use OpenAI as default if Voyage not available
-      if (!this.defaultProvider) {
+      if (!hasProvider) {
         this.defaultProvider = openai
+        hasProvider = true
       }
     }
     
-    if (!this.defaultProvider) {
+    if (!hasProvider) {
       throw new Error('No embedding provider configured. Set VOYAGE_API_KEY or OPENAI_API_KEY.')
     }
   }
