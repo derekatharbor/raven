@@ -1283,30 +1283,6 @@ function IntelligenceHub({
 
                   <div style={{ flex: 1 }} />
 
-                  {/* Background job button (when Deep Dive is ON) */}
-                  {deepDiveEnabled && (query.trim() || selectedText) && (
-                    <Tooltip label="Queue as background task">
-                      <button
-                        onClick={() => {
-                          const jobQuery = query.trim() || selectedText || ''
-                          if (jobQuery) {
-                            submitBackgroundJob(jobQuery, deepDiveSources)
-                            setQuery('')
-                          }
-                        }}
-                        style={{
-                          width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(147, 51, 234, 0.3)',
-                          background: 'rgba(147, 51, 234, 0.08)',
-                          color: '#9333EA',
-                          cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        <Briefcase className="w-3.5 h-3.5" />
-                      </button>
-                    </Tooltip>
-                  )}
-
                   {/* Send button */}
                   <button
                     onClick={handleSubmit}
