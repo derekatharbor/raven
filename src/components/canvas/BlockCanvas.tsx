@@ -3607,25 +3607,24 @@ export default function BlockCanvas({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           zIndex: 20,
         }}>
-          {/* Search Bar - Above dock */}
+          {/* Search Bar - Part of dock */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            width: 480,
-            padding: '10px 16px',
+            gap: 8,
+            padding: '6px 12px',
             background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: 10,
+            borderRadius: 8,
             boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
           }}>
             <input
               type="text"
-              placeholder="Research topics, verify claims, or ask a question..."
+              placeholder="Research topics, verify claims, or ask questions..."
               value={dockQuery}
               onChange={(e) => setDockQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -3636,12 +3635,12 @@ export default function BlockCanvas({
                 }
               }}
               style={{
-                flex: 1,
+                width: 340,
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                fontSize: 14,
-                color: '#111',
+                fontSize: 13,
+                color: '#374151',
               }}
             />
             <button
@@ -3658,8 +3657,8 @@ export default function BlockCanvas({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 borderRadius: 6,
                 border: 'none',
                 background: dockQuery.trim() ? '#22C55E' : '#F3F4F6',
@@ -3668,7 +3667,7 @@ export default function BlockCanvas({
                 transition: 'all 0.15s ease',
               }}
             >
-              <Atom className="w-4 h-4" />
+              <Atom className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -3680,11 +3679,11 @@ export default function BlockCanvas({
             background: 'rgba(255, 255, 255, 0.92)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: 10,
+            borderRadius: 8,
             boxShadow: '0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)',
           }}>
             {/* Left section - Tools */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '6px 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '4px 6px' }}>
               <Tooltip label="Insert Block (+)">
                 <button
                   onClick={() => setShowBlockTray(!showBlockTray)}
@@ -3693,45 +3692,45 @@ export default function BlockCanvas({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: 32,
-                    height: 32,
-                    borderRadius: 6,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 5,
                     border: 'none',
                     background: showBlockTray ? '#F3F4F6' : 'transparent',
                     color: showBlockTray ? '#111' : '#6B7280',
                     cursor: 'pointer',
                   }}
                 >
-                  <Plus className="w-[18px] h-[18px]" />
+                  <Plus className="w-4 h-4" />
                 </button>
               </Tooltip>
             </div>
             
             {/* Separator */}
-            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+            <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
             
-            {/* Center - Word count & Save status */}
+            {/* Center - Word count */}
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: 12,
-              padding: '6px 16px',
-              fontSize: 12,
-              color: '#6B7280',
+              gap: 8,
+              padding: '4px 12px',
+              fontSize: 11,
+              color: '#9CA3AF',
             }}>
-              <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+              <span>{wordCount} words</span>
             </div>
             
             {/* Separator */}
-            <div style={{ width: 1, height: 24, background: 'rgba(0,0,0,0.08)' }} />
+            <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.08)' }} />
             
             {/* Right section - Mode Switcher */}
-            <div style={{ padding: '6px 8px' }}>
+            <div style={{ padding: '4px 6px' }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 background: '#F3F4F6',
-                borderRadius: 6,
+                borderRadius: 5,
                 padding: 2,
               }}>
                 <button
@@ -3740,20 +3739,20 @@ export default function BlockCanvas({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 5,
-                    padding: '5px 10px',
-                    borderRadius: 4,
+                    gap: 4,
+                    padding: '4px 8px',
+                    borderRadius: 3,
                     border: 'none',
                     background: !auditMode ? 'white' : 'transparent',
                     color: !auditMode ? '#111' : '#6B7280',
                     cursor: 'pointer',
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 500,
                     boxShadow: !auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
                     transition: 'all 0.12s ease',
                   }}
                 >
-                  <PenLine className="w-3.5 h-3.5" />
+                  <PenLine className="w-3 h-3" />
                   Drafting
                 </button>
                 <button
@@ -3762,20 +3761,20 @@ export default function BlockCanvas({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 5,
-                    padding: '5px 10px',
-                    borderRadius: 4,
+                    gap: 4,
+                    padding: '4px 8px',
+                    borderRadius: 3,
                     border: 'none',
                     background: auditMode ? 'white' : 'transparent',
                     color: auditMode ? '#111' : '#6B7280',
                     cursor: 'pointer',
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 500,
                     boxShadow: auditMode ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
                     transition: 'all 0.12s ease',
                   }}
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-3 h-3" />
                   Audit
                 </button>
               </div>
@@ -3786,7 +3785,7 @@ export default function BlockCanvas({
           {/* Block Tray Modal - opens ABOVE dock */}
           {showBlockTray && (
             <BlockSelectorModal
-              position={{ bottom: 140, left: '50%' }}
+              position={{ bottom: 110, left: '50%' }}
               onSelect={(type) => {
                 addBlock(blocks[blocks.length - 1]?.id, type)
                 setShowBlockTray(false)
