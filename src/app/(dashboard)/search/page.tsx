@@ -46,6 +46,7 @@ interface MatrixRow {
   documentName: string
   documentType: string
   date: string
+  logoUrl?: string  // Favicon/logo for the document source
   cells: Record<string, Cell>
 }
 
@@ -81,6 +82,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'FY2024 P&L',
     documentType: 'Financials',
     date: 'Jan 18, 2024',
+    logoUrl: 'https://logo.clearbit.com/quickbooks.com',
     cells: {
       'col-1': { 
         id: 'cell-1-1',
@@ -109,6 +111,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Project Alpha CIM',
     documentType: 'Marketing Materials',
     date: 'Apr 29, 2024',
+    logoUrl: 'https://logo.clearbit.com/canva.com',
     cells: {
       'col-1': { 
         id: 'cell-2-1',
@@ -138,6 +141,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Product Overview Alpha',
     documentType: 'Product',
     date: 'Feb 26, 2024',
+    logoUrl: 'https://logo.clearbit.com/notion.so',
     cells: {
       'col-1': { 
         id: 'cell-3-1',
@@ -164,6 +168,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Product Roadmap',
     documentType: 'Product',
     date: 'Feb 26, 2024',
+    logoUrl: 'https://logo.clearbit.com/productboard.com',
     cells: {
       'col-1': { 
         id: 'cell-4-1',
@@ -192,6 +197,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Expert Calls Project Alpha',
     documentType: 'Customer',
     date: 'Mar 12, 2024',
+    logoUrl: 'https://logo.clearbit.com/gong.io',
     cells: {
       'col-1': { 
         id: 'cell-5-1',
@@ -221,6 +227,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Customer Reference Calls',
     documentType: 'Customer',
     date: 'Mar 18, 2024',
+    logoUrl: 'https://logo.clearbit.com/zoom.us',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
@@ -251,6 +258,7 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Market Report',
     documentType: 'Public Report',
     date: 'Mar 30, 2024',
+    logoUrl: 'https://logo.clearbit.com/gartner.com',
     cells: {
       'col-1': { 
         id: 'cell-7-1',
@@ -344,6 +352,7 @@ export default function SearchPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [selectedCell, setSelectedCell] = useState<Cell | null>(null)
+  const [selectedDocument, setSelectedDocument] = useState<MatrixRow | null>(null)
   const [highlightedCell, setHighlightedCell] = useState<string | null>(null)
   const [chatExpanded, setChatExpanded] = useState(true)
   const [chatHeight, setChatHeight] = useState(280)
@@ -732,112 +741,214 @@ export default function SearchPage() {
                 </div>
               </div>
               
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="w-10 px-3 py-2.5 text-left"><input type="checkbox" className="rounded border-gray-300 cursor-pointer" /></th>
-                    <th className="w-10 px-1 py-2.5"></th>
-                    <th className="min-w-[180px] px-3 py-2.5 text-left text-xs font-medium text-gray-500">
-                      <div className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" />Document</div>
-                    </th>
-                    <th className="w-28 px-3 py-2.5 text-left text-xs font-medium text-gray-500">
-                      <div className="flex items-center gap-1.5"><span className="text-gray-400">#</span>Date</div>
-                    </th>
-                    <th className="w-40 px-3 py-2.5 text-left text-xs font-medium text-gray-500">
-                      <div className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" />Document Type</div>
-                    </th>
-                    {columns.map(col => (
-                      <th key={col.id} className="min-w-[280px] px-3 py-2.5 text-left text-xs font-medium text-gray-500">
-                        <div className="flex items-center gap-1.5"><span className="text-gray-400">=</span>{col.question}</div>
+              <div className="border-t border-gray-200">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-white">
+                      <th className="w-10 px-3 py-3 text-left border-b border-r border-gray-200">
+                        <input type="checkbox" className="rounded border-gray-300 cursor-pointer" />
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {matrixData.map((row, idx) => (
-                    <tr key={row.id} className="border-b border-gray-100">
-                      <td className="px-3 py-2.5"><input type="checkbox" className="rounded border-gray-300 cursor-pointer" /></td>
-                      <td className="px-1 py-2.5">
-                        <div className="flex items-center gap-0.5 text-gray-400">
-                          <span className="text-xs w-4">{idx + 1}</span>
-                          <GripVertical className="w-3 h-3 cursor-grab" />
+                      <th className="w-8 px-1 py-3 border-b border-r border-gray-200"></th>
+                      <th className="min-w-[220px] px-3 py-3 text-left border-b border-r border-gray-200">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                          <FileText className="w-3.5 h-3.5" />
+                          Document
                         </div>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{row.documentName}</span>
+                      </th>
+                      <th className="w-32 px-3 py-3 text-left border-b border-r border-gray-200">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                          <span className="text-gray-400">=</span>
+                          Date
                         </div>
-                      </td>
-                      <td className="px-3 py-2.5 text-sm text-gray-600">{row.date}</td>
-                      <td className="px-3 py-2.5">
-                        <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium" style={{ background: docTypeColors[row.documentType]?.bg, color: docTypeColors[row.documentType]?.text }}>
-                          {row.documentType}
-                        </span>
-                      </td>
-                      {columns.map(col => {
-                        const cell = row.cells[col.id]
-                        const isEmpty = cell?.status === 'empty'
-                        const isSelected = selectedCell?.id === cell?.id
-                        const isHighlighted = highlightedCell === cell?.id
-                        
-                        return (
-                          <td key={col.id} className="px-3 py-2.5 align-top">
-                            <div 
-                              id={`cell-${cell?.id}`}
-                              className={`rounded-lg transition-all ${isHighlighted ? 'ring-2 ring-blue-400 bg-blue-50' : ''} ${isSelected ? 'ring-2 ring-gray-900 bg-gray-50' : ''}`}
-                            >
-                              {cell?.status === 'loading' ? (
-                                <div className="flex items-center gap-2 text-gray-400 p-2">
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  <span className="text-xs">Ranger is extracting...</span>
-                                </div>
-                              ) : (
-                                <button 
-                                  onClick={() => handleCellClick(cell)}
-                                  disabled={isEmpty}
-                                  className={`text-left w-full p-2 rounded-lg transition-colors ${
-                                    isEmpty 
-                                      ? 'text-gray-400 italic cursor-default' 
-                                      : 'text-gray-700 hover:bg-gray-50 cursor-pointer'
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-sm flex-1 line-clamp-3">{cell?.value}</span>
-                                    {!isEmpty && cell?.confidence && (
-                                      <div className={`flex-shrink-0 text-xs ${getConfidenceColor(cell.confidence)}`}>
-                                        {Math.round(cell.confidence * 100)}%
-                                      </div>
-                                    )}
-                                  </div>
-                                  {!isEmpty && (
-                                    <div className="flex items-center gap-2 mt-1">
-                                      {cell?.sourceLocation && (
-                                        <span className="text-xs text-gray-400">{cell.sourceLocation}</span>
-                                      )}
-                                      {cell?.verified && (
-                                        <span className="inline-flex items-center gap-1 text-xs text-green-600">
-                                          <CheckCircle2 className="w-3 h-3" />
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </button>
-                              )}
+                      </th>
+                      <th className="w-44 px-3 py-3 text-left border-b border-r border-gray-200">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Document Type
+                        </div>
+                      </th>
+                      {columns.map(col => (
+                        <th key={col.id} className="min-w-[260px] px-3 py-3 text-left border-b border-r border-gray-200 last:border-r-0">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                            <span className="text-gray-400">=</span>
+                            {col.question}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matrixData.map((row, idx) => {
+                      const isDocSelected = selectedDocument?.id === row.id
+                      
+                      return (
+                        <tr key={row.id} className="group">
+                          {/* Checkbox */}
+                          <td className="px-3 py-0 border-b border-r border-gray-200 bg-white">
+                            <input type="checkbox" className="rounded border-gray-300 cursor-pointer" />
+                          </td>
+                          
+                          {/* Row number + grip */}
+                          <td className="px-1 py-0 border-b border-r border-gray-200 bg-white">
+                            <div className="flex items-center gap-0.5 text-gray-400">
+                              <span className="text-xs w-4">{idx + 1}</span>
+                              <GripVertical className="w-3 h-3 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                           </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          
+                          {/* Document cell - clickable badge */}
+                          <td 
+                            className={`px-3 py-3 border-b border-r border-gray-200 cursor-pointer transition-colors ${
+                              isDocSelected ? 'bg-gray-100' : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => setSelectedDocument(isDocSelected ? null : row)}
+                          >
+                            <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-gray-100 max-w-full">
+                              {row.logoUrl ? (
+                                <img 
+                                  src={row.logoUrl} 
+                                  alt="" 
+                                  className="w-4 h-4 rounded flex-shrink-0"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                  }}
+                                />
+                              ) : (
+                                <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              )}
+                              <span className="text-sm font-medium text-gray-900 truncate">{row.documentName}</span>
+                            </div>
+                          </td>
+                          
+                          {/* Date cell */}
+                          <td className="px-3 py-3 border-b border-r border-gray-200 text-sm text-gray-600">
+                            {row.date}
+                          </td>
+                          
+                          {/* Document Type cell - colored badge */}
+                          <td className="px-3 py-3 border-b border-r border-gray-200">
+                            <span 
+                              className="inline-flex px-2.5 py-1 rounded-md text-xs font-medium"
+                              style={{ 
+                                background: docTypeColors[row.documentType]?.bg, 
+                                color: docTypeColors[row.documentType]?.text 
+                              }}
+                            >
+                              {row.documentType}
+                            </span>
+                          </td>
+                          
+                          {/* Data cells */}
+                          {columns.map(col => {
+                            const cell = row.cells[col.id]
+                            const isEmpty = cell?.status === 'empty'
+                            const isSelected = selectedCell?.id === cell?.id
+                            const isHighlighted = highlightedCell === cell?.id
+                            
+                            return (
+                              <td 
+                                key={col.id}
+                                id={`cell-${cell?.id}`}
+                                onClick={() => !isEmpty && cell && handleCellClick(cell)}
+                                className={`
+                                  px-3 py-3 border-b border-r border-gray-200 last:border-r-0
+                                  align-top transition-colors
+                                  ${isEmpty ? 'cursor-default' : 'cursor-pointer'}
+                                  ${isSelected ? 'bg-blue-50 ring-2 ring-inset ring-blue-400' : ''}
+                                  ${isHighlighted ? 'bg-yellow-50 ring-2 ring-inset ring-yellow-400' : ''}
+                                  ${!isSelected && !isHighlighted && !isEmpty ? 'hover:bg-gray-50' : ''}
+                                `}
+                              >
+                                {cell?.status === 'loading' ? (
+                                  <div className="flex items-center gap-2 text-gray-400">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span className="text-xs">Extracting...</span>
+                                  </div>
+                                ) : (
+                                  <div className={isEmpty ? 'text-gray-400 italic' : 'text-gray-700'}>
+                                    <p className="text-sm leading-snug line-clamp-2">{cell?.value}</p>
+                                  </div>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
               
-              <button className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 cursor-pointer">
+              <button className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 cursor-pointer border-t border-gray-200">
                 <Plus className="w-4 h-4" />Add row
               </button>
             </div>
           </div>
+
+          {/* Document Viewer Pane */}
+          {selectedDocument && !selectedCell && (
+            <>
+              <div className="w-px bg-gray-200" />
+              <div className="w-96 flex flex-col bg-white border-l border-gray-200">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {selectedDocument.logoUrl ? (
+                      <img src={selectedDocument.logoUrl} alt="" className="w-5 h-5 rounded flex-shrink-0" />
+                    ) : (
+                      <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    )}
+                    <span className="text-sm font-medium text-gray-900 truncate">{selectedDocument.documentName}</span>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedDocument(null)}
+                    className="p-1 rounded hover:bg-gray-100 cursor-pointer text-gray-400 flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                {/* Document Meta */}
+                <div className="px-4 py-3 border-b border-gray-100 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Type</span>
+                    <span 
+                      className="inline-flex px-2 py-0.5 rounded text-xs font-medium"
+                      style={{ 
+                        background: docTypeColors[selectedDocument.documentType]?.bg, 
+                        color: docTypeColors[selectedDocument.documentType]?.text 
+                      }}
+                    >
+                      {selectedDocument.documentType}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Date</span>
+                    <span className="text-xs text-gray-700">{selectedDocument.date}</span>
+                  </div>
+                </div>
+                
+                {/* Document Preview Placeholder */}
+                <div className="flex-1 overflow-auto p-4">
+                  <div className="h-full rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
+                    <div className="text-center p-4">
+                      <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 mb-1">Document Preview</p>
+                      <p className="text-xs text-gray-400">Full document viewer coming soon</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex-shrink-0 p-4 border-t border-gray-200">
+                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <ExternalLink className="w-4 h-4" />
+                    Open Full Document
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Cell Detail Pane */}
           {selectedCell && (
