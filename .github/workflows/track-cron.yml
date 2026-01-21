@@ -1,0 +1,48 @@
+# .github/workflows/track-cron.yml
+# Scheduled job to run tracked topic searches
+# Runs every hour to check for topics due for processing
+
+name: Track Cron
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  run-track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Trigger Track Cron
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          API_URL: ${{ secrets.API_URL }}
+        run: |
+          echo "Triggering track cron at $(date)"
+          
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "x-cron-secret: $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            "${API_URL}/api/track/cron")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "Response code: $http_code"
+          echo "Response body: $body"
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "Error: Cron job failed with status $http_code"
+            exit 1
+          fi
+          
+          echo "Cron job completed successfully"
+
+      - name: Report Results
+        if: always()
+        run: |
+          echo "Track cron job finished at $(date)"
