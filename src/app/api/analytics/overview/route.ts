@@ -53,11 +53,12 @@ export async function GET(req: NextRequest) {
     const docMap = new Map(userDocs.map(d => [d.id, d]))
 
     // Get published links for user's documents
+    // Include links where is_active is true OR null (for backwards compatibility)
     const { data: links, error: linksError } = await supabase
       .from('published_links')
       .select('id, document_id, slug, is_active, created_at')
       .in('document_id', docIds)
-      .eq('is_active', true)
+      .or('is_active.eq.true,is_active.is.null')
 
     if (linksError) {
       console.error('Error fetching links:', linksError)

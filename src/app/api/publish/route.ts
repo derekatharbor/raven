@@ -151,6 +151,7 @@ export async function POST(req: NextRequest) {
           current_version_id: version.id,
           require_email,
           notify_on_view,
+          is_active: true,
           expires_at: expires_in_days 
             ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000).toISOString()
             : null,

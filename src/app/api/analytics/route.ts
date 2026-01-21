@@ -54,12 +54,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Get published link
+    // Get published link (include null is_active for backwards compatibility)
     const { data: link } = await supabase
       .from('published_links')
       .select('id, slug')
       .eq('document_id', documentId)
-      .eq('is_active', true)
+      .or('is_active.eq.true,is_active.is.null')
       .single()
 
     if (!link) {
