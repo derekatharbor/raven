@@ -18,6 +18,11 @@ const docTypeColors: Record<string, { bg: string; text: string }> = {
   'Product': { bg: '#FAECEC', text: '#8B6B6B' },
   'Customer': { bg: '#E8F4EF', text: '#5B7B6B' },
   'Public Report': { bg: '#F3F0F7', text: '#6B5B7B' },
+  // Consulting document types
+  'Industry Report': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Client Materials': { bg: '#FDF6E3', text: '#8B7355' },
+  'Competitive Intel': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Internal Notes': { bg: '#E8F4EF', text: '#5B7B6B' },
 }
 
 // Cell interface - the core unit of extracted information
@@ -343,7 +348,7 @@ export default function SearchPage() {
   
   const [columns, setColumns] = useState<MatrixColumn[]>([
     { id: 'col-1', question: 'Key Findings' },
-    { id: 'col-2', question: 'Client Recommendations' },
+    { id: 'col-2', question: 'Recommendations' },
   ])
   const [matrixData, setMatrixData] = useState<MatrixRow[]>([
     {
@@ -377,7 +382,7 @@ export default function SearchPage() {
     },
     {
       id: 'doc-2',
-      documentName: 'Acme Corp Interview Transcripts',
+      documentName: 'Client Interview Transcripts',
       documentType: 'Client Materials',
       date: 'Jan 8, 2025',
       logoUrl: 'https://logo.clearbit.com/zoom.us',
@@ -408,14 +413,14 @@ export default function SearchPage() {
     },
     {
       id: 'doc-3',
-      documentName: 'Competitor Analysis - TechFlow Inc',
+      documentName: 'Competitor Landscape Analysis',
       documentType: 'Competitive Intel',
       date: 'Jan 3, 2025',
       logoUrl: 'https://logo.clearbit.com/crunchbase.com',
       cells: {
         'col-1': {
           id: 'cell-3-1',
-          value: 'TechFlow raised $45M Series C at $280M valuation. Expanding aggressively into mid-market with 60% YoY growth in SMB segment.',
+          value: 'Primary competitor raised $45M Series C at $280M valuation. Expanding aggressively into mid-market with 60% YoY growth in SMB segment.',
           status: 'complete',
           sourceDocId: 'doc-3',
           sourceLocation: 'Page 3, Funding Overview',
@@ -425,11 +430,11 @@ export default function SearchPage() {
         },
         'col-2': {
           id: 'cell-3-2',
-          value: 'Accelerate enterprise feature roadmap to differentiate from TechFlow\'s SMB focus. Consider strategic partnership with Salesforce for distribution.',
+          value: 'Accelerate enterprise feature roadmap to differentiate from competitor SMB focus. Consider strategic partnership with Salesforce for distribution.',
           status: 'complete',
           sourceDocId: 'doc-3',
           sourceLocation: 'Page 8, Strategic Implications',
-          sourceSnippet: '"TechFlow\'s mid-market pivot creates opportunity for competitors to own the enterprise segment."',
+          sourceSnippet: '"The mid-market pivot creates opportunity for competitors to own the enterprise segment."',
           reasoning: 'Strategic recommendation derived from competitive positioning analysis.',
           confidence: 0.85,
         },
@@ -437,7 +442,7 @@ export default function SearchPage() {
     },
     {
       id: 'doc-4',
-      documentName: 'Workshop Notes - Strategy Offsite',
+      documentName: 'Strategy Offsite Notes',
       documentType: 'Internal Notes',
       date: 'Jan 15, 2025',
       logoUrl: 'https://logo.clearbit.com/miro.com',
@@ -500,18 +505,18 @@ export default function SearchPage() {
     {
       id: 'msg-1',
       role: 'user',
-      content: 'What are the main technology challenges facing Acme Corp?'
+      content: 'What are the main technology challenges mentioned in the interviews?'
     },
     {
       id: 'msg-2',
       role: 'assistant',
-      content: 'Based on my analysis of the interview transcripts and workshop notes, Acme Corp faces several critical technology challenges:\n\n**System Fragmentation**\nThe organization operates 14 disconnected systems with no unified data layer. This creates significant operational overhead, with the engineering team dedicating approximately 40% of their capacity to integration maintenance rather than value-adding work [1].\n\n**Technical Debt**\nLegacy system maintenance is consuming resources that leadership wants to redirect toward strategic initiatives. The recent strategy offsite approved reallocating $2.4M away from legacy maintenance [2].\n\n**Integration Architecture**\nMultiple engineering leaders identified API gateway implementation as the critical first step before any new system additions can be effective [1].',
+      content: 'Based on my analysis of the interview transcripts and strategy notes, there are several critical technology challenges:\n\n**System Fragmentation**\nThe organization operates 14 disconnected systems with no unified data layer. This creates significant operational overhead, with the engineering team dedicating approximately 40% of their capacity to integration maintenance rather than value-adding work [1].\n\n**Technical Debt**\nLegacy system maintenance is consuming resources that leadership wants to redirect toward strategic initiatives. The recent strategy offsite approved reallocating $2.4M away from legacy maintenance [2].\n\n**Integration Architecture**\nMultiple engineering leaders identified API gateway implementation as the critical first step before any new system additions can be effective [1].',
       sources: [
         { cellId: 'cell-2-1', label: '1' },
         { cellId: 'cell-4-1', label: '2' },
       ],
       stepsCompleted: 5,
-      query: 'What are the main technology challenges facing Acme Corp?',
+      query: 'What are the main technology challenges mentioned in the interviews?',
       extractedCells: {
         'doc-2': {
           id: 'cell-2-1',
@@ -1042,7 +1047,7 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">Acme Corp Digital Transformation</span>
+            <span className="text-sm font-semibold text-gray-900">Q1 Strategy Research</span>
             <span className="text-xs text-gray-400">Saved at 2:34pm</span>
           </div>
           <div className="flex items-center gap-2">
@@ -1172,8 +1177,8 @@ export default function SearchPage() {
             </div>
 
             {/* Table Section */}
-            <div ref={tableRef} className="flex-1 overflow-auto">
-              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50">
+            <div ref={tableRef} className="flex-1 flex flex-col min-h-0">
+              <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 flex-shrink-0">
                 <button className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
                   <List className="w-4 h-4" />
                   Display
@@ -1193,7 +1198,8 @@ export default function SearchPage() {
                 </div>
               </div>
               
-              <div className="border-t border-gray-200">
+              <div className="flex-1 overflow-auto">
+                <div className="border-t border-gray-200">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-white">
@@ -1330,8 +1336,9 @@ export default function SearchPage() {
                   </tbody>
                 </table>
               </div>
+              </div>
               
-              <button className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 cursor-pointer border-t border-gray-200">
+              <button className="flex-shrink-0 w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 cursor-pointer border-t border-gray-200">
                 <Plus className="w-4 h-4" />Add row
               </button>
             </div>
