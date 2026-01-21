@@ -38,12 +38,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Get published link (include null is_active for backwards compatibility)
-    const { data: link } = await supabase
-      .from('published_links')
+    const { data: link } = await (supabase
+      .from('published_links' as any)
       .select('id, slug')
       .eq('document_id', documentId)
       .or('is_active.eq.true,is_active.is.null')
-      .single()
+      .single() as any)
 
     if (!link) {
       return NextResponse.json({ 
@@ -71,12 +71,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch sessions
-    const { data: sessions } = await supabase
-      .from('view_sessions')
+    const { data: sessions } = await (supabase
+      .from('view_sessions' as any)
       .select('*')
       .eq('link_id', link.id)
       .gte('started_at', startDate.toISOString())
-      .order('started_at', { ascending: false })
+      .order('started_at', { ascending: false }) as any)
 
     const allSessions = sessions || []
 
@@ -100,11 +100,11 @@ export async function GET(req: NextRequest) {
     const bounceRate = totalViews > 0 ? bounces / totalViews : 0
 
     // Fetch block metrics
-    const { data: blockMetrics } = await supabase
-      .from('block_metrics')
+    const { data: blockMetrics } = await (supabase
+      .from('block_metrics' as any)
       .select('*')
       .eq('link_id', link.id)
-      .order('block_index', { ascending: true })
+      .order('block_index', { ascending: true }) as any)
 
     // Format block metrics
     const formattedBlocks = (blockMetrics || []).map((b: any) => ({
@@ -190,13 +190,13 @@ export async function GET(req: NextRequest) {
     let questionTopics: { topic: string; count: number }[] = []
     
     try {
-      const { data: questionData } = await supabase
-        .from('document_questions')
+      const { data: questionData } = await (supabase
+        .from('document_questions' as any)
         .select('id, question, block_index, topic, created_at')
         .eq('link_id', link.id)
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(100) as any)
 
       questions = (questionData || []).map((q: any) => ({
         id: q.id,

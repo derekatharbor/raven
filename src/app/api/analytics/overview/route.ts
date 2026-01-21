@@ -37,11 +37,11 @@ export async function GET(req: NextRequest) {
 
     // Get published links for user's documents
     // Include links where is_active is true OR null (for backwards compatibility)
-    const { data: links, error: linksError } = await supabase
-      .from('published_links')
+    const { data: links, error: linksError } = await (supabase
+      .from('published_links' as any)
       .select('id, document_id, slug, is_active, created_at')
       .in('document_id', docIds)
-      .or('is_active.eq.true,is_active.is.null')
+      .or('is_active.eq.true,is_active.is.null') as any)
 
     if (linksError) {
       console.error('Error fetching links:', linksError)
@@ -62,10 +62,10 @@ export async function GET(req: NextRequest) {
         const doc = docMap.get(link.document_id)
         
         // Get sessions for this link
-        const { data: sessions } = await supabase
-          .from('view_sessions')
+        const { data: sessions } = await (supabase
+          .from('view_sessions' as any)
           .select('id, viewer_id, completion_rate, total_dwell_ms')
-          .eq('link_id', link.id)
+          .eq('link_id', link.id) as any)
 
         const allSessions = sessions || []
         const totalViews = allSessions.length
@@ -81,11 +81,11 @@ export async function GET(req: NextRequest) {
         let allQuestions: any[] = []
         let questionTopics: { topic: string; count: number }[] = []
         try {
-          const { data: questions } = await supabase
-            .from('document_questions')
+          const { data: questions } = await (supabase
+            .from('document_questions' as any)
             .select('topic, created_at')
             .eq('link_id', link.id)
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: false }) as any)
 
           allQuestions = questions || []
           
@@ -107,13 +107,13 @@ export async function GET(req: NextRequest) {
         let versionNumber = 1
         let publishedAt = link.created_at
         try {
-          const { data: version } = await supabase
-            .from('published_versions')
+          const { data: version } = await (supabase
+            .from('published_versions' as any)
             .select('version_number, published_at')
             .eq('document_id', link.document_id)
             .order('version_number', { ascending: false })
             .limit(1)
-            .single()
+            .single() as any)
           
           if (version) {
             versionNumber = version.version_number
