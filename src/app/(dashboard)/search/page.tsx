@@ -1318,41 +1318,48 @@ export default function SearchPage() {
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => !isUploading && setShowUploadModal(false)} />
-          <div className="relative w-full max-w-lg rounded-xl bg-white shadow-2xl">
+          <div className="relative w-full max-w-xl rounded-xl bg-gray-50 shadow-2xl">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Add Documents</h2>
-              <p className="text-sm text-gray-500 mt-1">Upload files or import from SEC EDGAR</p>
+            <div className="px-6 py-4 flex items-center gap-3">
+              <img src="/images/raven-logo.png" alt="Raven" className="w-8 h-8 p-1.5 bg-gray-900 rounded" />
+              <div className="flex items-center gap-3">
+                <h2 className="text-base font-semibold text-gray-900">Upload files</h2>
+                <span className="text-sm text-gray-500">All documents are private and fully encrypted</span>
+              </div>
+              <button 
+                onClick={() => !isUploading && setShowUploadModal(false)}
+                className="ml-auto p-1.5 hover:bg-gray-200 rounded cursor-pointer"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
             </div>
             
             {/* Tabs */}
-            <div className="flex border-b border-gray-200">
+            <div className="flex gap-1 px-6">
               <button
                 onClick={() => setUploadTab('upload')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg cursor-pointer transition-colors ${
                   uploadTab === 'upload' 
-                    ? 'text-gray-900 border-b-2 border-gray-900' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <Upload className="w-4 h-4" />
                 Upload Files
               </button>
               <button
                 onClick={() => setUploadTab('edgar')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg cursor-pointer transition-colors ${
                   uploadTab === 'edgar' 
-                    ? 'text-gray-900 border-b-2 border-gray-900' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-gray-900' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <Building2 className="w-4 h-4" />
                 SEC EDGAR
               </button>
             </div>
             
             {/* Content */}
-            <div className="px-6 py-6">
+            <div className="bg-white rounded-b-xl rounded-tr-xl p-6">
               {uploadTab === 'upload' ? (
                 <div>
                   {/* Drop Zone */}
@@ -1362,9 +1369,9 @@ export default function SearchPage() {
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                     className={`
-                      border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+                      border-2 border-dashed rounded-lg p-16 text-center cursor-pointer transition-colors
                       ${isDragging 
-                        ? 'border-gray-900 bg-gray-50' 
+                        ? 'border-gray-400 bg-gray-50' 
                         : 'border-gray-300 hover:border-gray-400'
                       }
                     `}
@@ -1377,14 +1384,11 @@ export default function SearchPage() {
                       onChange={handleFileSelect}
                       className="hidden"
                     />
-                    <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center mx-auto mb-4">
-                      <Upload className="w-6 h-6 text-white" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-900 mb-1">
-                      Drop files here or click to browse
+                    <p className="text-base font-medium text-gray-900 mb-2">
+                      Drag and drop files here
                     </p>
-                    <p className="text-xs text-gray-500">
-                      PDF, DOCX, TXT, MD up to 50MB each
+                    <p className="text-sm text-gray-500">
+                      .pdf, .docx, .txt, .md
                     </p>
                   </div>
                   
@@ -1401,7 +1405,7 @@ export default function SearchPage() {
                             </span>
                           </div>
                           <button 
-                            onClick={() => removeFile(idx)}
+                            onClick={(e) => { e.stopPropagation(); removeFile(idx) }}
                             className="p-1 hover:bg-gray-200 rounded cursor-pointer"
                           >
                             <X className="w-4 h-4 text-gray-400" />
@@ -1425,7 +1429,7 @@ export default function SearchPage() {
                         value={edgarTicker}
                         onChange={(e) => setEdgarTicker(e.target.value.toUpperCase())}
                         placeholder="e.g., NVDA, AAPL, MSFT"
-                        className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:border-gray-400 outline-none text-sm"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-200 focus:border-gray-400 outline-none text-sm"
                       />
                     </div>
                   </div>
@@ -1475,25 +1479,27 @@ export default function SearchPage() {
                   <p className="text-sm text-red-700">{uploadError}</p>
                 </div>
               )}
-            </div>
-            
-            {/* Footer */}
-            <div className="px-6 py-4 flex justify-end gap-3 border-t border-gray-200">
-              <button 
-                onClick={() => setShowUploadModal(false)}
-                disabled={isUploading}
-                className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleUploadSubmit}
-                disabled={isUploading || (uploadTab === 'upload' ? uploadedFiles.length === 0 : !edgarTicker.trim())}
-                className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-medium cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {uploadTab === 'upload' ? 'Upload' : 'Import'}
-              </button>
+              
+              {/* Footer */}
+              {(uploadedFiles.length > 0 || (uploadTab === 'edgar' && edgarTicker.trim())) && (
+                <div className="mt-6 flex justify-end gap-3">
+                  <button 
+                    onClick={() => setShowUploadModal(false)}
+                    disabled={isUploading}
+                    className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleUploadSubmit}
+                    disabled={isUploading}
+                    className="px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white text-sm font-medium cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {uploadTab === 'upload' ? `Upload ${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''}` : 'Import from EDGAR'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
