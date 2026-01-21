@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Plus, ChevronDown, ChevronRight, FileText, X, MoreHorizontal, GripVertical,
   Loader2, MessageSquare, ArrowUp, Copy, PanelRightOpen, ExternalLink, Table2, List,
-  CheckCircle2, AlertCircle, Eye, Link2, Sparkles, BookOpen, Quote, Info
+  CheckCircle2, AlertCircle, Eye, Link2, BookOpen, Quote, Info
 } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -656,8 +656,8 @@ export default function SearchPage() {
                                 <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="" className="w-full h-full object-cover" />
                               </div>
                             ) : (
-                              <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-gray-900">
-                                <Sparkles className="w-3.5 h-3.5 text-white" />
+                              <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-gray-900 p-1">
+                                <img src="/images/raven-logo-white.png" alt="Ranger" className="w-full h-full object-contain" />
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
