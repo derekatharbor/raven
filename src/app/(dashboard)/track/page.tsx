@@ -1,31 +1,17 @@
 // src/app/(dashboard)/track/page.tsx
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Search, Plus, MoreVertical, Pause, Trash2,
   Clock, Filter, Globe, X,
   Pencil, RefreshCw, Bell, BellOff, Eye,
   ChevronDown, ExternalLink, Calendar,
-  CheckSquare, Square, TrendingUp, AlertCircle
+  CheckSquare, Square, TrendingUp, AlertCircle, Loader2
 } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
-
-// Available sources with their domains for Brandfetch logos
-const AVAILABLE_SOURCES = [
-  { id: 'sec', name: 'SEC EDGAR', domain: 'sec.gov' },
-  { id: 'reuters', name: 'Reuters', domain: 'reuters.com' },
-  { id: 'bloomberg', name: 'Bloomberg', domain: 'bloomberg.com' },
-  { id: 'wsj', name: 'Wall Street Journal', domain: 'wsj.com' },
-  { id: 'ft', name: 'Financial Times', domain: 'ft.com' },
-  { id: 'nytimes', name: 'New York Times', domain: 'nytimes.com' },
-  { id: 'economist', name: 'The Economist', domain: 'economist.com' },
-  { id: 'cnbc', name: 'CNBC', domain: 'cnbc.com' },
-  { id: 'techcrunch', name: 'TechCrunch', domain: 'techcrunch.com' },
-  { id: 'arxiv', name: 'arXiv', domain: 'arxiv.org' },
-]
 
 // Topic colors - muted
 const topicColors: Record<string, { bg: string; text: string; dot: string }> = {
@@ -35,146 +21,40 @@ const topicColors: Record<string, { bg: string; text: string; dot: string }> = {
   'Regulatory': { bg: '#FFFBEB', text: '#92400E', dot: '#F59E0B' },
   'Market': { bg: '#F5F3FF', text: '#5B21B6', dot: '#8B5CF6' },
   'Competitive': { bg: '#ECFEFF', text: '#155E75', dot: '#06B6D4' },
+  'General': { bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' },
+}
+
+interface Source {
+  id: string
+  name: string
+  domain: string
+}
+
+interface Finding {
+  id: string
+  source_id: string
+  title: string
+  snippet: string
+  url: string
+  published_at: string | null
+  is_new: boolean
+  created_at: string
 }
 
 interface TrackedTopic {
   id: string
   query: string
   topic: string
-  sourceIds: string[]
+  source_ids: string[]
   cadence: 'hourly' | '6h' | 'daily' | 'weekly'
-  lastRun: string | null
-  nextRun: string
-  newFindings: number
-  totalFindings: number
+  last_run_at: string | null
+  next_run_at: string
+  new_findings_count: number
+  total_findings_count: number
   status: 'active' | 'paused'
-  createdAt: string
+  created_at: string
   findings?: Finding[]
 }
-
-interface Finding {
-  id: string
-  date: string
-  source: string
-  title: string
-  snippet: string
-  url: string
-  isNew: boolean
-}
-
-// Mock data
-const MOCK_TOPICS: TrackedTopic[] = [
-  {
-    id: '1',
-    query: 'Taiwan semiconductor supply chain disruptions',
-    topic: 'Geopolitical',
-    sourceIds: ['reuters', 'bloomberg', 'sec'],
-    cadence: 'daily',
-    lastRun: '2026-01-20T18:00:00Z',
-    nextRun: '2026-01-21T18:00:00Z',
-    newFindings: 3,
-    totalFindings: 47,
-    status: 'active',
-    createdAt: '2024-12-01T00:00:00Z',
-    findings: [
-      { id: 'f1', date: '2026-01-20', source: 'reuters', title: 'TSMC reports Q4 capacity concerns amid geopolitical tensions', snippet: 'Taiwan Semiconductor Manufacturing Co warned of potential supply constraints...', url: '#', isNew: true },
-      { id: 'f2', date: '2026-01-20', source: 'bloomberg', title: 'US-China chip tensions escalate with new export controls', snippet: 'The Biden administration announced additional restrictions on semiconductor...', url: '#', isNew: true },
-      { id: 'f3', date: '2026-01-19', source: 'sec', title: 'Intel 8-K filing mentions Taiwan supply risk', snippet: 'Risk factors updated to include potential disruption to Taiwan-based suppliers...', url: '#', isNew: true },
-      { id: 'f4', date: '2026-01-18', source: 'ft', title: 'European chipmakers seek alternatives to Taiwan dependency', snippet: 'Major European semiconductor firms are accelerating plans to diversify...', url: '#', isNew: false },
-    ]
-  },
-  {
-    id: '2',
-    query: 'Chinese military activity South China Sea',
-    topic: 'Geopolitical',
-    sourceIds: ['reuters', 'nytimes'],
-    cadence: '6h',
-    lastRun: '2026-01-20T22:00:00Z',
-    nextRun: '2026-01-21T04:00:00Z',
-    newFindings: 0,
-    totalFindings: 128,
-    status: 'active',
-    createdAt: '2024-11-15T00:00:00Z',
-  },
-  {
-    id: '3',
-    query: 'NVIDIA competitive position data center GPU',
-    topic: 'Competitive',
-    sourceIds: ['sec', 'techcrunch', 'bloomberg'],
-    cadence: 'weekly',
-    lastRun: '2026-01-15T10:00:00Z',
-    nextRun: '2026-01-22T10:00:00Z',
-    newFindings: 7,
-    totalFindings: 34,
-    status: 'active',
-    createdAt: '2024-10-20T00:00:00Z',
-  },
-  {
-    id: '4',
-    query: 'Federal Reserve interest rate policy signals',
-    topic: 'Financial',
-    sourceIds: ['wsj', 'bloomberg', 'ft'],
-    cadence: 'daily',
-    lastRun: '2026-01-20T14:00:00Z',
-    nextRun: '2026-01-21T14:00:00Z',
-    newFindings: 2,
-    totalFindings: 89,
-    status: 'active',
-    createdAt: '2024-09-01T00:00:00Z',
-  },
-  {
-    id: '5',
-    query: 'AI regulation executive orders legislation',
-    topic: 'Regulatory',
-    sourceIds: ['nytimes', 'techcrunch'],
-    cadence: 'daily',
-    lastRun: '2026-01-20T09:00:00Z',
-    nextRun: '2026-01-21T09:00:00Z',
-    newFindings: 1,
-    totalFindings: 56,
-    status: 'active',
-    createdAt: '2024-11-01T00:00:00Z',
-  },
-  {
-    id: '6',
-    query: 'AMD MI300 adoption enterprise deployments',
-    topic: 'Technology',
-    sourceIds: ['sec', 'techcrunch'],
-    cadence: 'weekly',
-    lastRun: '2026-01-13T10:00:00Z',
-    nextRun: '2026-01-20T10:00:00Z',
-    newFindings: 4,
-    totalFindings: 21,
-    status: 'active',
-    createdAt: '2024-12-10T00:00:00Z',
-  },
-  {
-    id: '7',
-    query: 'OpenAI enterprise partnerships announcements',
-    topic: 'Competitive',
-    sourceIds: ['techcrunch', 'bloomberg'],
-    cadence: 'daily',
-    lastRun: '2026-01-20T12:00:00Z',
-    nextRun: '2026-01-21T12:00:00Z',
-    newFindings: 0,
-    totalFindings: 73,
-    status: 'paused',
-    createdAt: '2024-08-15T00:00:00Z',
-  },
-  {
-    id: '8',
-    query: 'Semiconductor export controls China',
-    topic: 'Regulatory',
-    sourceIds: ['reuters', 'wsj', 'ft'],
-    cadence: '6h',
-    lastRun: '2026-01-20T20:00:00Z',
-    nextRun: '2026-01-21T02:00:00Z',
-    newFindings: 5,
-    totalFindings: 112,
-    status: 'active',
-    createdAt: '2024-07-01T00:00:00Z',
-  },
-]
 
 type ViewMode = 'query' | 'topic'
 type CadenceFilter = 'all' | 'hourly' | '6h' | 'daily' | 'weekly'
@@ -198,9 +78,8 @@ function SourceLogo({ domain, size = 20 }: { domain: string; size?: number }) {
     <img
       src={`https://cdn.brandfetch.io/${domain}?c=1id1Fyz-h7an5-5KR_y`}
       alt={domain}
-      width={size}
-      height={size}
-      className="rounded object-contain"
+      style={{ width: size, height: size }}
+      className="rounded object-cover"
       onError={() => setError(true)}
     />
   )
@@ -210,7 +89,9 @@ export default function TrackPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   
-  const [topics, setTopics] = useState<TrackedTopic[]>(MOCK_TOPICS)
+  const [topics, setTopics] = useState<TrackedTopic[]>([])
+  const [availableSources, setAvailableSources] = useState<Source[]>([])
+  const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<ViewMode>('query')
   const [searchQuery, setSearchQuery] = useState('')
   const [cadenceFilter, setCadenceFilter] = useState<CadenceFilter>('all')
@@ -218,12 +99,30 @@ export default function TrackPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<TrackedTopic | null>(null)
+  const [runningId, setRunningId] = useState<string | null>(null)
+
+  // Fetch topics from API
+  const fetchTopics = useCallback(async () => {
+    try {
+      const response = await fetch('/api/track')
+      if (!response.ok) throw new Error('Failed to fetch')
+      const data = await response.json()
+      setTopics(data.topics || [])
+      setAvailableSources(data.sources || [])
+    } catch (error) {
+      console.error('Error fetching topics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login')
+    } else if (user) {
+      fetchTopics()
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, fetchTopics])
 
   // Filter topics
   const filteredTopics = topics.filter(t => {
@@ -277,17 +176,58 @@ export default function TrackPage() {
     }
   }
 
-  const handleToggleStatus = (id: string) => {
-    setTopics(prev => prev.map(t => 
-      t.id === id ? { ...t, status: t.status === 'active' ? 'paused' : 'active' } : t
-    ))
+  const handleToggleStatus = async (id: string) => {
+    const topic = topics.find(t => t.id === id)
+    if (!topic) return
+
+    const newStatus = topic.status === 'active' ? 'paused' : 'active'
+    
+    try {
+      const response = await fetch(`/api/track/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      
+      if (response.ok) {
+        setTopics(prev => prev.map(t => 
+          t.id === id ? { ...t, status: newStatus } : t
+        ))
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+    }
     setMenuOpenId(null)
   }
 
-  const handleDelete = (id: string) => {
-    setTopics(prev => prev.filter(t => t.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/track/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setTopics(prev => prev.filter(t => t.id !== id))
+        if (selectedTopic?.id === id) setSelectedTopic(null)
+      }
+    } catch (error) {
+      console.error('Error deleting topic:', error)
+    }
     setMenuOpenId(null)
-    if (selectedTopic?.id === id) setSelectedTopic(null)
+  }
+
+  const handleRunNow = async (id: string) => {
+    setRunningId(id)
+    setMenuOpenId(null)
+    
+    try {
+      const response = await fetch(`/api/track/${id}/run`, { method: 'POST' })
+      if (response.ok) {
+        // Refresh topics to get updated counts
+        await fetchTopics()
+      }
+    } catch (error) {
+      console.error('Error running topic:', error)
+    } finally {
+      setRunningId(null)
+    }
   }
 
   const handleRowClick = (topic: TrackedTopic) => {
@@ -295,11 +235,61 @@ export default function TrackPage() {
   }
 
   const getSourcesByIds = (ids: string[]) => {
-    return ids.map(id => AVAILABLE_SOURCES.find(s => s.id === id)).filter(Boolean)
+    return ids.map(id => availableSources.find(s => s.id === id)).filter(Boolean) as Source[]
+  }
+
+  const handleAddTopic = async (newTopic: { query: string; topic: string; sourceIds: string[]; cadence: string }) => {
+    try {
+      const response = await fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTopic),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTopics(prev => [data.topic, ...prev])
+        setShowAddModal(false)
+      }
+    } catch (error) {
+      console.error('Error creating topic:', error)
+    }
+  }
+
+  const handleUpdateSources = async (topicId: string, sourceIds: string[]) => {
+    try {
+      const response = await fetch(`/api/track/${topicId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceIds }),
+      })
+      
+      if (response.ok) {
+        setTopics(prev => prev.map(t => 
+          t.id === topicId ? { ...t, source_ids: sourceIds } : t
+        ))
+        if (selectedTopic?.id === topicId) {
+          setSelectedTopic({ ...selectedTopic, source_ids: sourceIds })
+        }
+      }
+    } catch (error) {
+      console.error('Error updating sources:', error)
+    }
   }
 
   if (authLoading || !user) {
     return null
+  }
+
+  if (loading) {
+    return (
+      <div className="h-screen flex bg-[#FAFAFA]">
+        <Sidebar connectedSourceCount={3} />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -433,7 +423,8 @@ export default function TrackPage() {
                 {filteredTopics.map((topic) => {
                   const topicColor = topicColors[topic.topic] || { bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' }
                   const isSelected = selectedIds.has(topic.id)
-                  const sources = getSourcesByIds(topic.sourceIds)
+                  const sources = getSourcesByIds(topic.source_ids)
+                  const isRunning = runningId === topic.id
                   
                   return (
                     <tr 
@@ -482,11 +473,11 @@ export default function TrackPage() {
                         <div className="flex items-center gap-1">
                           {sources.slice(0, 4).map((source) => (
                             <div
-                              key={source!.id}
+                              key={source.id}
                               className="w-6 h-6 rounded border border-gray-100 flex items-center justify-center bg-white"
-                              title={source!.name}
+                              title={source.name}
                             >
-                              <SourceLogo domain={source!.domain} size={16} />
+                              <SourceLogo domain={source.domain} size={16} />
                             </div>
                           ))}
                           {sources.length > 4 && (
@@ -507,15 +498,15 @@ export default function TrackPage() {
                       {/* Last Run */}
                       <td className="px-4 py-3">
                         <span className="text-sm text-gray-500">
-                          {formatLastRun(topic.lastRun)}
+                          {formatLastRun(topic.last_run_at)}
                         </span>
                       </td>
 
                       {/* New Findings */}
                       <td className="px-4 py-3 text-center">
-                        {topic.newFindings > 0 ? (
+                        {topic.new_findings_count > 0 ? (
                           <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold min-w-[24px]">
-                            {topic.newFindings}
+                            {topic.new_findings_count}
                           </span>
                         ) : (
                           <span className="text-sm text-gray-300">—</span>
@@ -525,21 +516,25 @@ export default function TrackPage() {
                       {/* Total */}
                       <td className="px-4 py-3 text-center">
                         <span className="text-sm text-gray-500">
-                          {topic.totalFindings}
+                          {topic.total_findings_count}
                         </span>
                       </td>
 
                       {/* Status */}
                       <td className="px-4 py-3 text-center">
-                        <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
-                          topic.status === 'active' ? 'bg-emerald-50' : 'bg-gray-100'
-                        }`}>
-                          {topic.status === 'active' ? (
-                            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                          ) : (
-                            <Pause className="w-3 h-3 text-gray-400" />
-                          )}
-                        </div>
+                        {isRunning ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-400 mx-auto" />
+                        ) : (
+                          <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${
+                            topic.status === 'active' ? 'bg-emerald-50' : 'bg-gray-100'
+                          }`}>
+                            {topic.status === 'active' ? (
+                              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                            ) : (
+                              <Pause className="w-3 h-3 text-gray-400" />
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -558,7 +553,7 @@ export default function TrackPage() {
                           {menuOpenId === topic.id && (
                             <div className="absolute right-0 top-full mt-1 w-40 rounded-lg shadow-lg z-50 overflow-hidden bg-white border border-gray-200">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setMenuOpenId(null) }}
+                                onClick={(e) => { e.stopPropagation(); handleRunNow(topic.id) }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-left transition-colors cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
                               >
                                 <RefreshCw className="w-4 h-4" />
@@ -632,13 +627,9 @@ export default function TrackPage() {
         {selectedTopic && (
           <TopicSidePane 
             topic={selectedTopic} 
+            sources={availableSources}
             onClose={() => setSelectedTopic(null)}
-            onUpdateSources={(sourceIds) => {
-              setTopics(prev => prev.map(t => 
-                t.id === selectedTopic.id ? { ...t, sourceIds } : t
-              ))
-              setSelectedTopic({ ...selectedTopic, sourceIds })
-            }}
+            onUpdateSources={(sourceIds) => handleUpdateSources(selectedTopic.id, sourceIds)}
           />
         )}
 
@@ -653,11 +644,9 @@ export default function TrackPage() {
         {/* Add Topic Modal */}
         {showAddModal && (
           <AddTopicModal 
+            sources={availableSources}
             onClose={() => setShowAddModal(false)} 
-            onAdd={(newTopic) => {
-              setTopics(prev => [newTopic, ...prev])
-              setShowAddModal(false)
-            }}
+            onAdd={handleAddTopic}
           />
         )}
       </div>
@@ -668,21 +657,23 @@ export default function TrackPage() {
 // Side Pane Component
 function TopicSidePane({ 
   topic, 
+  sources,
   onClose,
   onUpdateSources 
 }: { 
   topic: TrackedTopic
+  sources: Source[]
   onClose: () => void
   onUpdateSources: (sourceIds: string[]) => void
 }) {
   const [activeTab, setActiveTab] = useState<'findings' | 'sources'>('findings')
-  const [localSourceIds, setLocalSourceIds] = useState(topic.sourceIds)
+  const [localSourceIds, setLocalSourceIds] = useState(topic.source_ids)
   const topicColor = topicColors[topic.topic] || { bg: '#F3F4F6', text: '#6B7280', dot: '#9CA3AF' }
 
   // Update local state when topic changes
   useEffect(() => {
-    setLocalSourceIds(topic.sourceIds)
-  }, [topic.id, topic.sourceIds])
+    setLocalSourceIds(topic.source_ids)
+  }, [topic.id, topic.source_ids])
 
   const toggleSource = (id: string) => {
     const newIds = localSourceIds.includes(id) 
@@ -751,9 +742,9 @@ function TopicSidePane({
           }`}
         >
           Findings
-          {topic.newFindings > 0 && (
+          {topic.new_findings_count > 0 && (
             <span className="ml-2 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
-              {topic.newFindings} new
+              {topic.new_findings_count} new
             </span>
           )}
         </button>
@@ -777,12 +768,12 @@ function TopicSidePane({
             {topic.findings && topic.findings.length > 0 ? (
               <div className="space-y-3">
                 {topic.findings.map((finding) => {
-                  const source = AVAILABLE_SOURCES.find(s => s.id === finding.source)
+                  const source = sources.find(s => s.id === finding.source_id)
                   return (
                     <div 
                       key={finding.id}
                       className={`p-3 rounded-lg border transition-colors cursor-pointer hover:border-gray-300 ${
-                        finding.isNew ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-200'
+                        finding.is_new ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-gray-200'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -793,12 +784,14 @@ function TopicSidePane({
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            {finding.isNew && (
+                            {finding.is_new && (
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-emerald-100 text-emerald-700">
                                 New
                               </span>
                             )}
-                            <span className="text-xs text-gray-400">{finding.date}</span>
+                            <span className="text-xs text-gray-400">
+                              {finding.published_at || new Date(finding.created_at).toLocaleDateString()}
+                            </span>
                           </div>
                           <h4 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
                             {finding.title}
@@ -807,9 +800,15 @@ function TopicSidePane({
                             {finding.snippet}
                           </p>
                         </div>
-                        <button className="flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-pointer text-gray-400 hover:text-gray-600">
+                        <a 
+                          href={finding.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0 p-1 rounded hover:bg-gray-100 cursor-pointer text-gray-400 hover:text-gray-600"
+                        >
                           <ExternalLink className="w-4 h-4" />
-                        </button>
+                        </a>
                       </div>
                     </div>
                   )
@@ -829,7 +828,7 @@ function TopicSidePane({
           <div className="p-4">
             <p className="text-xs text-gray-500 mb-3">Select the sources to monitor for this topic:</p>
             <div className="space-y-2">
-              {AVAILABLE_SOURCES.map((source) => {
+              {sources.map((source) => {
                 const isSelected = localSourceIds.includes(source.id)
                 return (
                   <button
@@ -865,11 +864,20 @@ function TopicSidePane({
 }
 
 // Add Topic Modal
-function AddTopicModal({ onClose, onAdd }: { onClose: () => void; onAdd: (topic: TrackedTopic) => void }) {
+function AddTopicModal({ 
+  sources,
+  onClose, 
+  onAdd 
+}: { 
+  sources: Source[]
+  onClose: () => void
+  onAdd: (topic: { query: string; topic: string; sourceIds: string[]; cadence: string }) => void 
+}) {
   const [query, setQuery] = useState('')
   const [topic, setTopic] = useState('Geopolitical')
   const [cadence, setCadence] = useState<'hourly' | '6h' | 'daily' | 'weekly'>('daily')
   const [sourceIds, setSourceIds] = useState<string[]>(['reuters', 'bloomberg'])
+  const [submitting, setSubmitting] = useState(false)
 
   const toggleSource = (id: string) => {
     if (sourceIds.includes(id)) {
@@ -879,24 +887,11 @@ function AddTopicModal({ onClose, onAdd }: { onClose: () => void; onAdd: (topic:
     }
   }
 
-  const handleSubmit = () => {
-    if (!query.trim()) return
-    
-    const newTopic: TrackedTopic = {
-      id: Date.now().toString(),
-      query: query.trim(),
-      topic,
-      sourceIds,
-      cadence,
-      lastRun: null,
-      nextRun: new Date(Date.now() + 3600000).toISOString(),
-      newFindings: 0,
-      totalFindings: 0,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-    }
-    
-    onAdd(newTopic)
+  const handleSubmit = async () => {
+    if (!query.trim() || submitting) return
+    setSubmitting(true)
+    await onAdd({ query: query.trim(), topic, sourceIds, cadence })
+    setSubmitting(false)
   }
 
   return (
@@ -947,7 +942,7 @@ function AddTopicModal({ onClose, onAdd }: { onClose: () => void; onAdd: (topic:
               Sources
             </label>
             <div className="flex flex-wrap gap-2">
-              {AVAILABLE_SOURCES.slice(0, 6).map((source) => (
+              {sources.slice(0, 6).map((source) => (
                 <button
                   key={source.id}
                   onClick={() => toggleSource(source.id)}
@@ -1001,9 +996,10 @@ function AddTopicModal({ onClose, onAdd }: { onClose: () => void; onAdd: (topic:
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!query.trim()}
-            className="px-4 py-2 rounded-lg transition-colors cursor-pointer bg-gray-800 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium"
+            disabled={!query.trim() || submitting}
+            className="px-4 py-2 rounded-lg transition-colors cursor-pointer bg-gray-800 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium flex items-center gap-2"
           >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             Add Topic
           </button>
         </div>
