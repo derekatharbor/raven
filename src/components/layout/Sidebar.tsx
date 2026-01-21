@@ -15,6 +15,7 @@ import {
   Home,
   BarChart3,
   Radar,
+  Search,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -69,6 +70,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               <span className="text-[13px] text-gray-900">Home</span>
             </Link>
             <Link 
+              href="/search"
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/search') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+            >
+              <Search className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] text-gray-900">Search</span>
+            </Link>
+            <Link 
               href="/workspace"
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors ${isActive('/workspace') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
             >
@@ -98,6 +106,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               title="Home"
             >
               <Home className="w-4 h-4 text-gray-500" />
+            </Link>
+            <Link 
+              href="/search"
+              className={`flex items-center justify-center p-2 rounded ${isActive('/search') ? 'bg-white shadow-sm border border-gray-200' : 'hover:bg-black/5'}`}
+              title="Search"
+            >
+              <Search className="w-4 h-4 text-gray-500" />
             </Link>
             <Link 
               href="/workspace"
