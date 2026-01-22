@@ -546,11 +546,10 @@ function IntelligenceHub({
   onTrackClaim: (claim: string, source?: string) => void
   onKeyFact: (keyFact: string, source?: string) => void
 }) {
-  const [activeTab, setActiveTab] = useState<'research' | 'jobs' | 'audit' | 'sources'>('research')
+  const [activeTab, setActiveTab] = useState<'research' | 'agents' | 'audit'>('research')
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; keyFact?: string; source?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [mode, setMode] = useState<'ask' | 'verify'>('ask')
   const [webEnabled, setWebEnabled] = useState(true)
   const [deepDiveEnabled, setDeepDiveEnabled] = useState(false)
   const [deepDiveSources, setDeepDiveSources] = useState<string[]>(['web', 'sec'])
@@ -562,10 +561,8 @@ function IntelligenceHub({
     synthesis?: string
     complete: boolean
   } | null>(null)
-  const [showModeDropdown, setShowModeDropdown] = useState(false)
   const [showSourcesDropdown, setShowSourcesDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const modeDropdownRef = useRef<HTMLDivElement>(null)
   const sourcesDropdownRef = useRef<HTMLDivElement>(null)
   
   // Panel width & resize
@@ -605,17 +602,9 @@ function IntelligenceHub({
 
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
-    { id: 'jobs' as const, icon: Briefcase, label: 'Jobs' },
+    { id: 'agents' as const, icon: Radar, label: 'Agents' },
     { id: 'audit' as const, icon: BarChart3, label: 'Audit' },
-    { id: 'sources' as const, icon: Folder, label: 'Sources' },
   ]
-
-  const modes = {
-    ask: { label: 'Ask', color: '#10B981', desc: 'Research' },
-    verify: { label: 'Verify', color: '#F59E0B', desc: 'Check claims' },
-  }
-
-  const currentMode = modes[mode]
 
   // Mock sources (will be replaced with real data)
   const sources = [
@@ -642,9 +631,6 @@ function IntelligenceHub({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
-        setShowModeDropdown(false)
-      }
       if (sourcesDropdownRef.current && !sourcesDropdownRef.current.contains(e.target as Node)) {
         setShowSourcesDropdown(false)
       }
@@ -1108,91 +1094,51 @@ function IntelligenceHub({
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
                   placeholder="Ask anything..."
-                  rows={1}
+                  rows={2}
                   style={{
                     width: '100%', border: 'none', outline: 'none', resize: 'none',
-                    fontSize: 13, lineHeight: 1.5, color: '#111', background: 'transparent',
+                    fontSize: 14, lineHeight: 1.5, color: '#111', background: 'transparent',
                   }}
                 />
                 
-                {/* Bottom row: Mode selector + toggles + Send */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
-                  {/* Mode dropdown */}
-                  <div style={{ position: 'relative' }} ref={modeDropdownRef}>
-                    <button
-                      onClick={() => setShowModeDropdown(!showModeDropdown)}
-                      className="mode-selector-btn"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        padding: '3px 6px', borderRadius: 4, 
-                        border: '1px solid #E5E7EB',
-                        background: 'white', color: '#374151', cursor: 'pointer',
-                        fontSize: 11, fontWeight: 500,
-                      }}
-                    >
-                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: currentMode.color }} />
-                      {currentMode.label}
-                      <ChevronDown className="w-3 h-3" style={{ color: '#9CA3AF' }} />
-                    </button>
-
-                    {showModeDropdown && (
-                      <div style={{
-                        position: 'absolute', bottom: '100%', left: 0, marginBottom: 4,
-                        background: 'white', border: '1px solid #E5E7EB', borderRadius: 4,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', minWidth: 100, zIndex: 100,
-                      }}>
-                        {Object.entries(modes).map(([key, m]) => (
-                          <button
-                            key={key}
-                            onClick={() => { setMode(key as typeof mode); setShowModeDropdown(false); }}
-                            className="mode-option"
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                              padding: '6px 10px', border: 'none',
-                              background: mode === key ? '#F5F5F5' : 'transparent',
-                              cursor: 'pointer', textAlign: 'left',
-                            }}
-                          >
-                            <div style={{ width: 5, height: 5, borderRadius: '50%', background: m.color }} />
-                            <span style={{ fontSize: 11, color: '#111' }}>{m.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Web toggle */}
+                {/* Bottom row: toggles + Send */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
+                  {/* Web toggle - muted colors */}
                   <button
                     onClick={() => setWebEnabled(!webEnabled)}
                     className="web-toggle-btn"
                     style={{
-                      width: 24, height: 24, borderRadius: 4, 
-                      border: webEnabled ? '1px solid #3B82F6' : '1px solid #E5E7EB',
-                      background: webEnabled ? '#EFF6FF' : 'white',
-                      color: webEnabled ? '#3B82F6' : '#9CA3AF',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      padding: '4px 8px', borderRadius: 4, 
+                      border: '1px solid #E5E7EB',
+                      background: webEnabled ? '#E8F4EF' : 'white',
+                      color: webEnabled ? '#5B7B6B' : '#9CA3AF',
                       cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 500,
                     }}
                     title={webEnabled ? 'Web search ON' : 'Enable web search'}
                   >
                     <Globe className="w-3.5 h-3.5" />
+                    Web
                   </button>
 
-                  {/* Deep Dive toggle */}
+                  {/* Deep Dive toggle - muted colors */}
                   <button
                     onClick={() => setDeepDiveEnabled(!deepDiveEnabled)}
                     className="deep-dive-toggle-btn"
                     style={{
-                      width: 24, height: 24, borderRadius: 4, 
-                      border: deepDiveEnabled ? '1px solid #9333EA' : '1px solid #E5E7EB',
-                      background: deepDiveEnabled ? '#FAF5FF' : 'white',
-                      color: deepDiveEnabled ? '#9333EA' : '#9CA3AF',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      padding: '4px 8px', borderRadius: 4, 
+                      border: '1px solid #E5E7EB',
+                      background: deepDiveEnabled ? '#F3F0F7' : 'white',
+                      color: deepDiveEnabled ? '#6B5B7B' : '#9CA3AF',
                       cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 500,
                     }}
                     title={deepDiveEnabled ? 'Deep Dive ON' : 'Enable Deep Dive'}
                   >
                     <Layers className="w-3.5 h-3.5" />
+                    Deep
                   </button>
 
                   {/* Sources dropdown (only when Deep Dive is ON) */}
@@ -1202,12 +1148,12 @@ function IntelligenceHub({
                         onClick={() => setShowSourcesDropdown(!showSourcesDropdown)}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 3,
-                          padding: '3px 6px', borderRadius: 4, 
-                          border: '1px solid #9333EA',
-                          background: '#FAF5FF',
-                          color: '#9333EA',
+                          padding: '4px 8px', borderRadius: 4, 
+                          border: '1px solid #E5E7EB',
+                          background: '#F3F0F7',
+                          color: '#6B5B7B',
                           cursor: 'pointer',
-                          fontSize: 10, fontWeight: 500,
+                          fontSize: 11, fontWeight: 500,
                         }}
                       >
                         {deepDiveSources.length} sources
@@ -1245,8 +1191,8 @@ function IntelligenceHub({
                             >
                               <div style={{
                                 width: 14, height: 14, borderRadius: 3,
-                                border: deepDiveSources.includes(source.id) ? '1px solid #9333EA' : '1px solid #D1D5DB',
-                                background: deepDiveSources.includes(source.id) ? '#9333EA' : 'transparent',
+                                border: deepDiveSources.includes(source.id) ? '1px solid #6B5B7B' : '1px solid #D1D5DB',
+                                background: deepDiveSources.includes(source.id) ? '#6B5B7B' : 'transparent',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                               }}>
                                 {deepDiveSources.includes(source.id) && (
@@ -1605,74 +1551,6 @@ function IntelligenceHub({
                       </div>
                     )}
                   </div>
-                  
-                  {/* Connected Sources */}
-                  <div>
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'space-between',
-                      marginBottom: 8,
-                    }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Sources ({connectedSources.length})
-                      </span>
-                      <button 
-                        onClick={() => setActiveTab('sources')}
-                        className="action-btn"
-                        style={{ 
-                          fontSize: 10, color: '#6B7280', background: 'none', border: 'none', 
-                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2,
-                        }}
-                      >
-                        See all
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      gap: 2, 
-                    }}>
-                      {connectedSources.map((source) => (
-                        <div
-                          key={source.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            padding: '8px 10px',
-                            border: '1px solid #E5E7EB',
-                            borderRadius: 4,
-                          }}
-                        >
-                          <img 
-                            src={getBrandfetchLogo(source.domain)} 
-                            alt={source.name}
-                            style={{ 
-                              width: 16, 
-                              height: 16, 
-                              borderRadius: 3,
-                              objectFit: 'contain',
-                            }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none'
-                            }}
-                          />
-                          <span style={{ flex: 1, fontSize: 11, fontWeight: 500, color: '#374151' }}>
-                            {source.name}
-                          </span>
-                          <div style={{ 
-                            width: 5, 
-                            height: 5, 
-                            borderRadius: '50%', 
-                            background: '#22C55E',
-                          }} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               ) : !deepDiveProgress?.isActive ? (
                 // CONVERSATION STATE
@@ -1895,8 +1773,8 @@ function IntelligenceHub({
           </>
         )}
 
-        {/* JOBS TAB */}
-        {activeTab === 'jobs' && (
+        {/* AGENTS TAB */}
+        {activeTab === 'agents' && (
           <>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -2207,73 +2085,6 @@ function IntelligenceHub({
                   )}
                 </div>
               ))}
-            </div>
-          </>
-        )}
-
-        {/* SOURCES TAB */}
-        {activeTab === 'sources' && (
-          <>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Connected Sources
-              </span>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
-              {sources.map(source => (
-                <div 
-                  key={source.id} 
-                  className="source-card"
-                  style={{
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 12,
-                    padding: '12px 14px', 
-                    marginBottom: 8, 
-                    background: '#FAFAFA',
-                    borderRadius: 8, 
-                    border: '1px solid #E5E7EB',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <img 
-                    src={getBrandfetchLogo(source.domain)} 
-                    alt={source.name}
-                    style={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: 4,
-                      objectFit: 'contain',
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none'
-                    }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>{source.name}</div>
-                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{source.domain}</div>
-                  </div>
-                  <div style={{ 
-                    fontSize: 10, 
-                    padding: '4px 8px',
-                    borderRadius: 4,
-                    background: source.status === 'connected' ? '#DCFCE7' : '#F3F4F6',
-                    color: source.status === 'connected' ? '#166534' : '#6B7280',
-                    fontWeight: 500,
-                  }}>
-                    {source.status === 'connected' ? 'Connected' : 'Connect'}
-                  </div>
-                </div>
-              ))}
-              <button className="add-source-btn" style={{
-                width: '100%', padding: '12px', border: '1px dashed #D1D5DB',
-                borderRadius: 8, background: 'transparent', color: '#6B7280',
-                fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                marginTop: 4,
-              }}>
-                <Plus className="w-4 h-4" /> Add Source
-              </button>
             </div>
           </>
         )}
