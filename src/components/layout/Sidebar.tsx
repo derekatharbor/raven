@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   ChevronRight,
   ChevronLeft,
@@ -16,7 +16,9 @@ import {
   BarChart3,
   Radar,
   Search,
+  LogOut,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
   connectedSourceCount?: number
@@ -24,9 +26,16 @@ interface SidebarProps {
 
 export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(true)
+  const supabase = createClient()
 
   const isActive = (href: string) => pathname?.startsWith(href)
+  
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
 
   return (
     <div 
@@ -163,6 +172,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
               <Settings className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-900">Settings</span>
             </Link>
+            <button 
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors hover:bg-black/5"
+            >
+              <LogOut className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] text-gray-500">Sign out</span>
+            </button>
           </>
         ) : (
           <>
@@ -183,6 +199,13 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
             >
               <Settings className="w-4 h-4 text-gray-500" />
             </Link>
+            <button 
+              onClick={handleSignOut}
+              className="flex items-center justify-center p-2 rounded transition-colors hover:bg-black/5"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4 text-gray-500" />
+            </button>
           </>
         )}
       </div>
