@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-// Manifesto Section with scroll-reveal
+// Manifesto Section with scroll-reveal text fill effect
 function ManifestoSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const [scrollProgress, setScrollProgress] = useState(0)
@@ -21,16 +21,16 @@ function ManifestoSection() {
       const sectionHeight = sectionRef.current.offsetHeight
       const viewportHeight = window.innerHeight
       
-      // Calculate progress: 0 when section enters, 1 when section exits
-      const startPoint = viewportHeight * 0.8 // Start revealing when 20% into viewport
-      const endPoint = -sectionHeight * 0.3 // Fully revealed when 30% has scrolled past
+      // Calculate progress based on scroll through section
+      const startPoint = viewportHeight * 0.9
+      const endPoint = -sectionHeight + viewportHeight * 0.5
       
       const progress = (startPoint - rect.top) / (startPoint - endPoint)
       setScrollProgress(Math.max(0, Math.min(1, progress)))
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll() // Initial check
+    handleScroll()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -46,57 +46,95 @@ function ManifestoSection() {
     "Moving beyond the PDF."
   ]
 
-  // Calculate which paragraphs should be visible
-  const getOpacity = (index: number) => {
-    const paragraphProgress = (index + 1) / paragraphs.length
-    const revealPoint = scrollProgress * 1.3 // Slightly ahead of progress
-    
-    if (revealPoint >= paragraphProgress) {
-      return 1
-    } else if (revealPoint >= paragraphProgress - 0.15) {
-      // Fade in zone
-      return (revealPoint - (paragraphProgress - 0.15)) / 0.15
-    }
-    return 0.15 // Dimmed but visible
+  // Join all text for character-level animation
+  const allText = paragraphs.join(' ')
+  const totalChars = allText.length
+  const revealedChars = Math.floor(scrollProgress * totalChars * 1.1) // Slight overshoot
+
+  // Render text with fill effect
+  const renderFilledText = () => {
+    let charIndex = 0
+    return paragraphs.map((paragraph, pIndex) => {
+      const paragraphStart = charIndex
+      const words = paragraph.split(' ')
+      
+      const renderedWords = words.map((word, wIndex) => {
+        const wordChars = word.split('').map((char, cIndex) => {
+          const isRevealed = charIndex < revealedChars
+          charIndex++
+          return (
+            <span
+              key={cIndex}
+              style={{
+                color: isRevealed ? '#ffffff' : 'rgba(255,255,255,0.25)',
+                transition: 'color 0.1s ease',
+              }}
+            >
+              {char}
+            </span>
+          )
+        })
+        charIndex++ // Space after word
+        return (
+          <span key={wIndex}>
+            {wordChars}
+            {wIndex < words.length - 1 && (
+              <span style={{ color: charIndex - 1 < revealedChars ? '#ffffff' : 'rgba(255,255,255,0.25)' }}> </span>
+            )}
+          </span>
+        )
+      })
+
+      return (
+        <p
+          key={pIndex}
+          className="text-2xl md:text-3xl leading-relaxed mb-8"
+          style={{ fontFamily: 'var(--font-space-grotesk)' }}
+        >
+          {renderedWords}
+        </p>
+      )
+    })
   }
 
   return (
     <section 
       ref={sectionRef}
-      className="bg-[#15120B] py-32 px-6 min-h-screen flex items-center"
+      className="bg-[#15120B] relative"
+      style={{ minHeight: '200vh' }} // Extra height for scroll
     >
-      <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 md:gap-24">
-        {/* Left - Title */}
-        <div className="md:sticky md:top-32 md:self-start">
-          <h2 
-            className="text-4xl md:text-5xl font-serif font-normal text-white leading-tight"
-            style={{ 
-              opacity: scrollProgress > 0.05 ? 1 : 0.15,
-              transition: 'opacity 0.5s ease',
-            }}
-          >
-            A document should answer back.
-          </h2>
-        </div>
+      {/* Horizontal line - top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
+      
+      {/* Horizontal line - bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-white/20" />
+      
+      {/* Vertical lines */}
+      <div className="absolute top-0 bottom-0 left-[5%] w-px bg-white/20" />
+      <div className="absolute top-0 bottom-0 left-1/2 w-px bg-white/20 -translate-x-1/2" />
+      <div className="absolute top-0 bottom-0 right-[5%] w-px bg-white/20" />
 
-        {/* Right - Body paragraphs */}
-        <div className="space-y-6">
-          {paragraphs.map((text, index) => {
-            const isEmphasis = index === 3 || index === 7 || index === 8 // "Then comes...", "This is what...", "Moving beyond..."
-            return (
-              <p
-                key={index}
-                className={`text-lg leading-relaxed transition-opacity duration-500 ${
-                  isEmphasis ? 'text-white font-medium' : 'text-neutral-400'
-                }`}
-                style={{ 
-                  opacity: getOpacity(index),
-                }}
-              >
-                {text}
-              </p>
-            )
-          })}
+      {/* Content */}
+      <div className="sticky top-0 min-h-screen flex items-center py-24">
+        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 md:gap-24 px-[8%]">
+          {/* Left - Title */}
+          <div>
+            <h2 
+              className="text-4xl md:text-6xl font-normal leading-tight"
+              style={{ 
+                fontFamily: 'var(--font-space-grotesk)',
+                color: scrollProgress > 0.02 ? '#ffffff' : 'rgba(255,255,255,0.25)',
+                transition: 'color 0.5s ease',
+              }}
+            >
+              A document should answer back.
+            </h2>
+          </div>
+
+          {/* Right - Body paragraphs with fill effect */}
+          <div>
+            {renderFilledText()}
+          </div>
         </div>
       </div>
     </section>
