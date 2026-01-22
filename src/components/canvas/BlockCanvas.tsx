@@ -885,7 +885,6 @@ function IntelligenceHub({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          mode,
           webEnabled,
         }),
       })
