@@ -9,6 +9,105 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff } from 'lucide-react'
 
+// Capabilities Grid Section - zig-zag layout
+function CapabilitiesSection() {
+  const capabilities = [
+    {
+      badge: 'EDITOR',
+      title: 'Smart Blocks',
+      description: 'Structure your documents with intelligent building blocks. Tables that update, charts that refresh, and citations that stay linked to their sources.',
+      image: '/images/marketing/cap-blocks.png',
+      link: '/features/create',
+    },
+    {
+      badge: 'RESEARCH',
+      title: 'Multi-agent Research',
+      description: 'Deploy multiple AI agents to research in parallel. Ask different questions, explore different angles, and synthesize findings—all without waiting.',
+      image: '/images/marketing/cap-agents.png',
+      link: '/features/create',
+    },
+    {
+      badge: 'WRITING',
+      title: 'AI-guided, not AI-generated',
+      description: 'Autocomplete suggestions grounded in your connected sources. The intelligence assists your thinking—you stay in control of every word.',
+      image: '/images/marketing/cap-autocomplete.png',
+      link: '/features/create',
+    },
+    {
+      badge: 'DELIVERY',
+      title: 'Interactive Documents',
+      description: 'Share via Raven Links and let readers ask questions answered by AI—privately and securely, grounded in your sources. No more follow-up calls for clarification.',
+      image: '/images/marketing/cap-interactive.png',
+      link: '/features/analyze',
+    },
+    {
+      badge: 'INTEGRATIONS',
+      title: 'Connect your sources',
+      description: 'Plug into your existing stack. Pull from PitchBook, internal databases, CRMs, and more. Your research stays connected to the systems you already use.',
+      image: '/images/marketing/cap-sources.png',
+      link: '/sources',
+    },
+  ]
+
+  return (
+    <section className="bg-[#15120B] py-24 px-6">
+      {/* Section Header */}
+      <div className="max-w-6xl mx-auto mb-12">
+        <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
+          Platform Capabilities
+        </span>
+        <h2 className="text-4xl md:text-5xl font-medium text-white leading-tight">
+          Built for how you<br />actually work
+        </h2>
+      </div>
+
+      {/* Capabilities Grid */}
+      <div className="max-w-6xl mx-auto border-t border-l border-white/20">
+        {capabilities.map((cap, idx) => {
+          const isEven = idx % 2 === 0
+          return (
+            <div 
+              key={idx}
+              className={`flex flex-col md:flex-row border-b border-r border-white/20 ${
+                !isEven ? 'md:flex-row-reverse' : ''
+              }`}
+            >
+              {/* Text Side */}
+              <div className="flex-1 p-8 md:p-12 flex flex-col justify-center md:border-r border-white/20">
+                <span className="inline-block px-2 py-1 mb-4 text-[10px] font-medium tracking-wider uppercase border border-white/20 text-white/50 w-fit">
+                  {cap.badge}
+                </span>
+                <h3 className="text-2xl md:text-3xl font-medium text-white mb-4 leading-tight">
+                  {cap.title}
+                </h3>
+                <p className="text-white/60 leading-relaxed mb-6">
+                  {cap.description}
+                </p>
+                <Link 
+                  href={cap.link}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80 transition-colors cursor-pointer"
+                >
+                  Learn more
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* Image Side */}
+              <div className="flex-1 bg-white/5 min-h-[300px] md:min-h-[400px] flex items-center justify-center">
+                <img 
+                  src={cap.image}
+                  alt={cap.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 // Features Section with tabs
 function FeaturesSection() {
   const [activeTab, setActiveTab] = useState<'search' | 'create' | 'track' | 'analyze'>('search')
@@ -190,12 +289,12 @@ function ManifestoSection() {
   }, [])
 
   const paragraphs = [
-    "Research is changing shape.",
-    "The work lives across links, chats, transcripts, filings, and feeds. The volume goes up. The stakes don't go down.",
-    "The hard part isn't finding information. It's making it coherent, keeping it current, and delivering it in a way that lands.",
-    "Then the loop breaks.",
+    "Research is changing.",
+    "AI made information cheaper, not clearer, which means more to sift through and more effort to prove what's real.",
+    "The hard part isn't finding information. It's finding what's true, then making it coherent, current, and clear before sending it out.",
+    "Then the flow breaks.",
     "You send the report and the feedback disappears. What did they read, where did they hesitate, what confused them, what questions did it trigger?",
-    "Raven is built for the full lifecycle of analysis: search, write, track, deliver, learn.",
+    "Raven is built for the full lifecycle of analysis: search, write, track, deliver, and learn.",
     "One workspace for research and writing. Monitoring that keeps your work current. And a reader experience where questions get answered in place, grounded in your sources.",
     "This is what comes next.",
     "Moving beyond the PDF."
@@ -421,6 +520,9 @@ export default function Home() {
 
       {/* Features Section */}
       <FeaturesSection />
+
+      {/* Capabilities Section */}
+      <CapabilitiesSection />
     </div>
   )
 }
