@@ -13,26 +13,22 @@ import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Downloa
 function SecuritySection() {
   const securityItems = [
     {
-      icon: Shield,
-      image: '/images/marketing/security-gdpr.svg', // Replace with animated icon
+      image: '/images/marketing/security-gdpr.svg',
       title: 'GDPR Compliant',
       description: 'Your data stays yours and stays protected',
     },
     {
-      icon: BrainCog,
-      image: '/images/marketing/security-no-training.svg', // Replace with animated icon
+      image: '/images/marketing/security-no-training.svg',
       title: 'No model training',
       description: 'Your documents never train our models',
     },
     {
-      icon: Lock,
-      image: '/images/marketing/security-encrypted.svg', // Replace with animated icon
+      image: '/images/marketing/security-encrypted.svg',
       title: 'Encrypted everywhere',
       description: 'TLS in transit, AES-256 at rest',
     },
     {
-      icon: KeyRound,
-      image: '/images/marketing/security-sso.svg', // Replace with animated icon
+      image: '/images/marketing/security-sso.svg',
       title: 'Enterprise SSO',
       description: 'SAML, OAuth, and role-based access',
     },
@@ -53,17 +49,14 @@ function SecuritySection() {
       {/* 4-block grid */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-white/20">
         {securityItems.map((item, idx) => {
-          const Icon = item.icon
           return (
             <div 
               key={idx}
               className="py-12 sm:py-0 sm:aspect-square flex flex-col items-center justify-center text-center p-6 border-r border-b border-white/20"
             >
-              {/* Icon placeholder - swap image src for animated versions */}
+              {/* Icon - swap src for animated versions */}
               <div className="w-16 h-16 mb-6 flex items-center justify-center">
-                {/* Using lucide icon as fallback - replace with: */}
-        
-                <Icon className="w-12 h-12 text-white/30" strokeWidth={1} />
+                <img src={item.image} alt={item.title} className="w-full h-full" />
               </div>
               <h3 className="text-lg font-medium text-white mb-2">
                 {item.title}
