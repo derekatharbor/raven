@@ -613,10 +613,6 @@ function IntelligenceHub({
     { id: 'grok-3', name: 'Grok 3', provider: 'xAI', domain: 'x.ai' },
   ]
   
-  // Tab transition
-  const [tabTransition, setTabTransition] = useState(false)
-  const prevTabRef = useRef(activeTab)
-
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
     { id: 'agents' as const, icon: Cpu, label: 'Agents' },
@@ -658,16 +654,6 @@ function IntelligenceHub({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-  
-  // Tab transition effect
-  useEffect(() => {
-    if (prevTabRef.current !== activeTab) {
-      setTabTransition(true)
-      const timer = setTimeout(() => setTabTransition(false), 150)
-      prevTabRef.current = activeTab
-      return () => clearTimeout(timer)
-    }
-  }, [activeTab])
   
   // Resize handlers
   useEffect(() => {
@@ -1050,13 +1036,14 @@ function IntelligenceHub({
             </button>
           </div>
 
-          {/* Tab row - underline style */}
+          {/* Tab row - sliding underline style */}
           <div style={{
             display: 'flex',
             gap: 0,
             borderBottom: '1px solid #E5E7EB',
+            position: 'relative',
           }}>
-            {tabs.map(tab => {
+            {tabs.map((tab, idx) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
               return (
@@ -1069,18 +1056,32 @@ function IntelligenceHub({
                     gap: 5,
                     padding: '8px 12px',
                     border: 'none',
-                    borderBottom: isActive ? '2px solid #111' : '2px solid transparent',
-                    marginBottom: '-1px',
                     background: 'transparent',
                     color: isActive ? '#111' : '#6B7280',
                     fontSize: 11,
                     fontWeight: 500,
                     cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'color 0.15s ease',
                   }}
                   className="hub-tab-btn"
                 >
                   <Icon className="w-3.5 h-3.5" />
                   {tab.label}
+                  {/* Sliding underline */}
+                  {isActive && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: -1,
+                      left: 0,
+                      right: 0,
+                      height: 2,
+                      background: '#111',
+                      borderRadius: 1,
+                    }} 
+                    className="tab-underline"
+                    />
+                  )}
                 </button>
               )
             })}
@@ -1092,9 +1093,6 @@ function IntelligenceHub({
             display: 'flex', 
             flexDirection: 'column', 
             overflow: 'hidden',
-            opacity: tabTransition ? 0 : 1,
-            transform: tabTransition ? 'translateY(4px)' : 'translateY(0)',
-            transition: 'opacity 0.15s ease, transform 0.15s ease',
           }}>
         
         {/* RESEARCH TAB - AI Chat */}
@@ -1915,6 +1913,7 @@ function IntelligenceHub({
                                   : [...prev, model.id]
                               )
                             }}
+                            className="model-dropdown-row"
                             style={{
                               display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                               padding: '10px 12px', border: 'none',
@@ -1923,27 +1922,28 @@ function IntelligenceHub({
                             }}
                           >
                             {/* Raven logo with model icon overlay */}
-                            <div style={{ position: 'relative', width: 28, height: 28 }}>
+                            <div style={{ position: 'relative', width: 32, height: 32 }}>
                               <img 
                                 src="/images/raven-logo.png"
                                 alt="Raven"
                                 style={{ 
-                                  width: 28, height: 28, 
+                                  width: 32, height: 32, 
                                   opacity: 0.6,
                                   filter: 'grayscale(100%) brightness(2)',
                                 }}
                               />
                               <div style={{
                                 position: 'absolute', bottom: -2, right: -2,
-                                width: 14, height: 14, borderRadius: '50%',
+                                width: 18, height: 18, borderRadius: '50%',
                                 background: 'white',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                overflow: 'hidden',
                               }}>
                                 <img 
                                   src={`https://cdn.brandfetch.io/${model.domain}?c=1id1Fyz-h7an5-5KR_y`}
                                   alt={model.provider}
-                                  style={{ width: 10, height: 10, objectFit: 'contain' }}
+                                  style={{ width: 14, height: 14, objectFit: 'cover' }}
                                   onError={(e) => { e.currentTarget.style.display = 'none' }}
                                 />
                               </div>
@@ -3386,6 +3386,16 @@ export default function BlockCanvas({
         .web-toggle-btn:hover { background: #E5E7EB !important; }
         .history-item:hover { background: #F5F5F5 !important; border-color: #D1D5DB !important; }
         .source-card:hover { background: #F5F5F5 !important; border-color: #D1D5DB !important; }
+        .model-dropdown-row:hover { background: rgba(255,255,255,0.12) !important; }
+        
+        /* Tab underline animation */
+        .tab-underline {
+          animation: slideIn 0.15s ease-out;
+        }
+        @keyframes slideIn {
+          from { transform: scaleX(0); opacity: 0; }
+          to { transform: scaleX(1); opacity: 1; }
+        }
         
         /* Tab row hover states */
         .editor-tab:hover { background: #F3F4F6 !important; }
