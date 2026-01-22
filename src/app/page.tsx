@@ -7,7 +7,77 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff } from 'lucide-react'
+import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff, Shield, Lock, BrainCog, KeyRound } from 'lucide-react'
+
+// Security Section - 4 blocks in a row
+function SecuritySection() {
+  const securityItems = [
+    {
+      icon: Shield,
+      image: '/images/marketing/security-gdpr.svg', // Replace with animated icon
+      title: 'GDPR Compliant',
+      description: 'Your data stays yours and stays protected',
+    },
+    {
+      icon: BrainCog,
+      image: '/images/marketing/security-no-training.svg', // Replace with animated icon
+      title: 'No model training',
+      description: 'Your documents never train our models',
+    },
+    {
+      icon: Lock,
+      image: '/images/marketing/security-encrypted.svg', // Replace with animated icon
+      title: 'Encrypted everywhere',
+      description: 'TLS in transit, AES-256 at rest',
+    },
+    {
+      icon: KeyRound,
+      image: '/images/marketing/security-sso.svg', // Replace with animated icon
+      title: 'Enterprise SSO',
+      description: 'SAML, OAuth, and role-based access',
+    },
+  ]
+
+  return (
+    <section className="bg-[#000000] py-16 md:py-24 px-5 md:px-6">
+      {/* Section Header */}
+      <div className="max-w-6xl mx-auto mb-8 md:mb-12 text-center">
+        <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
+          Security
+        </span>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-white leading-tight">
+          Built for sensitive work
+        </h2>
+      </div>
+
+      {/* 4-block grid */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-white/20">
+        {securityItems.map((item, idx) => {
+          const Icon = item.icon
+          return (
+            <div 
+              key={idx}
+              className="py-12 sm:py-0 sm:aspect-square flex flex-col items-center justify-center text-center p-6 border-r border-b border-white/20"
+            >
+              {/* Icon placeholder - swap image src for animated versions */}
+              <div className="w-16 h-16 mb-6 flex items-center justify-center">
+                {/* Using lucide icon as fallback - replace with: */}
+                {/* <img src={item.image} alt={item.title} className="w-full h-full" /> */}
+                <Icon className="w-12 h-12 text-white/30" strokeWidth={1} />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">
+                {item.title}
+              </h3>
+              <p className="text-sm text-white/50">
+                {item.description}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
 
 // Capabilities Grid Section - zig-zag layout
 function CapabilitiesSection() {
@@ -525,6 +595,9 @@ export default function Home() {
 
       {/* Capabilities Section */}
       <CapabilitiesSection />
+
+      {/* Security Section */}
+      <SecuritySection />
     </div>
   )
 }
