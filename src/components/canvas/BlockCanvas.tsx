@@ -21,7 +21,7 @@ import {
   Search, PenLine, Radar, ChevronDown, ChevronRight, ChevronLeft,
   Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
   RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2, Layers,
-  Briefcase, Clock, Loader2
+  Briefcase, Clock, Loader2, Cpu, ShieldCheck
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
@@ -602,8 +602,8 @@ function IntelligenceHub({
 
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
-    { id: 'agents' as const, icon: Radar, label: 'Agents' },
-    { id: 'audit' as const, icon: BarChart3, label: 'Audit' },
+    { id: 'agents' as const, icon: Cpu, label: 'Agents' },
+    { id: 'audit' as const, icon: ShieldCheck, label: 'Audit' },
   ]
 
   // Mock sources (will be replaced with real data)
@@ -690,7 +690,7 @@ function IntelligenceHub({
       if (response.ok) {
         const data = await response.json()
         setJobs(prev => [data.job, ...prev])
-        setActiveTab('jobs')
+        setActiveTab('agents')
       }
     } catch (error) {
       console.error('Error creating job:', error)
