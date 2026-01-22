@@ -599,6 +599,23 @@ function IntelligenceHub({
   const [jobs, setJobs] = useState<ResearchJob[]>([])
   const [jobsLoading, setJobsLoading] = useState(false)
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
+  
+  // Model selection for agents
+  const [selectedModels, setSelectedModels] = useState<string[]>(['claude-sonnet-4'])
+  const [showModelDropdown, setShowModelDropdown] = useState(false)
+  const modelDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Available AI models
+  const availableModels = [
+    { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic', domain: 'anthropic.com' },
+    { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'OpenAI', domain: 'openai.com' },
+    { id: 'gemini-3-flash', name: 'Gemini 3 Flash', provider: 'Google', domain: 'google.com' },
+    { id: 'grok-3', name: 'Grok 3', provider: 'xAI', domain: 'x.ai' },
+  ]
+  
+  // Tab transition
+  const [tabTransition, setTabTransition] = useState(false)
+  const prevTabRef = useRef(activeTab)
 
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
@@ -634,10 +651,23 @@ function IntelligenceHub({
       if (sourcesDropdownRef.current && !sourcesDropdownRef.current.contains(e.target as Node)) {
         setShowSourcesDropdown(false)
       }
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target as Node)) {
+        setShowModelDropdown(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+  
+  // Tab transition effect
+  useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      setTabTransition(true)
+      const timer = setTimeout(() => setTabTransition(false), 150)
+      prevTabRef.current = activeTab
+      return () => clearTimeout(timer)
+    }
+  }, [activeTab])
   
   // Resize handlers
   useEffect(() => {
@@ -685,7 +715,7 @@ function IntelligenceHub({
       const response = await fetch('/api/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: jobQuery, sources: jobSources }),
+        body: JSON.stringify({ query: jobQuery, sources: jobSources, models: selectedModels }),
       })
       if (response.ok) {
         const data = await response.json()
@@ -1057,7 +1087,15 @@ function IntelligenceHub({
           </div>
 
           {/* Tab Content */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            overflow: 'hidden',
+            opacity: tabTransition ? 0 : 1,
+            transform: tabTransition ? 'translateY(4px)' : 'translateY(0)',
+            transition: 'opacity 0.15s ease, transform 0.15s ease',
+          }}>
         
         {/* RESEARCH TAB - AI Chat */}
         {activeTab === 'research' && (
@@ -1775,65 +1813,192 @@ function IntelligenceHub({
         {/* AGENTS TAB */}
         {activeTab === 'agents' && (
           <>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Research Jobs
+            {/* New Job Input */}
+            <div style={{ padding: '10px 12px', borderBottom: '1px solid #E5E7EB' }}>
+              <textarea
+                placeholder="Describe the research task for your agents..."
+                rows={2}
+                style={{
+                  width: '100%', border: 'none', outline: 'none', resize: 'none',
+                  fontSize: 14, lineHeight: 1.5, color: '#111', background: 'transparent',
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && e.currentTarget.value.trim()) {
+                    e.preventDefault()
+                    submitBackgroundJob(e.currentTarget.value.trim(), deepDiveSources)
+                    e.currentTarget.value = ''
+                  }
+                }}
+              />
+              
+              {/* Model selector row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                {/* Model dropdown */}
+                <div style={{ position: 'relative' }} ref={modelDropdownRef}>
+                  <button
+                    onClick={() => setShowModelDropdown(!showModelDropdown)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '5px 10px', borderRadius: 4,
+                      border: '1px solid #E5E7EB',
+                      background: 'white', cursor: 'pointer',
+                    }}
+                  >
+                    {/* Stacked model icons */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {selectedModels.slice(0, 3).map((modelId, idx) => {
+                        const model = availableModels.find(m => m.id === modelId)
+                        return (
+                          <div 
+                            key={modelId}
+                            style={{ 
+                              marginLeft: idx > 0 ? -6 : 0,
+                              position: 'relative',
+                              zIndex: 3 - idx,
+                            }}
+                          >
+                            <div style={{
+                              width: 20, height: 20,
+                              borderRadius: '50%',
+                              background: 'white',
+                              border: '1.5px solid #E5E7EB',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              overflow: 'hidden',
+                            }}>
+                              <img 
+                                src={`https://cdn.brandfetch.io/${model?.domain}?c=1id1Fyz-h7an5-5KR_y`}
+                                alt={model?.provider}
+                                style={{ width: 12, height: 12, objectFit: 'contain' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {selectedModels.length > 3 && (
+                        <div style={{
+                          marginLeft: -6,
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: '#F3F4F6', border: '1.5px solid #E5E7EB',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 9, fontWeight: 600, color: '#6B7280',
+                        }}>
+                          +{selectedModels.length - 3}
+                        </div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 500, color: '#374151' }}>
+                      {selectedModels.length} model{selectedModels.length !== 1 ? 's' : ''}
+                    </span>
+                    <ChevronDown className="w-3 h-3" style={{ color: '#9CA3AF' }} />
+                  </button>
+
+                  {showModelDropdown && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, marginTop: 4,
+                      background: '#1F1F1F', borderRadius: 8,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.3)', overflow: 'hidden', 
+                      minWidth: 200, zIndex: 100,
+                    }}>
+                      <div style={{ padding: '8px 12px', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', borderBottom: '1px solid #333' }}>
+                        Select Models
+                      </div>
+                      {availableModels.map(model => {
+                        const isSelected = selectedModels.includes(model.id)
+                        return (
+                          <button
+                            key={model.id}
+                            onClick={() => {
+                              setSelectedModels(prev => 
+                                isSelected 
+                                  ? prev.filter(id => id !== model.id)
+                                  : [...prev, model.id]
+                              )
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                              padding: '10px 12px', border: 'none',
+                              background: isSelected ? 'rgba(255,255,255,0.08)' : 'transparent',
+                              cursor: 'pointer', textAlign: 'left',
+                            }}
+                          >
+                            {/* Raven logo with model icon overlay */}
+                            <div style={{ position: 'relative', width: 28, height: 28 }}>
+                              <img 
+                                src="/images/raven-logo.png"
+                                alt="Raven"
+                                style={{ 
+                                  width: 28, height: 28, 
+                                  opacity: 0.6,
+                                  filter: 'grayscale(100%) brightness(2)',
+                                }}
+                              />
+                              <div style={{
+                                position: 'absolute', bottom: -2, right: -2,
+                                width: 14, height: 14, borderRadius: '50%',
+                                background: 'white',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                              }}>
+                                <img 
+                                  src={`https://cdn.brandfetch.io/${model.domain}?c=1id1Fyz-h7an5-5KR_y`}
+                                  alt={model.provider}
+                                  style={{ width: 10, height: 10, objectFit: 'contain' }}
+                                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                                />
+                              </div>
+                            </div>
+                            
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'white' }}>
+                              {model.name}
+                            </span>
+                            
+                            {isSelected && (
+                              <Check className="w-4 h-4" style={{ color: '#22C55E' }} />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ flex: 1 }} />
+                
+                <span style={{ fontSize: 10, color: '#9CA3AF' }}>
+                  Enter to deploy
+                </span>
+              </div>
+            </div>
+            
+            {/* Active Agents Header */}
+            <div style={{ padding: '8px 12px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                Active ({jobs.length})
               </span>
               <button
                 onClick={fetchJobs}
                 style={{
-                  padding: '4px 8px', borderRadius: 4, border: '1px solid #E5E7EB',
-                  background: 'white', color: '#6B7280', fontSize: 11, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '2px 4px', borderRadius: 3, border: 'none',
+                  background: 'transparent', color: '#9CA3AF', fontSize: 10, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center',
                 }}
+                className="action-btn"
               >
                 <RefreshCw className="w-3 h-3" />
-                Refresh
               </button>
-            </div>
-
-            {/* New Job Input */}
-            <div style={{ padding: '12px', borderBottom: '1px solid #F3F4F6' }}>
-              <div style={{ background: '#F5F5F5', borderRadius: 8, padding: '10px 12px' }}>
-                <input
-                  type="text"
-                  placeholder="Enter research task..."
-                  style={{
-                    width: '100%', border: 'none', outline: 'none',
-                    fontSize: 13, color: '#111', background: 'transparent',
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                      submitBackgroundJob(e.currentTarget.value.trim(), deepDiveSources)
-                      e.currentTarget.value = ''
-                    }
-                  }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>
-                    Sources: {deepDiveSources.join(', ')}
-                  </span>
-                  <div style={{ flex: 1 }} />
-                  <span style={{ fontSize: 10, color: '#9CA3AF' }}>
-                    Press Enter to queue
-                  </span>
-                </div>
-              </div>
             </div>
 
             {/* Jobs List */}
             <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
               {jobs.length === 0 ? (
                 <div style={{ 
-                  padding: '24px', 
+                  padding: '24px 16px', 
                   textAlign: 'center', 
                   color: '#9CA3AF', 
                   fontSize: 12,
-                  background: '#F9FAFB',
-                  borderRadius: 8,
-                  border: '1px dashed #E5E7EB',
                 }}>
-                  No research jobs yet. Queue a task above or use "Run in Background" from Research.
+                  No active agents. Describe a task above to deploy.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
