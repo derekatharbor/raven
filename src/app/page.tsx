@@ -50,14 +50,14 @@ function CapabilitiesSection() {
   ]
 
   return (
-    <section className="bg-[#15120B] py-24 px-6">
+    <section className="bg-[#15120B] py-16 md:py-24 px-5 md:px-6">
       {/* Section Header */}
-      <div className="max-w-6xl mx-auto mb-12">
+      <div className="max-w-6xl mx-auto mb-8 md:mb-12">
         <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
           Platform Capabilities
         </span>
-        <h2 className="text-4xl md:text-5xl font-medium text-white leading-tight">
-          Built for how you<br />actually work
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-white leading-tight">
+          Built for how you<br className="hidden sm:block" />actually work
         </h2>
       </div>
 
@@ -70,17 +70,17 @@ function CapabilitiesSection() {
               key={idx}
               className="grid grid-cols-1 md:grid-cols-2 border-b border-r border-white/20"
             >
-              {/* Text Side - square */}
-              <div className={`aspect-square p-8 md:p-12 flex flex-col justify-center ${
+              {/* Text Side - square on desktop only */}
+              <div className={`p-6 sm:p-8 md:p-12 md:aspect-square flex flex-col justify-center ${
                 isEven ? 'md:order-1' : 'md:order-2'
               }`}>
-                <span className="inline-block px-2 py-1 mb-4 text-[10px] font-medium tracking-wider uppercase border border-white/20 text-white/50 w-fit">
+                <span className="inline-block px-2 py-1 mb-3 md:mb-4 text-[10px] font-medium tracking-wider uppercase border border-white/20 text-white/50 w-fit">
                   {cap.badge}
                 </span>
-                <h3 className="text-2xl md:text-3xl font-medium text-white mb-4 leading-tight">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-medium text-white mb-3 md:mb-4 leading-tight">
                   {cap.title}
                 </h3>
-                <p className="text-white/60 leading-relaxed mb-6">
+                <p className="text-sm sm:text-base text-white/60 leading-relaxed mb-4 md:mb-6">
                   {cap.description}
                 </p>
                 <Link 
@@ -92,8 +92,8 @@ function CapabilitiesSection() {
                 </Link>
               </div>
 
-              {/* Image Side - square */}
-              <div className={`aspect-square bg-white/5 flex items-center justify-center border-white/20 ${
+              {/* Image Side - square on desktop, shorter on mobile */}
+              <div className={`min-h-[250px] sm:min-h-[300px] md:aspect-square bg-white/5 flex items-center justify-center border-white/20 ${
                 isEven ? 'md:order-2 md:border-l' : 'md:order-1 md:border-r'
               }`}>
                 <img 
@@ -172,14 +172,14 @@ function FeaturesSection() {
   const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || Search
 
   return (
-    <section id="features" className="bg-[#15120B] py-24 px-6">
+    <section id="features" className="bg-[#15120B] py-16 md:py-24 px-5 md:px-6">
       {/* Section Header */}
-      <div className="max-w-6xl mx-auto mb-12">
+      <div className="max-w-6xl mx-auto mb-8 md:mb-12">
         <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
           The Platform
         </span>
-        <h2 className="text-4xl md:text-5xl font-medium text-white leading-tight">
-          Where research becomes<br />actionable intelligence
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-white leading-tight">
+          Where research becomes<br className="hidden sm:block" />actionable intelligence
         </h2>
       </div>
 
@@ -194,7 +194,7 @@ function FeaturesSection() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
                   idx > 0 ? 'border-l border-white/20' : ''
                 } ${
                   isActive 
@@ -202,7 +202,7 @@ function FeaturesSection() {
                     : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 hidden sm:block" />
                 {tab.label}
               </button>
             )
@@ -212,11 +212,11 @@ function FeaturesSection() {
         {/* Two Panel Content */}
         <div className="grid md:grid-cols-2 border-b border-white/20">
           {/* Left - Text */}
-          <div className="p-8 md:p-12 flex flex-col justify-center border-r border-white/20">
-            <h3 className="text-2xl md:text-3xl font-medium text-white mb-4 leading-tight">
+          <div className="p-6 sm:p-8 md:p-12 flex flex-col justify-center md:border-r border-white/20">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-medium text-white mb-4 leading-tight">
               {content.title}
             </h3>
-            <p className="text-white/60 leading-relaxed mb-6">
+            <p className="text-sm sm:text-base text-white/60 leading-relaxed mb-6">
               {content.description}
             </p>
             <Link 
@@ -229,7 +229,7 @@ function FeaturesSection() {
           </div>
 
           {/* Right - Image */}
-          <div className="flex items-center justify-center bg-white/5 min-h-[400px]">
+          <div className="flex items-center justify-center bg-white/5 min-h-[250px] sm:min-h-[300px] md:min-h-[400px]">
             <img 
               src={content.image}
               alt={`${activeTab} feature`}
@@ -367,16 +367,16 @@ function ManifestoSection() {
       
       {/* Vertical lines */}
       <div className="absolute top-0 bottom-0 left-[5%] w-px bg-white/20" />
-      <div className="absolute top-0 bottom-0 left-1/2 w-px bg-white/20 -translate-x-1/2" />
+      <div className="absolute top-0 bottom-0 left-1/2 w-px bg-white/20 -translate-x-1/2 hidden md:block" />
       <div className="absolute top-0 bottom-0 right-[5%] w-px bg-white/20" />
 
       {/* Content */}
-      <div className="sticky top-0 min-h-screen flex items-center py-24">
-        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 md:gap-16 px-[6%]">
+      <div className="sticky top-0 min-h-screen flex items-center py-16 md:py-24">
+        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-8 md:gap-16 px-[6%]">
           {/* Left - Title */}
           <div className="flex items-start">
             <h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.2]"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.2]"
               style={{ 
                 fontFamily: 'var(--font-geist-sans)',
                 color: scrollProgress > 0.02 ? '#ffffff' : 'rgba(255,255,255,0.25)',
@@ -441,13 +441,13 @@ export default function Home() {
     <div className="min-h-screen bg-[#15120B] overflow-x-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#15120B]/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-5 md:px-6 h-14 flex items-center justify-between">
           {/* Logo - IMAGE: /public/images/nav-logo.png */}
           <Link href="/" className="flex items-center gap-2">
             <img src="/images/nav-logo.png" alt="Raven" className="h-6 w-auto" />
           </Link>
 
-          {/* Nav Links */}
+          {/* Nav Links - desktop */}
           <div className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm text-neutral-400 hover:text-white transition-colors">
               Features
@@ -464,7 +464,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Link 
               href="/login" 
-              className="text-sm text-neutral-400 hover:text-white transition-colors"
+              className="hidden sm:block text-sm text-neutral-400 hover:text-white transition-colors"
             >
               Log in
             </Link>
@@ -479,21 +479,21 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-24">
+      <section className="pt-24 md:pt-32 pb-16 md:pb-24">
         {/* Text Content - constrained */}
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-6">
+        <div className="max-w-4xl mx-auto text-center px-5 md:px-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-5 md:mb-6">
             Built for work that matters.
           </h1>
-          <p className="text-lg md:text-xl text-neutral-400 max-w-xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-neutral-400 max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed">
             Raven is a document workspace with AI-powered research and reader analytics.
           </p>
           
-          {/* CTA Buttons */}
-          <div className="flex items-center justify-center gap-4">
+          {/* CTA Buttons - stack on mobile */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link 
               href="/signup" 
-              className="px-8 py-3.5 bg-white text-black text-sm font-medium rounded-full hover:bg-neutral-200 transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto px-8 py-3.5 bg-white text-black text-sm font-medium rounded-full hover:bg-neutral-200 transition-all hover:scale-[1.02]"
             >
               Get started
             </Link>
@@ -506,13 +506,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Hero Image - full width container, 67% of hero width */}
+        {/* Hero Image - responsive width */}
         {/* IMAGE: /public/images/marketing/hero.png */}
-        <div className="mt-20 flex justify-center">
+        <div className="mt-12 md:mt-20 flex justify-center px-4 md:px-0">
           <img 
             src="/images/marketing/hero.png" 
             alt="Raven workspace" 
-            className="w-[67%]"
+            className="w-[90%] sm:w-[80%] md:w-[67%]"
           />
         </div>
       </section>
