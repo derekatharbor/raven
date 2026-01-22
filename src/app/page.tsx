@@ -3,10 +3,105 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
+// Manifesto Section with scroll-reveal
+function ManifestoSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const [scrollProgress, setScrollProgress] = useState(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current) return
+      
+      const rect = sectionRef.current.getBoundingClientRect()
+      const sectionHeight = sectionRef.current.offsetHeight
+      const viewportHeight = window.innerHeight
+      
+      // Calculate progress: 0 when section enters, 1 when section exits
+      const startPoint = viewportHeight * 0.8 // Start revealing when 20% into viewport
+      const endPoint = -sectionHeight * 0.3 // Fully revealed when 30% has scrolled past
+      
+      const progress = (startPoint - rect.top) / (startPoint - endPoint)
+      setScrollProgress(Math.max(0, Math.min(1, progress)))
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Initial check
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const paragraphs = [
+    "Research is changing shape.",
+    "Work that used to live in PDFs now lives across links, chats, transcripts, filings, and feeds. The volume goes up. The stakes don't go down.",
+    "The hard part isn't finding information. It's turning it into something coherent, keeping it current, and delivering it in a way that actually lands.",
+    "Then comes the part nobody tracks.",
+    "You send the report and the feedback disappears. What did they read. Where did they slow down. What did they misunderstand. What pushed them to ask the same questions again.",
+    "Raven is built for the full lifecycle of an analysis. Search. Create. Track. Analyze.",
+    "One workspace for research and writing. Monitoring that keeps your work current. And a reader experience that answers questions in place, grounded in the sources you connected.",
+    "This is what comes next.",
+    "Moving beyond the PDF."
+  ]
+
+  // Calculate which paragraphs should be visible
+  const getOpacity = (index: number) => {
+    const paragraphProgress = (index + 1) / paragraphs.length
+    const revealPoint = scrollProgress * 1.3 // Slightly ahead of progress
+    
+    if (revealPoint >= paragraphProgress) {
+      return 1
+    } else if (revealPoint >= paragraphProgress - 0.15) {
+      // Fade in zone
+      return (revealPoint - (paragraphProgress - 0.15)) / 0.15
+    }
+    return 0.15 // Dimmed but visible
+  }
+
+  return (
+    <section 
+      ref={sectionRef}
+      className="bg-[#15120B] py-32 px-6 min-h-screen flex items-center"
+    >
+      <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 md:gap-24">
+        {/* Left - Title */}
+        <div className="md:sticky md:top-32 md:self-start">
+          <h2 
+            className="text-4xl md:text-5xl font-serif font-normal text-white leading-tight"
+            style={{ 
+              opacity: scrollProgress > 0.05 ? 1 : 0.15,
+              transition: 'opacity 0.5s ease',
+            }}
+          >
+            A document should answer back.
+          </h2>
+        </div>
+
+        {/* Right - Body paragraphs */}
+        <div className="space-y-6">
+          {paragraphs.map((text, index) => {
+            const isEmphasis = index === 3 || index === 7 || index === 8 // "Then comes...", "This is what...", "Moving beyond..."
+            return (
+              <p
+                key={index}
+                className={`text-lg leading-relaxed transition-opacity duration-500 ${
+                  isEmphasis ? 'text-white font-medium' : 'text-neutral-400'
+                }`}
+                style={{ 
+                  opacity: getOpacity(index),
+                }}
+              >
+                {text}
+              </p>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default function Home() {
   const router = useRouter()
@@ -113,6 +208,9 @@ export default function Home() {
           />
         </div>
       </section>
+
+      {/* Manifesto Section */}
+      <ManifestoSection />
     </div>
   )
 }
