@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, PenLine, Radar, BarChart3, ArrowRight } from 'lucide-react'
+import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff } from 'lucide-react'
 
 // Features Section with tabs
 function FeaturesSection() {
@@ -26,10 +26,10 @@ function FeaturesSection() {
       description: 'Search across documents, filings, transcripts, and more with natural language. Get cited answers instantly, organized in a structured matrix you can export and share.',
       image: '/images/marketing/feature-search.png',
       features: [
-        { icon: Search, text: 'Natural language queries across all your connected sources' },
-        { icon: Search, text: 'Structured matrix view with citations and confidence scores' },
-        { icon: Search, text: 'Export results to spreadsheets or reports' },
-        { icon: Search, text: 'Connect SEC EDGAR, internal docs, and web sources' },
+        { icon: FileText, text: 'Natural language queries across all your connected sources' },
+        { icon: Table, text: 'Structured matrix view with citations and confidence scores' },
+        { icon: Download, text: 'Export results to spreadsheets or reports' },
+        { icon: Database, text: 'Connect SEC EDGAR, internal docs, and web sources' },
       ]
     },
     create: {
@@ -37,10 +37,10 @@ function FeaturesSection() {
       description: 'A Cursor-style editor where research happens alongside writing. Highlight claims to verify, run agents for deep research, and autocomplete with grounded data from your sources.',
       image: '/images/marketing/feature-create.png',
       features: [
-        { icon: PenLine, text: 'Inline autocomplete powered by your connected sources' },
-        { icon: PenLine, text: 'Highlight text to research and verify claims' },
-        { icon: PenLine, text: 'Deploy multiple AI agents for parallel research' },
-        { icon: PenLine, text: 'Notion-style blocks for structured documents' },
+        { icon: Sparkles, text: 'Inline autocomplete powered by your connected sources' },
+        { icon: CheckCircle, text: 'Highlight text to research and verify claims' },
+        { icon: Bot, text: 'Deploy multiple AI agents for parallel research' },
+        { icon: Blocks, text: 'Notion-style blocks for structured documents' },
       ]
     },
     track: {
@@ -48,10 +48,10 @@ function FeaturesSection() {
       description: 'Set up monitoring for topics and keywords that matter. Raven runs queries on your schedule and surfaces relevant updates so you never miss a development.',
       image: '/images/marketing/feature-track.png',
       features: [
-        { icon: Radar, text: 'Schedule recurring searches across your sources' },
-        { icon: Radar, text: 'Get alerts when new relevant content appears' },
-        { icon: Radar, text: 'Track competitors, markets, or regulatory changes' },
-        { icon: Radar, text: 'Digest summaries delivered on your cadence' },
+        { icon: Bell, text: 'Schedule recurring searches across your sources' },
+        { icon: TrendingUp, text: 'Get alerts when new relevant content appears' },
+        { icon: Globe, text: 'Track competitors, markets, or regulatory changes' },
+        { icon: Mail, text: 'Digest summaries delivered on your cadence' },
       ]
     },
     analyze: {
@@ -59,10 +59,10 @@ function FeaturesSection() {
       description: 'Share documents with a Raven link and understand exactly how readers engage. See where they pause, what they skip, and let them ask questions answered by AI—grounded in your sources.',
       image: '/images/marketing/feature-analyze.png',
       features: [
-        { icon: BarChart3, text: 'Reader heatmaps showing scroll and time spent' },
-        { icon: BarChart3, text: 'In-document AI that answers reader questions' },
-        { icon: BarChart3, text: 'Track which sections drive engagement' },
-        { icon: BarChart3, text: 'Reduce follow-up calls with instant clarity' },
+        { icon: Eye, text: 'Reader heatmaps showing scroll and time spent' },
+        { icon: MessageSquare, text: 'In-document AI that answers reader questions' },
+        { icon: MousePointer, text: 'Track which sections drive engagement' },
+        { icon: PhoneOff, text: 'Reduce follow-up calls with instant clarity' },
       ]
     },
   }
@@ -71,7 +71,7 @@ function FeaturesSection() {
   const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || Search
 
   return (
-    <section id="features" className="bg-[#0A0A0A] py-24 px-6">
+    <section id="features" className="bg-[#15120B] py-24 px-6">
       {/* Section Header */}
       <div className="max-w-6xl mx-auto mb-12">
         <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
@@ -82,18 +82,20 @@ function FeaturesSection() {
         </h2>
       </div>
 
-      {/* Main Container with border */}
-      <div className="max-w-6xl mx-auto border border-white/20 rounded-lg overflow-hidden">
+      {/* Main Container with border - no rounded corners */}
+      <div className="max-w-6xl mx-auto border border-white/20 overflow-hidden">
         {/* Tabs Row */}
         <div className="flex border-b border-white/20">
-          {tabs.map((tab) => {
+          {tabs.map((tab, idx) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors cursor-pointer ${
+                  idx > 0 ? 'border-l border-white/20' : ''
+                } ${
                   isActive 
                     ? 'bg-white text-black' 
                     : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5'
@@ -118,7 +120,7 @@ function FeaturesSection() {
             </p>
             <Link 
               href={`/features/${activeTab}`}
-              className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80 transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80 transition-colors cursor-pointer"
             >
               Learn more
               <ArrowRight className="w-4 h-4" />
@@ -126,11 +128,11 @@ function FeaturesSection() {
           </div>
 
           {/* Right - Image */}
-          <div className="p-6 md:p-8 flex items-center justify-center bg-white/5">
+          <div className="flex items-center justify-center bg-white/5 min-h-[400px]">
             <img 
               src={content.image}
               alt={`${activeTab} feature`}
-              className="w-full rounded-lg shadow-2xl"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>
@@ -142,7 +144,9 @@ function FeaturesSection() {
             return (
               <div 
                 key={idx} 
-                className="p-6 flex gap-4 border-t border-white/20 lg:border-t-0 lg:border-l first:border-l-0"
+                className={`p-6 flex gap-4 ${
+                  idx > 0 ? 'border-t sm:border-t-0 sm:border-l lg:border-l border-white/20' : ''
+                } ${idx === 2 ? 'sm:border-t sm:border-l-0 lg:border-t-0 lg:border-l' : ''}`}
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                   <FeatureIcon className="w-4 h-4 text-white/60" />
