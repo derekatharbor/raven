@@ -88,7 +88,7 @@ function ManifestoSection() {
       return (
         <p
           key={pIndex}
-          className="text-2xl md:text-3xl leading-relaxed mb-8"
+          className="text-base md:text-lg leading-[1.6] mb-5"
           style={{ fontFamily: 'var(--font-space-grotesk)' }}
         >
           {renderedWords}
@@ -101,7 +101,7 @@ function ManifestoSection() {
     <section 
       ref={sectionRef}
       className="bg-[#15120B] relative"
-      style={{ minHeight: '200vh' }} // Extra height for scroll
+      style={{ minHeight: '150vh' }}
     >
       {/* Horizontal line - top */}
       <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
@@ -116,18 +116,18 @@ function ManifestoSection() {
 
       {/* Content */}
       <div className="sticky top-0 min-h-screen flex items-center py-24">
-        <div className="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 md:gap-24 px-[8%]">
+        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 md:gap-16 px-[6%]">
           {/* Left - Title */}
-          <div>
+          <div className="flex items-start">
             <h2 
-              className="text-4xl md:text-6xl font-normal leading-tight"
+              className="text-3xl md:text-4xl font-medium leading-[1.2]"
               style={{ 
-                fontFamily: 'var(--font-space-grotesk)',
+                fontFamily: 'var(--font-geist-sans)',
                 color: scrollProgress > 0.02 ? '#ffffff' : 'rgba(255,255,255,0.25)',
                 transition: 'color 0.5s ease',
               }}
             >
-              A document should answer back.
+              A document should<br />answer back.
             </h2>
           </div>
 
