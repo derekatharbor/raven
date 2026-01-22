@@ -72,8 +72,8 @@ function CapabilitiesSection() {
                 !isEven ? 'md:flex-row-reverse' : ''
               }`}
             >
-              {/* Text Side */}
-              <div className="flex-1 p-8 md:p-12 flex flex-col justify-center md:border-r border-white/20">
+              {/* Text Side - square */}
+              <div className="flex-1 aspect-square p-8 md:p-12 flex flex-col justify-center md:border-r border-white/20">
                 <span className="inline-block px-2 py-1 mb-4 text-[10px] font-medium tracking-wider uppercase border border-white/20 text-white/50 w-fit">
                   {cap.badge}
                 </span>
@@ -92,8 +92,8 @@ function CapabilitiesSection() {
                 </Link>
               </div>
 
-              {/* Image Side */}
-              <div className="flex-1 bg-white/5 min-h-[300px] md:min-h-[400px] flex items-center justify-center">
+              {/* Image Side - square */}
+              <div className="flex-1 aspect-square bg-white/5 flex items-center justify-center">
                 <img 
                   src={cap.image}
                   alt={cap.title}
