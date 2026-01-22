@@ -174,7 +174,7 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
             </Link>
             <button 
               onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors hover:bg-black/5"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors hover:bg-black/5 cursor-pointer"
             >
               <LogOut className="w-4 h-4 text-gray-400" />
               <span className="text-[13px] text-gray-500">Sign out</span>
@@ -201,7 +201,7 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
             </Link>
             <button 
               onClick={handleSignOut}
-              className="flex items-center justify-center p-2 rounded transition-colors hover:bg-black/5"
+              className="flex items-center justify-center p-2 rounded transition-colors hover:bg-black/5 cursor-pointer"
               title="Sign out"
             >
               <LogOut className="w-4 h-4 text-gray-500" />
