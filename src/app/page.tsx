@@ -62,7 +62,7 @@ function SecuritySection() {
               {/* Icon placeholder - swap image src for animated versions */}
               <div className="w-16 h-16 mb-6 flex items-center justify-center">
                 {/* Using lucide icon as fallback - replace with: */}
-                {/* <img src={item.image} alt={item.title} className="w-full h-full" /> */}
+        
                 <Icon className="w-12 h-12 text-white/30" strokeWidth={1} />
               </div>
               <h3 className="text-lg font-medium text-white mb-2">
