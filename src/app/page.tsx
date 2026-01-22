@@ -21,22 +21,23 @@ function RotatingText() {
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % words.length)
         setIsAnimating(false)
-      }, 200)
+      }, 150)
     }, 2500)
 
     return () => clearInterval(interval)
   }, [])
 
   return (
-    <span className="inline-block min-w-[200px] sm:min-w-[280px] text-left">
+    <span className="inline-block w-[165px] sm:w-[220px] md:w-[280px] text-left">
       <span
-        className={`inline-block transition-all duration-300 ${
-          isAnimating 
-            ? '-translate-y-4 opacity-0' 
-            : 'translate-y-0 opacity-100'
-        }`}
+        className="inline-block transition-all duration-300 ease-out"
+        style={{
+          opacity: isAnimating ? 0 : 1,
+          filter: isAnimating ? 'blur(8px)' : 'blur(0px)',
+          transform: isAnimating ? 'scale(0.95)' : 'scale(1)',
+        }}
       >
-        {words[currentIndex]}.
+        {words[currentIndex]}
       </span>
     </span>
   )
@@ -516,7 +517,8 @@ export default function Home() {
         {/* Text Content - constrained */}
         <div className="max-w-4xl mx-auto text-center px-5 md:px-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-5 md:mb-6">
-            The AI platform<br />for <RotatingText />
+            <span className="block">The AI platform</span>
+            <span className="block">for <RotatingText /></span>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-neutral-400 max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed">
             Search, write, track, and deliver—all in one workspace.
