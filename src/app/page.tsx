@@ -57,7 +57,7 @@ function CapabilitiesSection() {
           Platform Capabilities
         </span>
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-white leading-tight">
-          Built for how you<br className="hidden sm:block" />actually work
+          Built for how you<br className="hidden sm:block" /> actually work
         </h2>
       </div>
 
@@ -179,7 +179,7 @@ function FeaturesSection() {
           The Platform
         </span>
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-white leading-tight">
-          Where research becomes<br className="hidden sm:block" />actionable intelligence
+          Where research becomes<br className="hidden sm:block" /> actionable intelligence
         </h2>
       </div>
 
