@@ -9,40 +9,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff } from 'lucide-react'
 
-// Rotating text component for hero
-function RotatingText() {
-  const words = ['finance', 'consulting', 'government', 'legal', 'research']
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAnimating(true)
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % words.length)
-        setIsAnimating(false)
-      }, 150)
-    }, 2500)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  return (
-    <span className="inline-block w-[165px] sm:w-[220px] md:w-[280px] text-left">
-      <span
-        className="inline-block transition-all duration-300 ease-out"
-        style={{
-          opacity: isAnimating ? 0 : 1,
-          filter: isAnimating ? 'blur(8px)' : 'blur(0px)',
-          transform: isAnimating ? 'scale(0.95)' : 'scale(1)',
-        }}
-      >
-        {words[currentIndex]}
-      </span>
-    </span>
-  )
-}
-
 // Capabilities Grid Section - zig-zag layout
 function CapabilitiesSection() {
   const capabilities = [
@@ -517,11 +483,10 @@ export default function Home() {
         {/* Text Content - constrained */}
         <div className="max-w-4xl mx-auto text-center px-5 md:px-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-5 md:mb-6">
-            <span className="block">The AI platform</span>
-            <span className="block">for <RotatingText /></span>
+            One platform.<br />From research to reader.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-neutral-400 max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed">
-            Search, write, track, and deliver—all in one workspace.
+            Raven is a document workspace with AI-powered research and reader analytics.
           </p>
           
           {/* CTA Buttons - stack on mobile */}
