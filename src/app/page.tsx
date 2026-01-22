@@ -50,7 +50,7 @@ function CapabilitiesSection() {
   ]
 
   return (
-    <section className="bg-[#15120B] py-16 md:py-24 px-5 md:px-6">
+    <section className="bg-[#000000] py-16 md:py-24 px-5 md:px-6">
       {/* Section Header */}
       <div className="max-w-6xl mx-auto mb-8 md:mb-12">
         <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
@@ -172,7 +172,7 @@ function FeaturesSection() {
   const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || Search
 
   return (
-    <section id="features" className="bg-[#15120B] py-16 md:py-24 px-5 md:px-6">
+    <section id="features" className="bg-[#000000] py-16 md:py-24 px-5 md:px-6">
       {/* Section Header */}
       <div className="max-w-6xl mx-auto mb-8 md:mb-12">
         <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
@@ -356,7 +356,7 @@ function ManifestoSection() {
   return (
     <section 
       ref={sectionRef}
-      className="bg-[#15120B] relative"
+      className="bg-[#000000] relative"
       style={{ minHeight: '115vh' }}
     >
       {/* Horizontal line - top */}
@@ -431,16 +431,16 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#15120B]">
+      <div className="min-h-screen flex items-center justify-center bg-[#000000]">
         <div className="w-5 h-5 border-2 border-neutral-700 border-t-neutral-400 rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#15120B] overflow-x-hidden">
+    <div className="min-h-screen bg-[#000000] overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#15120B]/80 backdrop-blur-md">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#000000]/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-5 md:px-6 h-14 flex items-center justify-between">
           {/* Logo - IMAGE: /public/images/nav-logo.png */}
           <Link href="/" className="flex items-center gap-2">
@@ -483,7 +483,7 @@ export default function Home() {
         {/* Text Content - constrained */}
         <div className="max-w-4xl mx-auto text-center px-5 md:px-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-5 md:mb-6">
-            Built for work that matters.
+            One platform.<br />From research to reader.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-neutral-400 max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed">
             Raven is a document workspace with AI-powered research and reader analytics.
