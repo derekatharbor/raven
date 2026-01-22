@@ -76,9 +76,9 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-24 px-6">
-        {/* Content */}
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="pt-32 pb-24">
+        {/* Text Content - constrained */}
+        <div className="max-w-4xl mx-auto text-center px-6">
           <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-6">
             Built for work that matters.
           </h1>
@@ -87,7 +87,7 @@ export default function Home() {
           </p>
           
           {/* CTA Buttons */}
-          <div className="flex items-center justify-center gap-4 mb-20">
+          <div className="flex items-center justify-center gap-4">
             <Link 
               href="/signup" 
               className="px-8 py-3.5 bg-white text-black text-sm font-medium rounded-full hover:bg-neutral-200 transition-all hover:scale-[1.02]"
@@ -101,15 +101,16 @@ export default function Home() {
               Learn more →
             </Link>
           </div>
+        </div>
 
-          {/* Hero Image - IMAGE: /public/images/marketing/hero.png */}
-          <div className="flex justify-center">
-            <img 
-              src="/images/marketing/hero.png" 
-              alt="Raven workspace" 
-              className="w-[67%]"
-            />
-          </div>
+        {/* Hero Image - full width container, 67% of hero width */}
+        {/* IMAGE: /public/images/marketing/hero.png */}
+        <div className="mt-20 flex justify-center">
+          <img 
+            src="/images/marketing/hero.png" 
+            alt="Raven workspace" 
+            className="w-[67%]"
+          />
         </div>
       </section>
     </div>

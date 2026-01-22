@@ -33,8 +33,9 @@ export default function Sidebar({ connectedSourceCount = 0 }: SidebarProps) {
   const isActive = (href: string) => pathname?.startsWith(href)
   
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     router.push('/')
+    router.refresh()
   }
 
   return (
