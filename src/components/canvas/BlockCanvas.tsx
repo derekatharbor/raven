@@ -21,7 +21,7 @@ import {
   Search, PenLine, Radar, ChevronDown, ChevronRight, ChevronLeft,
   Folder, FolderOpen, FileText, Database, Check, AlertTriangle, XCircle,
   RefreshCw, Wifi, WifiOff, Globe, PanelRightClose, PanelRight, Share2, Layers,
-  Briefcase, Clock, Loader2, Cpu, ShieldCheck
+  Briefcase, Clock, Loader2, Cpu
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import PublishModal from '@/components/publish/PublishModal'
@@ -546,7 +546,7 @@ function IntelligenceHub({
   onTrackClaim: (claim: string, source?: string) => void
   onKeyFact: (keyFact: string, source?: string) => void
 }) {
-  const [activeTab, setActiveTab] = useState<'research' | 'agents' | 'audit'>('research')
+  const [activeTab, setActiveTab] = useState<'research' | 'agents'>('research')
   const [query, setQuery] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: string; keyFact?: string; source?: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -607,16 +607,15 @@ function IntelligenceHub({
   
   // Available AI models
   const availableModels = [
-    { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic', domain: 'anthropic.com' },
+    { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic', domain: 'claude.ai' },
     { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'OpenAI', domain: 'openai.com' },
-    { id: 'gemini-3-flash', name: 'Gemini 3 Flash', provider: 'Google', domain: 'google.com' },
-    { id: 'grok-3', name: 'Grok 3', provider: 'xAI', domain: 'x.ai' },
+    { id: 'gemini-3-flash', name: 'Gemini 3 Flash', provider: 'Google', domain: 'deepmind.google' },
+    { id: 'grok-3', name: 'Grok 3', provider: 'xAI', domain: 'x.com' },
   ]
   
   const tabs = [
     { id: 'research' as const, icon: Atom, label: 'Research' },
     { id: 'agents' as const, icon: Cpu, label: 'Agents' },
-    { id: 'audit' as const, icon: ShieldCheck, label: 'Audit' },
   ]
 
   // Mock sources (will be replaced with real data)
@@ -631,12 +630,6 @@ function IntelligenceHub({
   // Brandfetch logo URL helper
   const getBrandfetchLogo = (domain: string) => 
     `https://cdn.brandfetch.io/${domain}?c=1id1Fyz-h7an5-5KR_y`
-
-  const integrityCards = [
-    { id: 'ic-1', claim: 'Data center revenue of $14.51B', source: 'NVDA 10-Q', status: 'verified' as const },
-    { id: 'ic-2', claim: '279% YoY increase', source: 'NVDA 10-Q', status: 'drift' as const, note: 'Doc says 280%' },
-    { id: 'ic-3', claim: 'AI chip demand driving growth', source: 'Bloomberg', status: 'monitoring' as const },
-  ]
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1051,8 +1044,10 @@ function IntelligenceHub({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
+                    flex: 1,
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: 5,
                     padding: '8px 12px',
                     border: 'none',
@@ -2209,49 +2204,6 @@ function IntelligenceHub({
           </>
         )}
 
-        {/* AUDIT TAB */}
-        {activeTab === 'audit' && (
-          <>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#111', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Integrity
-              </span>
-              <span style={{ fontSize: 11, color: auditMode ? '#22C55E' : '#9CA3AF', fontWeight: 500 }}>
-                {auditMode ? '● Active' : '○ Off'}
-              </span>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
-              {integrityCards.map(card => (
-                <div key={card.id} className="integrity-card" style={{
-                  padding: '10px 12px', marginBottom: 8, background: '#FAFAFA',
-                  borderRadius: 8, border: '1px solid #E5E7EB',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                    {card.status === 'verified' && <Check className="w-3 h-3" style={{ color: '#22C55E' }} />}
-                    {card.status === 'drift' && <AlertTriangle className="w-3 h-3" style={{ color: '#F59E0B' }} />}
-                    {card.status === 'monitoring' && <Radio className="w-3 h-3" style={{ color: '#3B82F6' }} />}
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 
-                      card.status === 'verified' ? '#22C55E' : 
-                      card.status === 'drift' ? '#F59E0B' : '#3B82F6',
-                      textTransform: 'uppercase',
-                    }}>
-                      {card.status}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: '#111', marginBottom: 4 }}>
-                    "{card.claim}"
-                  </div>
-                  <div style={{ fontSize: 11, color: '#6B7280' }}>
-                    {card.source}
-                  </div>
-                  {card.note && (
-                    <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 6 }}>Note: {card.note}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
           </div>
         </>
       )}
@@ -3766,7 +3718,7 @@ export default function BlockCanvas({
       <PublishModal
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
-        documentId={activeTab?.id || ''}
+        documentId={activeTab?.id || ''}///
         documentTitle={title || 'Untitled'}
         blocks={blocks}
       />
