@@ -22,8 +22,8 @@ function ManifestoSection() {
       const viewportHeight = window.innerHeight
       
       // Calculate progress based on scroll through section
-      const startPoint = viewportHeight * 0.7 // Start earlier
-      const endPoint = -sectionHeight + viewportHeight * 0.7 // End earlier
+      const startPoint = viewportHeight * 0.5 // Start later (was 0.7)
+      const endPoint = -sectionHeight + viewportHeight * 0.8 // End later
       
       const progress = (startPoint - rect.top) / (startPoint - endPoint)
       setScrollProgress(Math.max(0, Math.min(1, progress)))
@@ -49,7 +49,7 @@ function ManifestoSection() {
   // Join all text for character-level animation
   const allText = paragraphs.join(' ')
   const totalChars = allText.length
-  const revealedChars = Math.floor(scrollProgress * totalChars * 1.4) // More aggressive reveal
+  const revealedChars = Math.floor(scrollProgress * totalChars * 1.2)
 
   // Render text with fill effect
   const renderFilledText = () => {
@@ -101,7 +101,7 @@ function ManifestoSection() {
     <section 
       ref={sectionRef}
       className="bg-[#15120B] relative"
-      style={{ minHeight: '150vh' }}
+      style={{ minHeight: '115vh' }}
     >
       {/* Horizontal line - top */}
       <div className="absolute top-0 left-0 right-0 h-px bg-white/20" />
