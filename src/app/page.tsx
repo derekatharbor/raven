@@ -22,8 +22,8 @@ function ManifestoSection() {
       const viewportHeight = window.innerHeight
       
       // Calculate progress based on scroll through section
-      const startPoint = viewportHeight * 0.9
-      const endPoint = -sectionHeight + viewportHeight * 0.5
+      const startPoint = viewportHeight * 0.7 // Start earlier
+      const endPoint = -sectionHeight + viewportHeight * 0.7 // End earlier
       
       const progress = (startPoint - rect.top) / (startPoint - endPoint)
       setScrollProgress(Math.max(0, Math.min(1, progress)))
@@ -36,12 +36,12 @@ function ManifestoSection() {
 
   const paragraphs = [
     "Research is changing shape.",
-    "Work that used to live in PDFs now lives across links, chats, transcripts, filings, and feeds. The volume goes up. The stakes don't go down.",
-    "The hard part isn't finding information. It's turning it into something coherent, keeping it current, and delivering it in a way that actually lands.",
-    "Then comes the part nobody tracks.",
-    "You send the report and the feedback disappears. What did they read. Where did they slow down. What did they misunderstand. What pushed them to ask the same questions again.",
-    "Raven is built for the full lifecycle of an analysis. Search. Create. Track. Analyze.",
-    "One workspace for research and writing. Monitoring that keeps your work current. And a reader experience that answers questions in place, grounded in the sources you connected.",
+    "The work lives across links, chats, transcripts, filings, and feeds. The volume goes up. The stakes don't go down.",
+    "The hard part isn't finding information. It's making it coherent, keeping it current, and delivering it in a way that lands.",
+    "Then the loop breaks.",
+    "You send the report and the feedback disappears. What did they read, where did they hesitate, what confused them, what questions did it trigger?",
+    "Raven is built for the full lifecycle of analysis: search, write, track, deliver, learn.",
+    "One workspace for research and writing. Monitoring that keeps your work current. And a reader experience where questions get answered in place, grounded in your sources.",
     "This is what comes next.",
     "Moving beyond the PDF."
   ]
@@ -49,7 +49,7 @@ function ManifestoSection() {
   // Join all text for character-level animation
   const allText = paragraphs.join(' ')
   const totalChars = allText.length
-  const revealedChars = Math.floor(scrollProgress * totalChars * 1.1) // Slight overshoot
+  const revealedChars = Math.floor(scrollProgress * totalChars * 1.4) // More aggressive reveal
 
   // Render text with fill effect
   const renderFilledText = () => {
