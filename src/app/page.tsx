@@ -7,6 +7,157 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Search, PenLine, Radar, BarChart3, ArrowRight } from 'lucide-react'
+
+// Features Section with tabs
+function FeaturesSection() {
+  const [activeTab, setActiveTab] = useState<'search' | 'create' | 'track' | 'analyze'>('search')
+
+  const tabs = [
+    { id: 'search' as const, label: 'Search', icon: Search },
+    { id: 'create' as const, label: 'Create', icon: PenLine },
+    { id: 'track' as const, label: 'Track', icon: Radar },
+    { id: 'analyze' as const, label: 'Analyze', icon: BarChart3 },
+  ]
+
+  const tabContent = {
+    search: {
+      title: 'Find what matters across any dataset',
+      description: 'Search across documents, filings, transcripts, and more with natural language. Get cited answers instantly, organized in a structured matrix you can export and share.',
+      image: '/images/marketing/feature-search.png',
+      features: [
+        { icon: Search, text: 'Natural language queries across all your connected sources' },
+        { icon: Search, text: 'Structured matrix view with citations and confidence scores' },
+        { icon: Search, text: 'Export results to spreadsheets or reports' },
+        { icon: Search, text: 'Connect SEC EDGAR, internal docs, and web sources' },
+      ]
+    },
+    create: {
+      title: 'Write with intelligence built in',
+      description: 'A Cursor-style editor where research happens alongside writing. Highlight claims to verify, run agents for deep research, and autocomplete with grounded data from your sources.',
+      image: '/images/marketing/feature-create.png',
+      features: [
+        { icon: PenLine, text: 'Inline autocomplete powered by your connected sources' },
+        { icon: PenLine, text: 'Highlight text to research and verify claims' },
+        { icon: PenLine, text: 'Deploy multiple AI agents for parallel research' },
+        { icon: PenLine, text: 'Notion-style blocks for structured documents' },
+      ]
+    },
+    track: {
+      title: 'Stay current without the noise',
+      description: 'Set up monitoring for topics and keywords that matter. Raven runs queries on your schedule and surfaces relevant updates so you never miss a development.',
+      image: '/images/marketing/feature-track.png',
+      features: [
+        { icon: Radar, text: 'Schedule recurring searches across your sources' },
+        { icon: Radar, text: 'Get alerts when new relevant content appears' },
+        { icon: Radar, text: 'Track competitors, markets, or regulatory changes' },
+        { icon: Radar, text: 'Digest summaries delivered on your cadence' },
+      ]
+    },
+    analyze: {
+      title: 'See how your work lands',
+      description: 'Share documents with a Raven link and understand exactly how readers engage. See where they pause, what they skip, and let them ask questions answered by AI—grounded in your sources.',
+      image: '/images/marketing/feature-analyze.png',
+      features: [
+        { icon: BarChart3, text: 'Reader heatmaps showing scroll and time spent' },
+        { icon: BarChart3, text: 'In-document AI that answers reader questions' },
+        { icon: BarChart3, text: 'Track which sections drive engagement' },
+        { icon: BarChart3, text: 'Reduce follow-up calls with instant clarity' },
+      ]
+    },
+  }
+
+  const content = tabContent[activeTab]
+  const ActiveIcon = tabs.find(t => t.id === activeTab)?.icon || Search
+
+  return (
+    <section id="features" className="bg-[#0A0A0A] py-24 px-6">
+      {/* Section Header */}
+      <div className="max-w-6xl mx-auto mb-12">
+        <span className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase border border-white/20 rounded-full text-white/60">
+          The Platform
+        </span>
+        <h2 className="text-4xl md:text-5xl font-medium text-white leading-tight">
+          Where research becomes<br />actionable intelligence
+        </h2>
+      </div>
+
+      {/* Main Container with border */}
+      <div className="max-w-6xl mx-auto border border-white/20 rounded-lg overflow-hidden">
+        {/* Tabs Row */}
+        <div className="flex border-b border-white/20">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-medium transition-colors ${
+                  isActive 
+                    ? 'bg-white text-black' 
+                    : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Two Panel Content */}
+        <div className="grid md:grid-cols-2 border-b border-white/20">
+          {/* Left - Text */}
+          <div className="p-8 md:p-12 flex flex-col justify-center border-r border-white/20">
+            <h3 className="text-2xl md:text-3xl font-medium text-white mb-4 leading-tight">
+              {content.title}
+            </h3>
+            <p className="text-white/60 leading-relaxed mb-6">
+              {content.description}
+            </p>
+            <Link 
+              href={`/features/${activeTab}`}
+              className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80 transition-colors"
+            >
+              Learn more
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Right - Image */}
+          <div className="p-6 md:p-8 flex items-center justify-center bg-white/5">
+            <img 
+              src={content.image}
+              alt={`${activeTab} feature`}
+              className="w-full rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>
+
+        {/* Feature Nodes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {content.features.map((feature, idx) => {
+            const FeatureIcon = feature.icon
+            return (
+              <div 
+                key={idx} 
+                className="p-6 flex gap-4 border-t border-white/20 lg:border-t-0 lg:border-l first:border-l-0"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <FeatureIcon className="w-4 h-4 text-white/60" />
+                </div>
+                <p className="text-sm text-white/60 leading-relaxed">
+                  {feature.text}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 // Manifesto Section with scroll-reveal text fill effect
 function ManifestoSection() {
@@ -120,20 +271,34 @@ function ManifestoSection() {
           {/* Left - Title */}
           <div className="flex items-start">
             <h2 
-              className="text-3xl md:text-4xl font-medium leading-[1.2]"
+              className="text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.2]"
               style={{ 
                 fontFamily: 'var(--font-geist-sans)',
                 color: scrollProgress > 0.02 ? '#ffffff' : 'rgba(255,255,255,0.25)',
                 transition: 'color 0.5s ease',
               }}
             >
-              A document should<br />answer back.
+              A document<br />should answer<br />back.
             </h2>
           </div>
 
           {/* Right - Body paragraphs with fill effect */}
           <div>
             {renderFilledText()}
+            {/* CTA Button */}
+            <Link 
+              href="#features"
+              className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 border border-white/30 rounded-full text-sm text-white hover:bg-white/10 transition-colors"
+              style={{
+                opacity: scrollProgress > 0.85 ? 1 : 0,
+                transition: 'opacity 0.3s ease',
+              }}
+            >
+              Learn more
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </Link>
           </div>
         </div>
       </div>
@@ -249,6 +414,9 @@ export default function Home() {
 
       {/* Manifesto Section */}
       <ManifestoSection />
+
+      {/* Features Section */}
+      <FeaturesSection />
     </div>
   )
 }
