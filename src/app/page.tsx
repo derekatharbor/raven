@@ -68,12 +68,12 @@ function CapabilitiesSection() {
           return (
             <div 
               key={idx}
-              className={`flex flex-col md:flex-row border-b border-r border-white/20 ${
-                !isEven ? 'md:flex-row-reverse' : ''
-              }`}
+              className="grid grid-cols-1 md:grid-cols-2 border-b border-r border-white/20"
             >
               {/* Text Side - square */}
-              <div className="flex-1 aspect-square p-8 md:p-12 flex flex-col justify-center md:border-r border-white/20">
+              <div className={`aspect-square p-8 md:p-12 flex flex-col justify-center ${
+                isEven ? 'md:order-1' : 'md:order-2'
+              }`}>
                 <span className="inline-block px-2 py-1 mb-4 text-[10px] font-medium tracking-wider uppercase border border-white/20 text-white/50 w-fit">
                   {cap.badge}
                 </span>
@@ -93,7 +93,9 @@ function CapabilitiesSection() {
               </div>
 
               {/* Image Side - square */}
-              <div className="flex-1 aspect-square bg-white/5 flex items-center justify-center">
+              <div className={`aspect-square bg-white/5 flex items-center justify-center border-white/20 ${
+                isEven ? 'md:order-2 md:border-l' : 'md:order-1 md:border-r'
+              }`}>
                 <img 
                   src={cap.image}
                   alt={cap.title}
