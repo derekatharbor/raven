@@ -93,7 +93,7 @@ function CapabilitiesSection() {
     },
     {
       badge: 'WRITING',
-      title: 'AI-guided, not AI-generated',
+      title: 'Autocomplete from your sources',
       description: 'Autocomplete suggestions grounded in your connected sources. The intelligence assists your thinking—you stay in control of every word.',
       image: '/images/marketing/cap-autocomplete.png',
       link: '/features/create',
