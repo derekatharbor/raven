@@ -2378,6 +2378,7 @@ function BlockEditor({
   onEditorReady,
   enableAutocomplete = true,
   recentResearch,
+  documentId,
 }: {
   block: Block
   isFirst: boolean
@@ -2394,6 +2395,7 @@ function BlockEditor({
   onEditorReady?: (editor: any) => void
   enableAutocomplete?: boolean
   recentResearch?: Array<{ text: string; source: string }>
+  documentId?: string
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -2409,11 +2411,40 @@ function BlockEditor({
     recentResearchRef.current = recentResearch
   }, [recentResearch])
 
-  // Autocomplete suggestion callback
+  // Autocomplete suggestion callback - uses grounded completion when documentId available
   const getSuggestion = useCallback(async ({ textBefore, fullDocument }: { textBefore: string; fullDocument: string; cursorPos: number }) => {
     if (!enableAutocomplete) return null
     
     try {
+      // Use grounded completion if we have a saved document
+      if (documentId && documentId !== 'new') {
+        const response = await fetch('/api/editor/grounded-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            documentId,
+            context: textBefore,
+            maxTokens: 100,
+          }),
+        })
+        
+        if (!response.ok) return null
+        
+        const data = await response.json()
+        if (data.text) {
+          let suggestion = data.text
+          // Add space prefix if needed
+          if (suggestion && !suggestion.startsWith(' ') && !textBefore.endsWith(' ') && !textBefore.endsWith('\n')) {
+            suggestion = ' ' + suggestion
+          }
+          // Return with source info if grounded
+          const sourceName = data.citations?.[0]?.documentName
+          return { text: suggestion, source: sourceName || (data.groundedIn > 0 ? 'Sources' : undefined) }
+        }
+        return null
+      }
+      
+      // Fall back to generic autocomplete for new/unsaved documents
       const response = await fetch('/api/autocomplete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2434,7 +2465,7 @@ function BlockEditor({
     } catch {
       return null
     }
-  }, [enableAutocomplete])
+  }, [enableAutocomplete, documentId])
 
   const editor = useEditor({
     extensions: [
@@ -3486,6 +3517,7 @@ export default function BlockCanvas({
                   onAcceptGhost={handleAcceptGhost}
                   onRejectGhost={handleRejectGhost}
                   onEditorReady={(editor) => { activeEditorRef.current = editor }}
+                  documentId={activeTabId}
                 />
               ))}
             </div>
