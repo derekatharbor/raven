@@ -612,7 +612,6 @@ export default function Home() {
                 <li><Link href="/features/track" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Track</Link></li>
                 <li><Link href="/features/analyze" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Analyze</Link></li>
                 <li><Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Pricing</Link></li>
-                <li><Link href="/changelog" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Changelog</Link></li>
               </ul>
             </div>
 
@@ -624,7 +623,6 @@ export default function Home() {
                 <li><Link href="/solutions/consulting" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Consulting</Link></li>
                 <li><Link href="/solutions/government" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Government</Link></li>
                 <li><Link href="/solutions/legal" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Legal</Link></li>
-                <li><Link href="/customers" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Customer Stories</Link></li>
               </ul>
             </div>
 
@@ -633,7 +631,6 @@ export default function Home() {
               <h4 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">Resources</h4>
               <ul className="space-y-2.5">
                 <li><Link href="/docs" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Documentation</Link></li>
-                <li><Link href="/api" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">API</Link></li>
                 <li><Link href="/blog" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Blog</Link></li>
                 <li><Link href="/security" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Security</Link></li>
               </ul>
@@ -645,7 +642,6 @@ export default function Home() {
               <ul className="space-y-2.5">
                 <li><Link href="/about" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">About</Link></li>
                 <li><Link href="/contact" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Contact</Link></li>
-                <li><Link href="/careers" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Careers</Link></li>
               </ul>
             </div>
           </div>
