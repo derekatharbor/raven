@@ -40,7 +40,7 @@ export default function GovernmentPage() {
                 Build intelligence products with AI that shows its reasoning. Every assessment backed by source material with complete provenance.
               </p>
               <p className="text-lg text-white/60 mb-8 leading-relaxed">
-                From OSINT to classified holdings—Raven helps analysts work faster without sacrificing rigor.
+                From OSINT to finished intelligence—Raven helps analysts work faster without sacrificing rigor.
               </p>
               <div>
                 <Link 
