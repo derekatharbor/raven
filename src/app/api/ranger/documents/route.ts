@@ -1,23 +1,33 @@
 // src/app/api/ranger/documents/route.ts
 // Document management for Ranger - upload, import from EDGAR, list
+// NOW WITH REAL PERSISTENCE + EMBEDDINGS
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { storeDocument, listDocuments, deleteDocument } from '@/lib/embeddings/vector-store'
 import { createSECEdgarAdapter } from '@/lib/sources/adapters/sec-edgar'
 
-// Document structure stored in memory for now (will move to Supabase)
-interface StoredDocument {
-  id: string
-  name: string
-  content: string
-  type: string
-  source: 'upload' | 'sec-edgar' | 'web'
-  metadata?: Record<string, unknown>
-  createdAt: string
-  projectId?: string
+// Get authenticated Supabase client
+async function getClient() {
+  const cookieStore = await cookies()
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch { /* Server Component */ }
+        },
+      },
+    }
+  )
 }
-
-// In-memory store (replace with Supabase)
-const documentStore: Map<string, StoredDocument> = new Map()
 
 // SEC EDGAR adapter
 const secAdapter = createSECEdgarAdapter()
@@ -25,6 +35,14 @@ const secAdapter = createSECEdgarAdapter()
 // POST - Upload or import documents
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await getClient()
+    
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const contentType = request.headers.get('content-type') || ''
     
     // Handle JSON requests (SEC import, URL fetch)
@@ -52,72 +70,85 @@ export async function POST(request: NextRequest) {
           },
         })
         
-        const importedDocs: StoredDocument[] = []
+        const importedDocs: Array<{
+          id: string
+          name: string
+          type: string
+          source: string
+          createdAt: string
+          contentLength: number
+        }> = []
         
         for (const doc of result.documents) {
           // Fetch full document content
           const fullDoc = await secAdapter.getDocument(doc.id)
           
           if (fullDoc) {
-            const storedDoc: StoredDocument = {
-              id: doc.id,
-              name: doc.title,
-              content: fullDoc.content,
-              type: doc.metadata?.form as string || 'SEC Filing',
-              source: 'sec-edgar',
-              metadata: doc.metadata,
-              createdAt: new Date().toISOString(),
-              projectId: body.projectId,
-            }
+            // Store with embeddings
+            const storedDoc = await storeDocument(
+              user.id,
+              doc.title,
+              fullDoc.content,
+              {
+                projectId: body.projectId,
+                type: doc.metadata?.form as string || 'SEC Filing',
+                source: 'sec-edgar',
+                sourceUrl: doc.url,
+                metadata: doc.metadata,
+                isSECFiling: true,
+              }
+            )
             
-            documentStore.set(doc.id, storedDoc)
-            importedDocs.push(storedDoc)
+            importedDocs.push({
+              id: storedDoc.id,
+              name: storedDoc.name,
+              type: storedDoc.type,
+              source: storedDoc.source,
+              createdAt: storedDoc.createdAt,
+              contentLength: fullDoc.content.length,
+            })
           }
         }
         
         return NextResponse.json({
           success: true,
           imported: importedDocs.length,
-          documents: importedDocs.map(d => ({
-            id: d.id,
-            name: d.name,
-            type: d.type,
-            content: d.content,  // Include content for extraction
-            source: d.source,
-            createdAt: d.createdAt,
-            contentLength: d.content.length,
-          })),
+          documents: importedDocs,
         })
       }
       
-      // Direct document creation (for testing)
+      // Direct document creation (for testing or programmatic uploads)
       if (body.documents && Array.isArray(body.documents)) {
-        const createdDocs: StoredDocument[] = []
+        const createdDocs: Array<{
+          id: string
+          name: string
+          type: string
+        }> = []
         
         for (const doc of body.documents) {
-          const storedDoc: StoredDocument = {
-            id: doc.id || `doc-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            name: doc.name,
-            content: doc.content,
-            type: doc.type || 'Document',
-            source: 'upload',
-            metadata: doc.metadata,
-            createdAt: new Date().toISOString(),
-            projectId: body.projectId,
-          }
+          const storedDoc = await storeDocument(
+            user.id,
+            doc.name,
+            doc.content,
+            {
+              projectId: body.projectId,
+              type: doc.type || 'Document',
+              source: 'upload',
+              metadata: doc.metadata,
+            }
+          )
           
-          documentStore.set(storedDoc.id, storedDoc)
-          createdDocs.push(storedDoc)
+          createdDocs.push({
+            id: storedDoc.id,
+            name: storedDoc.name,
+            type: storedDoc.type,
+          })
         }
         
         return NextResponse.json({
           success: true,
           created: createdDocs.length,
-          documents: createdDocs.map(d => ({
-            id: d.id,
-            name: d.name,
-            type: d.type,
-          })),
+          documents: createdDocs,
         })
       }
       
@@ -133,12 +164,16 @@ export async function POST(request: NextRequest) {
       const files = formData.getAll('files')
       const projectId = formData.get('projectId') as string | null
       
-      const uploadedDocs: StoredDocument[] = []
+      const uploadedDocs: Array<{
+        id: string
+        name: string
+        type: string
+        contentLength: number
+      }> = []
       
       for (const file of files) {
         if (file instanceof File) {
           const content = await file.text()
-          const docId = `doc-${Date.now()}-${Math.random().toString(36).slice(2)}`
           
           // Determine type from filename
           let type = 'Document'
@@ -147,32 +182,33 @@ export async function POST(request: NextRequest) {
           else if (ext === 'txt') type = 'Text'
           else if (ext === 'md') type = 'Markdown'
           else if (ext === 'html' || ext === 'htm') type = 'HTML'
+          else if (ext === 'docx') type = 'Word Document'
           
-          const storedDoc: StoredDocument = {
-            id: docId,
-            name: file.name,
+          // Store with embeddings
+          const storedDoc = await storeDocument(
+            user.id,
+            file.name,
             content,
-            type,
-            source: 'upload',
-            createdAt: new Date().toISOString(),
-            projectId: projectId || undefined,
-          }
+            {
+              projectId: projectId || undefined,
+              type,
+              source: 'upload',
+            }
+          )
           
-          documentStore.set(docId, storedDoc)
-          uploadedDocs.push(storedDoc)
+          uploadedDocs.push({
+            id: storedDoc.id,
+            name: storedDoc.name,
+            type: storedDoc.type,
+            contentLength: content.length,
+          })
         }
       }
       
       return NextResponse.json({
         success: true,
         uploaded: uploadedDocs.length,
-        documents: uploadedDocs.map(d => ({
-          id: d.id,
-          name: d.name,
-          type: d.type,
-          content: d.content,  // Include content for extraction
-          contentLength: d.content.length,
-        })),
+        documents: uploadedDocs,
       })
     }
     
@@ -192,46 +228,71 @@ export async function POST(request: NextRequest) {
 
 // GET - List documents
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const projectId = searchParams.get('projectId')
-  
-  let documents = Array.from(documentStore.values())
-  
-  // Filter by project if specified
-  if (projectId) {
-    documents = documents.filter(d => d.projectId === projectId)
+  try {
+    const supabase = await getClient()
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const projectId = searchParams.get('projectId') || undefined
+    
+    const documents = await listDocuments(user.id, projectId)
+    
+    return NextResponse.json({
+      documents: documents.map(d => ({
+        id: d.id,
+        name: d.name,
+        type: d.type,
+        source: d.source,
+        sourceUrl: d.sourceUrl,
+        createdAt: d.createdAt,
+        metadata: d.metadata,
+      })),
+      total: documents.length,
+    })
+  } catch (error) {
+    console.error('List documents error:', error)
+    return NextResponse.json(
+      { error: 'Failed to list documents' },
+      { status: 500 }
+    )
   }
-  
-  return NextResponse.json({
-    documents: documents.map(d => ({
-      id: d.id,
-      name: d.name,
-      type: d.type,
-      source: d.source,
-      createdAt: d.createdAt,
-      contentLength: d.content.length,
-      metadata: d.metadata,
-    })),
-    total: documents.length,
-  })
 }
 
 // DELETE - Remove a document
 export async function DELETE(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const docId = searchParams.get('id')
-  
-  if (!docId) {
+  try {
+    const supabase = await getClient()
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const docId = searchParams.get('id')
+    
+    if (!docId) {
+      return NextResponse.json(
+        { error: 'Document ID required' },
+        { status: 400 }
+      )
+    }
+    
+    const deleted = await deleteDocument(docId)
+    
+    return NextResponse.json({
+      success: deleted,
+      message: deleted ? 'Document deleted' : 'Document not found',
+    })
+  } catch (error) {
+    console.error('Delete document error:', error)
     return NextResponse.json(
-      { error: 'Document ID required' },
-      { status: 400 }
+      { error: 'Failed to delete document' },
+      { status: 500 }
     )
   }
-  
-  const deleted = documentStore.delete(docId)
-  
-  return NextResponse.json({
-    success: deleted,
-    message: deleted ? 'Document deleted' : 'Document not found',
-  })
 }
