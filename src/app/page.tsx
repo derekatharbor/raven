@@ -558,6 +558,114 @@ export default function Home() {
 
       {/* Security Section */}
       <SecuritySection />
+
+      {/* CTA Section */}
+      <section className="bg-black py-24 px-5 md:px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white mb-4">
+            Ready to get started?
+          </h2>
+          <p className="text-lg text-white/60 mb-8 max-w-xl mx-auto">
+            Join analysts who build, deliver, and track documents that matter.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link 
+              href="/signup" 
+              className="w-full sm:w-auto px-8 py-3.5 bg-white text-black text-sm font-medium rounded-full hover:bg-neutral-200 transition-all cursor-pointer"
+            >
+              Get started free
+            </Link>
+            <Link 
+              href="/contact" 
+              className="px-6 py-3.5 text-sm font-medium text-white/70 hover:text-white transition-colors cursor-pointer"
+            >
+              Contact sales →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-black border-t border-white/10 py-12 px-5 md:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+            {/* Logo Column */}
+            <div className="col-span-2 md:col-span-1">
+              <Link href="/" className="inline-block mb-4 cursor-pointer">
+                <img 
+                  src="/images/raven-logo-white.png" 
+                  alt="Raven" 
+                  className="h-6 w-auto"
+                />
+              </Link>
+              <p className="text-sm text-white/40">
+                The AI-native workspace for analysts.
+              </p>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h4 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">Product</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="/features/search" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Search</Link></li>
+                <li><Link href="/features/create" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Create</Link></li>
+                <li><Link href="/features/track" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Track</Link></li>
+                <li><Link href="/features/analyze" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Analyze</Link></li>
+                <li><Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Pricing</Link></li>
+                <li><Link href="/changelog" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Changelog</Link></li>
+              </ul>
+            </div>
+
+            {/* Solutions */}
+            <div>
+              <h4 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">Solutions</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="/solutions/finance" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Finance</Link></li>
+                <li><Link href="/solutions/consulting" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Consulting</Link></li>
+                <li><Link href="/solutions/government" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Government</Link></li>
+                <li><Link href="/solutions/legal" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Legal</Link></li>
+                <li><Link href="/customers" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Customer Stories</Link></li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h4 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">Resources</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="/docs" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Documentation</Link></li>
+                <li><Link href="/api" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">API</Link></li>
+                <li><Link href="/blog" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Blog</Link></li>
+                <li><Link href="/security" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Security</Link></li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="text-xs font-medium text-white/60 uppercase tracking-wider mb-4">Company</h4>
+              <ul className="space-y-2.5">
+                <li><Link href="/about" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">About</Link></li>
+                <li><Link href="/contact" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Contact</Link></li>
+                <li><Link href="/careers" className="text-sm text-white/50 hover:text-white transition-colors cursor-pointer">Careers</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-8 border-t border-white/10 gap-4">
+            <p className="text-xs text-white/40">
+              © {new Date().getFullYear()} Raven Technologies, Inc. All rights reserved.
+            </p>
+            <div className="flex items-center gap-6">
+              <Link href="/privacy" className="text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
