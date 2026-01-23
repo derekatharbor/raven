@@ -7,7 +7,9 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff, Shield, Lock, BrainCog, KeyRound } from 'lucide-react'
+import { Search, PenLine, Radar, BarChart3, ArrowRight, FileText, Table, Download, Database, Sparkles, CheckCircle, Bot, Blocks, Bell, TrendingUp, Globe, Mail, Eye, MessageSquare, MousePointer, PhoneOff } from 'lucide-react'
+import MainNav from '@/components/marketing/MainNav'
+import StickyNav from '@/components/marketing/StickyNav'
 
 // Security Section - 4 blocks in a row
 function SecuritySection() {
@@ -503,46 +505,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#000000] overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#000000]/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-5 md:px-6 h-14 flex items-center justify-between">
-          {/* Logo - IMAGE: /public/images/nav-logo.png */}
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/images/nav-logo.png" alt="Raven" className="h-6 w-auto" />
-          </Link>
-
-          {/* Nav Links - desktop */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm text-neutral-400 hover:text-white transition-colors">
-              Features
-            </Link>
-            <Link href="#pricing" className="text-sm text-neutral-400 hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link href="/docs" className="text-sm text-neutral-400 hover:text-white transition-colors">
-              Docs
-            </Link>
-          </div>
-
-          {/* Auth Buttons */}
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/login" 
-              className="hidden sm:block text-sm text-neutral-400 hover:text-white transition-colors"
-            >
-              Log in
-            </Link>
-            <Link 
-              href="/signup" 
-              className="text-sm px-4 py-2 bg-white text-black rounded-full hover:bg-neutral-200 transition-colors"
-            >
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <MainNav />
+      <StickyNav />
 
       {/* Hero Section */}
-      <section className="pt-24 md:pt-32 pb-16 md:pb-24">
+      <section className="pt-8 md:pt-16 pb-16 md:pb-24">
         {/* Text Content - constrained */}
         <div className="max-w-4xl mx-auto text-center px-5 md:px-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-5 md:mb-6">
