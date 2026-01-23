@@ -52,15 +52,25 @@ export default function GovernmentPage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Hero Image - boxed in by grid lines */}
-          {/* IMAGE: /public/images/marketing/solutions/government-hero.png */}
-          <div className="relative ml-5 md:ml-6 mr-5 md:mr-6 mb-16 md:mb-24">
-            {/* Horizontal line above image */}
-            <div className="absolute -top-px left-0 right-0 h-px bg-white/10" />
-            <div className="w-full aspect-[2/1] bg-white/5 flex items-center justify-center">
-              <span className="text-white/20 text-sm">government-hero.png (2:1)</span>
-            </div>
+        {/* Horizontal line above image - full width */}
+        <div className="w-full h-px bg-white/10" />
+
+        {/* Hero Image - boxed in by grid lines */}
+        {/* IMAGE: /public/images/marketing/solutions/government-hero.png */}
+        <div className="max-w-7xl mx-auto relative">
+          {/* Left vertical line */}
+          <div className="absolute top-0 bottom-0 left-5 md:left-6 w-px bg-white/10" />
+          {/* Right vertical line */}
+          <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
+          
+          <div className="ml-5 md:ml-6 mr-5 md:mr-6 py-8 md:py-12">
+            <img 
+              src="/images/marketing/solutions/government-hero.png" 
+              alt="Raven for Government"
+              className="w-full aspect-[2/1] object-cover"
+            />
           </div>
         </div>
       </section>
