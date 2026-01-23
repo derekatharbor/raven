@@ -52,12 +52,14 @@ export default function GovernmentPage() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Hero Image - 2:1 ratio */}
-        {/* IMAGE: /public/images/marketing/solutions/government-hero.png */}
-        <div className="w-full aspect-[2/1] bg-white/5 flex items-center justify-center">
-          <span className="text-white/20 text-sm">government-hero.png (2:1)</span>
+          {/* Hero Image - 2:1 ratio, contained within columns */}
+          {/* IMAGE: /public/images/marketing/solutions/government-hero.png */}
+          <div className="px-10 md:px-16 pb-16 md:pb-24">
+            <div className="w-full aspect-[2/1] bg-white/5 rounded-sm flex items-center justify-center">
+              <span className="text-white/20 text-sm">government-hero.png (2:1)</span>
+            </div>
+          </div>
         </div>
       </section>
     </div>
