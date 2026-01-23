@@ -513,10 +513,10 @@ export default function Home() {
         {/* Text Content - constrained */}
         <div className="max-w-4xl mx-auto text-center px-5 md:px-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-5 md:mb-6">
-            One platform.<br />From research to reader.
+            The AI-native workspace<br />for analysts.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-neutral-400 max-w-xl mx-auto mb-8 md:mb-10 leading-relaxed">
-            Raven is a document workspace with AI-powered research and reader analytics.
+            Build, deliver, and track documents that matter. From source to reader.
           </p>
           
           {/* CTA Buttons - stack on mobile */}
