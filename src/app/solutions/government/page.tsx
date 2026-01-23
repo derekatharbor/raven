@@ -65,7 +65,7 @@ export default function GovernmentPage() {
           {/* Right vertical line */}
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
-          <div className="ml-5 md:ml-6 mr-5 md:mr-6 py-8 md:py-12">
+          <div className="ml-5 md:ml-6 mr-5 md:mr-6">
             <img 
               src="/images/marketing/solutions/government-hero.png" 
               alt="Raven for Government"
