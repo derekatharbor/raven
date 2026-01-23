@@ -32,7 +32,7 @@ function NavDropdown({ label, children }: NavDropdownProps) {
       onMouseLeave={handleMouseLeave}
     >
       <button
-        className={`flex items-center gap-1.5 px-3 py-2 text-[14px] font-medium transition-colors rounded ${
+        className={`flex items-center gap-1.5 px-3 py-2 text-[14px] font-medium transition-colors rounded cursor-pointer ${
           isOpen ? 'text-white bg-white/10' : 'text-white/70 hover:text-white hover:bg-white/5'
         }`}
       >
@@ -63,85 +63,40 @@ function NavDropdown({ label, children }: NavDropdownProps) {
 
 function ProductDropdown() {
   return (
-    <div className="w-[580px]">
-      <div className="flex">
-        {/* Left Column - Core Features */}
-        <div className="w-[240px] p-4 border-r border-white/10">
-          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
-            Core Features
-          </span>
-          
-          <Link href="/features/search" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white group-hover:text-white">Search</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Matrix extraction across any dataset</p>
-            </div>
-          </Link>
-          
-          <Link href="/features/create" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white group-hover:text-white">Create</span>
-              <p className="text-[13px] text-white/50 mt-0.5">AI-guided editor with Smart Blocks</p>
-            </div>
-          </Link>
-          
-          <Link href="/features/track" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white group-hover:text-white">Track</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Topic monitoring and alerts</p>
-            </div>
-          </Link>
-          
-          <Link href="/features/analyze" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white group-hover:text-white">Analyze</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Reader analytics and engagement</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Right Column - More */}
-        <div className="flex-1 p-4">
-          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
-            More
-          </span>
-          
-          <div className="grid grid-cols-2 gap-x-4">
-            <Link href="/features/integrations" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Integrations</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Connect your data sources</p>
-            </Link>
-            
-            <Link href="/features/security" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Security</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Enterprise-grade protection</p>
-            </Link>
-            
-            <Link href="/features/raven-links" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Raven Links</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Interactive document sharing</p>
-            </Link>
-            
-            <Link href="/api" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">API</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Build on Raven</p>
-            </Link>
-            
-            <Link href="/features/ai" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">AI Models</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Multi-agent orchestration</p>
-            </Link>
-            
-            <Link href="/mobile" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Mobile</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Research on the go</p>
-            </Link>
+    <div className="w-[420px]">
+      {/* 2x2 Grid of Core Features */}
+      <div className="grid grid-cols-2 p-4 gap-1">
+        <Link href="/features/search" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Search</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Matrix extraction across any dataset</p>
           </div>
-        </div>
+        </Link>
+        
+        <Link href="/features/create" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Create</span>
+            <p className="text-[13px] text-white/50 mt-0.5">AI-guided editor with Smart Blocks</p>
+          </div>
+        </Link>
+        
+        <Link href="/features/track" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Track</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Topic monitoring and alerts</p>
+          </div>
+        </Link>
+        
+        <Link href="/features/analyze" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Analyze</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Reader analytics and engagement</p>
+          </div>
+        </Link>
       </div>
       
       {/* Bottom Bar */}
@@ -149,7 +104,7 @@ function ProductDropdown() {
         <span className="text-[13px] text-white/60">
           <span className="text-white/40">New:</span> Multi-agent research is now available
         </span>
-        <Link href="/changelog" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors">
+        <Link href="/changelog" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer">
           Changelog
         </Link>
       </div>
@@ -159,85 +114,40 @@ function ProductDropdown() {
 
 function SolutionsDropdown() {
   return (
-    <div className="w-[580px]">
-      <div className="flex">
-        {/* Left Column - Industries */}
-        <div className="w-[240px] p-4 border-r border-white/10">
-          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
-            Industries
-          </span>
-          
-          <Link href="/solutions/finance" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white">Finance</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Investment research & due diligence</p>
-            </div>
-          </Link>
-          
-          <Link href="/solutions/consulting" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white">Consulting</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Client deliverables & research</p>
-            </div>
-          </Link>
-          
-          <Link href="/solutions/government" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white">Government</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Intelligence analysis & briefs</p>
-            </div>
-          </Link>
-          
-          <Link href="/solutions/legal" className="flex items-start gap-3 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
-            <div>
-              <span className="text-[14px] font-semibold text-white">Legal</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Document review & case research</p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Right Column - Use Cases */}
-        <div className="flex-1 p-4">
-          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
-            Use Cases
-          </span>
-          
-          <div className="grid grid-cols-2 gap-x-4">
-            <Link href="/use-cases/due-diligence" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Due Diligence</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Data room analysis</p>
-            </Link>
-            
-            <Link href="/use-cases/market-research" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Market Research</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Competitive intelligence</p>
-            </Link>
-            
-            <Link href="/use-cases/investment-memos" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Investment Memos</span>
-              <p className="text-[13px] text-white/50 mt-0.5">From research to report</p>
-            </Link>
-            
-            <Link href="/use-cases/client-reports" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Client Reports</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Professional deliverables</p>
-            </Link>
-            
-            <Link href="/use-cases/earnings-analysis" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Earnings Analysis</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Filings & transcripts</p>
-            </Link>
-            
-            <Link href="/use-cases/contract-review" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
-              <span className="text-[14px] font-semibold text-white">Contract Review</span>
-              <p className="text-[13px] text-white/50 mt-0.5">Extract key terms at scale</p>
-            </Link>
+    <div className="w-[420px]">
+      {/* 2x2 Grid of Industries */}
+      <div className="grid grid-cols-2 p-4 gap-1">
+        <Link href="/solutions/finance" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Finance</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Investment research & due diligence</p>
           </div>
-        </div>
+        </Link>
+        
+        <Link href="/solutions/consulting" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Consulting</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Client deliverables & research</p>
+          </div>
+        </Link>
+        
+        <Link href="/solutions/government" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Government</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Intelligence analysis & briefs</p>
+          </div>
+        </Link>
+        
+        <Link href="/solutions/legal" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Legal</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Document review & case research</p>
+          </div>
+        </Link>
       </div>
       
       {/* Bottom Bar */}
@@ -245,7 +155,7 @@ function SolutionsDropdown() {
         <span className="text-[13px] text-white/60">
           See how teams use Raven
         </span>
-        <Link href="/customers" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors">
+        <Link href="/customers" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer">
           Customer Stories
         </Link>
       </div>
@@ -261,7 +171,7 @@ export default function MainNav() {
       <nav className="flex items-center justify-between px-5 md:px-6 lg:px-14 py-4 lg:py-6">
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center mr-4">
+          <Link href="/" className="flex items-center mr-4 cursor-pointer">
             <img
               src="/images/nav-logo.png"
               alt="Raven"
@@ -281,14 +191,14 @@ export default function MainNav() {
 
             <Link
               href="/pricing"
-              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded"
+              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded cursor-pointer"
             >
               Pricing
             </Link>
             
             <Link
               href="/docs"
-              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded"
+              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded cursor-pointer"
             >
               Docs
             </Link>
@@ -299,13 +209,13 @@ export default function MainNav() {
         <div className="hidden lg:flex items-center gap-2.5">
           <Link 
             href="/login"
-            className="h-10 px-5 rounded-lg border border-white/20 text-[14px] font-medium text-white hover:bg-white/5 transition-colors flex items-center"
+            className="h-10 px-5 rounded-lg border border-white/20 text-[14px] font-medium text-white hover:bg-white/5 transition-colors flex items-center cursor-pointer"
           >
             Log in
           </Link>
           <Link 
             href="/signup"
-            className="h-10 px-5 rounded-lg bg-white text-black text-[14px] font-medium hover:bg-gray-100 transition-colors flex items-center"
+            className="h-10 px-5 rounded-lg bg-white text-black text-[14px] font-medium hover:bg-gray-100 transition-colors flex items-center cursor-pointer"
           >
             Get started
           </Link>
@@ -314,7 +224,7 @@ export default function MainNav() {
         {/* Mobile: Hamburger Menu */}
         <button 
           onClick={() => setMobileMenuOpen(true)}
-          className="lg:hidden p-2 -mr-2 rounded-lg hover:bg-white/5 transition-colors"
+          className="lg:hidden p-2 -mr-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
         >
           <Menu className="w-6 h-6 text-white" />
         </button>

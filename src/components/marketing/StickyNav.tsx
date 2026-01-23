@@ -32,7 +32,7 @@ function NavDropdown({ label, children }: NavDropdownProps) {
       onMouseLeave={handleMouseLeave}
     >
       <button
-        className={`flex items-center gap-1 px-2 py-1.5 text-[13px] font-medium transition-colors rounded ${
+        className={`flex items-center gap-1 px-2 py-1.5 text-[13px] font-medium transition-colors rounded cursor-pointer ${
           isOpen ? 'text-white bg-white/10' : 'text-white/80 hover:text-white hover:bg-white/10'
         }`}
       >
@@ -63,101 +63,40 @@ function NavDropdown({ label, children }: NavDropdownProps) {
 
 function ProductDropdown() {
   return (
-    <div className="w-[520px]">
-      <div className="flex">
-        {/* Left Column - Core Features */}
-        <div className="w-[200px] p-4 border-r border-white/10">
-          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
-            Core Features
-          </span>
-          <div className="space-y-3">
-            <Link href="/features/search" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Search
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Matrix extraction across datasets
-                </p>
-              </div>
-            </Link>
-            <Link href="/features/create" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Create
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  AI-guided editor with Smart Blocks
-                </p>
-              </div>
-            </Link>
-            <Link href="/features/track" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Track
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Topic monitoring and alerts
-                </p>
-              </div>
-            </Link>
-            <Link href="/features/analyze" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Analyze
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Reader analytics and engagement
-                </p>
-              </div>
-            </Link>
+    <div className="w-[380px]">
+      {/* 2x2 Grid of Core Features */}
+      <div className="grid grid-cols-2 p-4 gap-1">
+        <Link href="/features/search" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Search</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Matrix extraction across datasets</p>
           </div>
-        </div>
-
-        {/* Right Column - More */}
-        <div className="flex-1 p-4">
-          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
-            More
-          </span>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            <Link href="/features/integrations" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Integrations
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Connect data sources
-              </p>
-            </Link>
-            <Link href="/features/security" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Security
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Enterprise-grade
-              </p>
-            </Link>
-            <Link href="/features/raven-links" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Raven Links
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Interactive sharing
-              </p>
-            </Link>
-            <Link href="/features/ai" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                AI Models
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Multi-provider
-              </p>
-            </Link>
+        </Link>
+        
+        <Link href="/features/create" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Create</span>
+            <p className="text-[12px] text-white/50 mt-0.5">AI-guided editor with Smart Blocks</p>
           </div>
-        </div>
+        </Link>
+        
+        <Link href="/features/track" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Track</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Topic monitoring and alerts</p>
+          </div>
+        </Link>
+        
+        <Link href="/features/analyze" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Analyze</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Reader analytics and engagement</p>
+          </div>
+        </Link>
       </div>
 
       {/* Footer */}
@@ -167,7 +106,7 @@ function ProductDropdown() {
         </span>
         <Link 
           href="/changelog" 
-          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors"
+          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer"
         >
           Changelog
         </Link>
@@ -178,101 +117,40 @@ function ProductDropdown() {
 
 function SolutionsDropdown() {
   return (
-    <div className="w-[520px]">
-      <div className="flex">
-        {/* Left Column - Industries */}
-        <div className="w-[200px] p-4 border-r border-white/10">
-          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
-            Industries
-          </span>
-          <div className="space-y-3">
-            <Link href="/solutions/finance" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Finance
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Investment research & diligence
-                </p>
-              </div>
-            </Link>
-            <Link href="/solutions/consulting" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Consulting
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Client deliverables & research
-                </p>
-              </div>
-            </Link>
-            <Link href="/solutions/government" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Government
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Intelligence analysis & briefs
-                </p>
-              </div>
-            </Link>
-            <Link href="/solutions/legal" className="flex items-start gap-2.5 group">
-              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
-              <div>
-                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                  Legal
-                </span>
-                <p className="text-[12px] text-white/50 mt-0.5">
-                  Document review & case research
-                </p>
-              </div>
-            </Link>
+    <div className="w-[380px]">
+      {/* 2x2 Grid of Industries */}
+      <div className="grid grid-cols-2 p-4 gap-1">
+        <Link href="/solutions/finance" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Finance</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Investment research & diligence</p>
           </div>
-        </div>
-
-        {/* Right Column - Use Cases */}
-        <div className="flex-1 p-4">
-          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
-            Use Cases
-          </span>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            <Link href="/use-cases/due-diligence" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Due Diligence
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Data room analysis
-              </p>
-            </Link>
-            <Link href="/use-cases/market-research" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Market Research
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Competitive intel
-              </p>
-            </Link>
-            <Link href="/use-cases/investment-memos" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Investment Memos
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Research to report
-              </p>
-            </Link>
-            <Link href="/use-cases/client-reports" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Client Reports
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Professional deliverables
-              </p>
-            </Link>
+        </Link>
+        
+        <Link href="/solutions/consulting" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Consulting</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Client deliverables & research</p>
           </div>
-        </div>
+        </Link>
+        
+        <Link href="/solutions/government" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Government</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Intelligence analysis & briefs</p>
+          </div>
+        </Link>
+        
+        <Link href="/solutions/legal" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Legal</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Document review & case research</p>
+          </div>
+        </Link>
       </div>
 
       {/* Footer */}
@@ -282,9 +160,9 @@ function SolutionsDropdown() {
         </span>
         <Link 
           href="/customers" 
-          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors"
+          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer"
         >
-          Customer stories
+          Customer Stories
         </Link>
       </div>
     </div>
@@ -318,7 +196,7 @@ export default function StickyNav() {
         <div className="hidden lg:flex items-center justify-between w-[720px] h-14 px-5 rounded-xl backdrop-blur-md bg-[#111111]/80 shadow-[0px_4px_20px_rgba(0,0,0,0.5)] border border-white/10">
           {/* Left: Logo + Nav Links */}
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center mr-3">
+            <Link href="/" className="flex items-center mr-3 cursor-pointer">
               <img
                 src="/images/raven-logo-white.png"
                 alt="Raven"
@@ -337,14 +215,14 @@ export default function StickyNav() {
 
             <Link
               href="/pricing"
-              className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded"
+              className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded cursor-pointer"
             >
               Pricing
             </Link>
 
             <Link
               href="/docs"
-              className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded"
+              className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded cursor-pointer"
             >
               Docs
             </Link>
@@ -354,13 +232,13 @@ export default function StickyNav() {
           <div className="flex items-center gap-2">
             <Link 
               href="/login"
-              className="h-9 px-5 rounded-md border border-white/20 text-[13px] font-medium text-white hover:bg-white/10 transition-colors flex items-center"
+              className="h-9 px-5 rounded-md border border-white/20 text-[13px] font-medium text-white hover:bg-white/10 transition-colors flex items-center cursor-pointer"
             >
               Log in
             </Link>
             <Link 
               href="/signup"
-              className="h-9 px-5 rounded-md bg-white text-black text-[13px] font-medium hover:bg-gray-200 transition-colors flex items-center"
+              className="h-9 px-5 rounded-md bg-white text-black text-[13px] font-medium hover:bg-gray-200 transition-colors flex items-center cursor-pointer"
             >
               Get started
             </Link>
@@ -369,7 +247,7 @@ export default function StickyNav() {
 
         {/* Mobile Nav */}
         <div className="lg:hidden flex items-center justify-between w-[calc(100vw-32px)] max-w-[400px] h-12 px-4 rounded-xl backdrop-blur-md bg-[#111111]/80 shadow-[0px_4px_20px_rgba(0,0,0,0.5)] border border-white/10">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center cursor-pointer">
             <img
               src="/images/raven-logo-white.png"
               alt="Raven"
@@ -380,13 +258,13 @@ export default function StickyNav() {
           <div className="flex items-center gap-2">
             <Link 
               href="/signup"
-              className="h-8 px-4 rounded-md bg-white text-black text-[12px] font-medium hover:bg-gray-200 transition-colors flex items-center"
+              className="h-8 px-4 rounded-md bg-white text-black text-[12px] font-medium hover:bg-gray-200 transition-colors flex items-center cursor-pointer"
             >
               Get started
             </Link>
             <button 
               onClick={() => setMobileMenuOpen(true)}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Menu className="w-5 h-5 text-white" />
             </button>
