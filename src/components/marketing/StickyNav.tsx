@@ -71,37 +71,49 @@ function ProductDropdown() {
             Core Features
           </span>
           <div className="space-y-3">
-            <Link href="/features/search" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Search
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Matrix extraction across datasets
-              </p>
+            <Link href="/features/search" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Search
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Matrix extraction across datasets
+                </p>
+              </div>
             </Link>
-            <Link href="/features/create" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Create
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                AI-guided editor with Smart Blocks
-              </p>
+            <Link href="/features/create" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Create
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  AI-guided editor with Smart Blocks
+                </p>
+              </div>
             </Link>
-            <Link href="/features/track" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Track
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Topic monitoring and alerts
-              </p>
+            <Link href="/features/track" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Track
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Topic monitoring and alerts
+                </p>
+              </div>
             </Link>
-            <Link href="/features/analyze" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Analyze
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Reader analytics and engagement
-              </p>
+            <Link href="/features/analyze" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Analyze
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Reader analytics and engagement
+                </p>
+              </div>
             </Link>
           </div>
         </div>
@@ -174,37 +186,49 @@ function SolutionsDropdown() {
             Industries
           </span>
           <div className="space-y-3">
-            <Link href="/solutions/finance" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Finance
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Investment research & diligence
-              </p>
+            <Link href="/solutions/finance" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Finance
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Investment research & diligence
+                </p>
+              </div>
             </Link>
-            <Link href="/solutions/consulting" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Consulting
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Client deliverables & research
-              </p>
+            <Link href="/solutions/consulting" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Consulting
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Client deliverables & research
+                </p>
+              </div>
             </Link>
-            <Link href="/solutions/government" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Government
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Intelligence analysis & briefs
-              </p>
+            <Link href="/solutions/government" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Government
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Intelligence analysis & briefs
+                </p>
+              </div>
             </Link>
-            <Link href="/solutions/legal" className="block group">
-              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
-                Legal
-              </span>
-              <p className="text-[12px] text-white/50 mt-0.5">
-                Document review & case research
-              </p>
+            <Link href="/solutions/legal" className="flex items-start gap-2.5 group">
+              <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
+              <div>
+                <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                  Legal
+                </span>
+                <p className="text-[12px] text-white/50 mt-0.5">
+                  Document review & case research
+                </p>
+              </div>
             </Link>
           </div>
         </div>

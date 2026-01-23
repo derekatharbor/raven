@@ -12,10 +12,10 @@ interface MobileMenuProps {
 }
 
 const PRODUCT_CORE = [
-  { title: 'Search', description: 'Matrix extraction across datasets', href: '/features/search' },
-  { title: 'Create', description: 'AI-guided editor with Smart Blocks', href: '/features/create' },
-  { title: 'Track', description: 'Topic monitoring and alerts', href: '/features/track' },
-  { title: 'Analyze', description: 'Reader analytics and engagement', href: '/features/analyze' },
+  { title: 'Search', description: 'Matrix extraction across datasets', href: '/features/search', color: '#7C9EB2' },
+  { title: 'Create', description: 'AI-guided editor with Smart Blocks', href: '/features/create', color: '#8BAF9C' },
+  { title: 'Track', description: 'Topic monitoring and alerts', href: '/features/track', color: '#C9A87C' },
+  { title: 'Analyze', description: 'Reader analytics and engagement', href: '/features/analyze', color: '#9B8EC4' },
 ]
 
 const PRODUCT_MORE = [
@@ -26,10 +26,10 @@ const PRODUCT_MORE = [
 ]
 
 const INDUSTRIES = [
-  { title: 'Finance', description: 'Investment research & diligence', href: '/solutions/finance' },
-  { title: 'Consulting', description: 'Client deliverables & research', href: '/solutions/consulting' },
-  { title: 'Government', description: 'Intelligence analysis & briefs', href: '/solutions/government' },
-  { title: 'Legal', description: 'Document review & case research', href: '/solutions/legal' },
+  { title: 'Finance', description: 'Investment research & diligence', href: '/solutions/finance', color: '#7C9EB2' },
+  { title: 'Consulting', description: 'Client deliverables & research', href: '/solutions/consulting', color: '#C9A87C' },
+  { title: 'Government', description: 'Intelligence analysis & briefs', href: '/solutions/government', color: '#8BAF9C' },
+  { title: 'Legal', description: 'Document review & case research', href: '/solutions/legal', color: '#9B8EC4' },
 ]
 
 const USE_CASES = [
@@ -94,10 +94,16 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         key={item.href}
                         href={item.href}
                         onClick={onClose}
-                        className="block py-1.5"
+                        className="flex items-start gap-2.5 py-1.5"
                       >
-                        <span className="text-[14px] font-medium text-white">{item.title}</span>
-                        <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                        <div 
+                          className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div>
+                          <span className="text-[14px] font-medium text-white">{item.title}</span>
+                          <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                        </div>
                       </Link>
                     ))}
                   </div>
@@ -147,10 +153,16 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         key={item.href}
                         href={item.href}
                         onClick={onClose}
-                        className="block py-1.5"
+                        className="flex items-start gap-2.5 py-1.5"
                       >
-                        <span className="text-[14px] font-medium text-white">{item.title}</span>
-                        <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                        <div 
+                          className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" 
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div>
+                          <span className="text-[14px] font-medium text-white">{item.title}</span>
+                          <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                        </div>
                       </Link>
                     ))}
                   </div>
