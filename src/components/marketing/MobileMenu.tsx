@@ -11,18 +11,32 @@ interface MobileMenuProps {
   onClose: () => void
 }
 
-const PRODUCT_ITEMS = [
-  { title: 'Search', href: '/features/search' },
-  { title: 'Create', href: '/features/create' },
-  { title: 'Track', href: '/features/track' },
-  { title: 'Analyze', href: '/features/analyze' },
+const PRODUCT_CORE = [
+  { title: 'Search', description: 'Matrix extraction across datasets', href: '/features/search' },
+  { title: 'Create', description: 'AI-guided editor with Smart Blocks', href: '/features/create' },
+  { title: 'Track', description: 'Topic monitoring and alerts', href: '/features/track' },
+  { title: 'Analyze', description: 'Reader analytics and engagement', href: '/features/analyze' },
 ]
 
-const INDUSTRY_ITEMS = [
-  { title: 'Finance', href: '/solutions/finance' },
-  { title: 'Legal', href: '/solutions/legal' },
-  { title: 'Government', href: '/solutions/government' },
-  { title: 'Consulting', href: '/solutions/consulting' },
+const PRODUCT_MORE = [
+  { title: 'Integrations', href: '/features/integrations' },
+  { title: 'Security', href: '/features/security' },
+  { title: 'Raven Links', href: '/features/raven-links' },
+  { title: 'AI Models', href: '/features/ai' },
+]
+
+const INDUSTRIES = [
+  { title: 'Finance', description: 'Investment research & diligence', href: '/solutions/finance' },
+  { title: 'Consulting', description: 'Client deliverables & research', href: '/solutions/consulting' },
+  { title: 'Government', description: 'Intelligence analysis & briefs', href: '/solutions/government' },
+  { title: 'Legal', description: 'Document review & case research', href: '/solutions/legal' },
+]
+
+const USE_CASES = [
+  { title: 'Due Diligence', href: '/use-cases/due-diligence' },
+  { title: 'Market Research', href: '/use-cases/market-research' },
+  { title: 'Investment Memos', href: '/use-cases/investment-memos' },
+  { title: 'Client Reports', href: '/use-cases/client-reports' },
 ]
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
@@ -41,7 +55,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
       {/* Menu Panel - Full Height */}
       <div
-        className={`fixed top-0 right-0 bottom-0 w-[300px] bg-black z-50 transition-transform duration-300 flex flex-col ${
+        className={`fixed top-0 right-0 bottom-0 w-[320px] bg-black z-50 transition-transform duration-300 flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -68,17 +82,45 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <ChevronDown className={`w-4 h-4 transition-transform ${productOpen ? 'rotate-180' : ''}`} />
             </button>
             {productOpen && (
-              <div className="ml-3 mt-1 space-y-1">
-                {PRODUCT_ITEMS.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onClose}
-                    className="block px-3 py-2.5 rounded-lg text-[14px] text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-                  >
-                    {item.title}
-                  </Link>
-                ))}
+              <div className="mt-2 space-y-4 px-3 pb-3">
+                {/* Core Features */}
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-white/40 font-medium mb-2">
+                    Core Features
+                  </span>
+                  <div className="space-y-2">
+                    {PRODUCT_CORE.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className="block py-1.5"
+                      >
+                        <span className="text-[14px] font-medium text-white">{item.title}</span>
+                        <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* More */}
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-white/40 font-medium mb-2">
+                    More
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PRODUCT_MORE.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className="text-[13px] text-white/70 hover:text-white transition-colors py-1"
+                      >
+                        {item.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -93,21 +135,44 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <ChevronDown className={`w-4 h-4 transition-transform ${solutionsOpen ? 'rotate-180' : ''}`} />
             </button>
             {solutionsOpen && (
-              <div className="ml-3 mt-1">
-                <span className="block px-3 py-2 text-[11px] uppercase tracking-wider text-white/40 font-medium">
-                  For Industries
-                </span>
-                <div className="space-y-1">
-                  {INDUSTRY_ITEMS.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onClose}
-                      className="block px-3 py-2.5 rounded-lg text-[14px] text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
+              <div className="mt-2 space-y-4 px-3 pb-3">
+                {/* Industries */}
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-white/40 font-medium mb-2">
+                    Industries
+                  </span>
+                  <div className="space-y-2">
+                    {INDUSTRIES.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className="block py-1.5"
+                      >
+                        <span className="text-[14px] font-medium text-white">{item.title}</span>
+                        <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Use Cases */}
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-white/40 font-medium mb-2">
+                    Use Cases
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {USE_CASES.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={onClose}
+                        className="text-[13px] text-white/70 hover:text-white transition-colors py-1"
+                      >
+                        {item.title}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -120,6 +185,22 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             className="block px-3 py-3 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
           >
             Pricing
+          </Link>
+          
+          <Link
+            href="/docs"
+            onClick={onClose}
+            className="block px-3 py-3 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          >
+            Docs
+          </Link>
+          
+          <Link
+            href="/changelog"
+            onClick={onClose}
+            className="block px-3 py-3 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          >
+            Changelog
           </Link>
         </div>
 

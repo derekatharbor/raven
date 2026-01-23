@@ -7,22 +7,6 @@ import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import MobileMenu from './MobileMenu'
 
-// Product dropdown items - muted pastel colors
-const PRODUCT_ITEMS = [
-  { id: 'search', color: '#7C9EB2', title: 'Search', href: '/features/search' },
-  { id: 'create', color: '#8BAF9C', title: 'Create', href: '/features/create' },
-  { id: 'track', color: '#C9A87C', title: 'Track', href: '/features/track' },
-  { id: 'analyze', color: '#9B8EC4', title: 'Analyze', href: '/features/analyze' },
-]
-
-// Solutions dropdown items
-const INDUSTRY_ITEMS = [
-  { id: 'finance', color: '#7C9EB2', title: 'Finance', href: '/solutions/finance' },
-  { id: 'legal', color: '#9B8EC4', title: 'Legal', href: '/solutions/legal' },
-  { id: 'government', color: '#8BAF9C', title: 'Government', href: '/solutions/government' },
-  { id: 'consulting', color: '#C9A87C', title: 'Consulting', href: '/solutions/consulting' },
-]
-
 interface NavDropdownProps {
   label: string
   children: React.ReactNode
@@ -63,9 +47,9 @@ function NavDropdown({ label, children }: NavDropdownProps) {
         </svg>
       </button>
 
-      {/* Dropdown Panel - Black */}
+      {/* Dropdown Panel */}
       <div
-        className={`absolute top-full left-0 mt-3 bg-black rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.4)] border border-white/10 transition-all duration-150 overflow-hidden ${
+        className={`absolute top-full left-0 mt-3 bg-[#0A0A0B] rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-150 overflow-hidden ${
           isOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -79,43 +63,206 @@ function NavDropdown({ label, children }: NavDropdownProps) {
 
 function ProductDropdown() {
   return (
-    <div className="py-2 px-2 min-w-[180px]">
-      {PRODUCT_ITEMS.map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+    <div className="w-[520px]">
+      <div className="flex">
+        {/* Left Column - Core Features */}
+        <div className="w-[200px] p-4 border-r border-white/10">
+          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
+            Core Features
+          </span>
+          <div className="space-y-3">
+            <Link href="/features/search" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Search
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Matrix extraction across datasets
+              </p>
+            </Link>
+            <Link href="/features/create" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Create
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                AI-guided editor with Smart Blocks
+              </p>
+            </Link>
+            <Link href="/features/track" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Track
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Topic monitoring and alerts
+              </p>
+            </Link>
+            <Link href="/features/analyze" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Analyze
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Reader analytics and engagement
+              </p>
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Column - More */}
+        <div className="flex-1 p-4">
+          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
+            More
+          </span>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <Link href="/features/integrations" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Integrations
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Connect data sources
+              </p>
+            </Link>
+            <Link href="/features/security" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Security
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Enterprise-grade
+              </p>
+            </Link>
+            <Link href="/features/raven-links" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Raven Links
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Interactive sharing
+              </p>
+            </Link>
+            <Link href="/features/ai" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                AI Models
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Multi-provider
+              </p>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] border-t border-white/10">
+        <span className="text-[12px] text-white/60">
+          <span className="text-white/40">New:</span> Multi-agent research
+        </span>
+        <Link 
+          href="/changelog" 
+          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors"
         >
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: item.color }}
-          />
-          <span className="text-[13px] font-medium text-white/90">{item.title}</span>
+          Changelog
         </Link>
-      ))}
+      </div>
     </div>
   )
 }
 
 function SolutionsDropdown() {
   return (
-    <div className="py-2 px-2 min-w-[180px]">
-      <span className="block px-3 py-1.5 text-[10px] uppercase tracking-wider text-white/40 font-medium">
-        For Industries
-      </span>
-      {INDUSTRY_ITEMS.map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+    <div className="w-[520px]">
+      <div className="flex">
+        {/* Left Column - Industries */}
+        <div className="w-[200px] p-4 border-r border-white/10">
+          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
+            Industries
+          </span>
+          <div className="space-y-3">
+            <Link href="/solutions/finance" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Finance
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Investment research & diligence
+              </p>
+            </Link>
+            <Link href="/solutions/consulting" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Consulting
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Client deliverables & research
+              </p>
+            </Link>
+            <Link href="/solutions/government" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Government
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Intelligence analysis & briefs
+              </p>
+            </Link>
+            <Link href="/solutions/legal" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Legal
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Document review & case research
+              </p>
+            </Link>
+          </div>
+        </div>
+
+        {/* Right Column - Use Cases */}
+        <div className="flex-1 p-4">
+          <span className="block text-[11px] uppercase tracking-wider text-white/40 font-medium mb-3">
+            Use Cases
+          </span>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            <Link href="/use-cases/due-diligence" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Due Diligence
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Data room analysis
+              </p>
+            </Link>
+            <Link href="/use-cases/market-research" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Market Research
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Competitive intel
+              </p>
+            </Link>
+            <Link href="/use-cases/investment-memos" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Investment Memos
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Research to report
+              </p>
+            </Link>
+            <Link href="/use-cases/client-reports" className="block group">
+              <span className="text-[13px] font-semibold text-white group-hover:text-white/80 transition-colors">
+                Client Reports
+              </span>
+              <p className="text-[12px] text-white/50 mt-0.5">
+                Professional deliverables
+              </p>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] border-t border-white/10">
+        <span className="text-[12px] text-white/60">
+          See how teams use Raven
+        </span>
+        <Link 
+          href="/customers" 
+          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors"
         >
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: item.color }}
-          />
-          <span className="text-[13px] font-medium text-white/90">{item.title}</span>
+          Customer stories
         </Link>
-      ))}
+      </div>
     </div>
   )
 }
@@ -169,6 +316,13 @@ export default function StickyNav() {
               className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded"
             >
               Pricing
+            </Link>
+
+            <Link
+              href="/docs"
+              className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded"
+            >
+              Docs
             </Link>
           </div>
 

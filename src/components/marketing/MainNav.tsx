@@ -7,22 +7,6 @@ import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import MobileMenu from './MobileMenu'
 
-// Product dropdown items - muted pastel colors
-const PRODUCT_ITEMS = [
-  { id: 'search', color: '#7C9EB2', title: 'Search', href: '/features/search' },
-  { id: 'create', color: '#8BAF9C', title: 'Create', href: '/features/create' },
-  { id: 'track', color: '#C9A87C', title: 'Track', href: '/features/track' },
-  { id: 'analyze', color: '#9B8EC4', title: 'Analyze', href: '/features/analyze' },
-]
-
-// Solutions dropdown items
-const INDUSTRY_ITEMS = [
-  { id: 'finance', color: '#7C9EB2', title: 'Finance', href: '/solutions/finance' },
-  { id: 'legal', color: '#9B8EC4', title: 'Legal', href: '/solutions/legal' },
-  { id: 'government', color: '#8BAF9C', title: 'Government', href: '/solutions/government' },
-  { id: 'consulting', color: '#C9A87C', title: 'Consulting', href: '/solutions/consulting' },
-]
-
 interface NavDropdownProps {
   label: string
   children: React.ReactNode
@@ -63,9 +47,9 @@ function NavDropdown({ label, children }: NavDropdownProps) {
         </svg>
       </button>
 
-      {/* Dropdown Panel - Black */}
+      {/* Dropdown Panel */}
       <div
-        className={`absolute top-full left-0 mt-2 bg-black rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.4)] border border-white/10 transition-all duration-150 overflow-hidden ${
+        className={`absolute top-full left-0 mt-2 bg-[#0a0a0a] rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-150 overflow-hidden ${
           isOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -79,43 +63,168 @@ function NavDropdown({ label, children }: NavDropdownProps) {
 
 function ProductDropdown() {
   return (
-    <div className="py-2 px-2 min-w-[200px]">
-      {PRODUCT_ITEMS.map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
-        >
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: item.color }}
-          />
-          <span className="text-[14px] font-medium text-white/90">{item.title}</span>
+    <div className="w-[580px]">
+      <div className="flex">
+        {/* Left Column - Core Features */}
+        <div className="w-[240px] p-4 border-r border-white/10">
+          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
+            Core Features
+          </span>
+          
+          <Link href="/features/search" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white group-hover:text-white">Search</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Matrix extraction across any dataset</p>
+          </Link>
+          
+          <Link href="/features/create" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white group-hover:text-white">Create</span>
+            <p className="text-[13px] text-white/50 mt-0.5">AI-guided editor with Smart Blocks</p>
+          </Link>
+          
+          <Link href="/features/track" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white group-hover:text-white">Track</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Topic monitoring and alerts</p>
+          </Link>
+          
+          <Link href="/features/analyze" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white group-hover:text-white">Analyze</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Reader analytics and engagement</p>
+          </Link>
+        </div>
+
+        {/* Right Column - More */}
+        <div className="flex-1 p-4">
+          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
+            More
+          </span>
+          
+          <div className="grid grid-cols-2 gap-x-4">
+            <Link href="/features/integrations" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Integrations</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Connect your data sources</p>
+            </Link>
+            
+            <Link href="/features/security" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Security</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Enterprise-grade protection</p>
+            </Link>
+            
+            <Link href="/features/raven-links" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Raven Links</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Interactive document sharing</p>
+            </Link>
+            
+            <Link href="/api" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">API</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Build on Raven</p>
+            </Link>
+            
+            <Link href="/features/ai" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">AI Models</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Multi-agent orchestration</p>
+            </Link>
+            
+            <Link href="/mobile" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Mobile</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Research on the go</p>
+            </Link>
+          </div>
+        </div>
+      </div>
+      
+      {/* Bottom Bar */}
+      <div className="flex items-center justify-between px-6 py-3 bg-white/[0.02] border-t border-white/10">
+        <span className="text-[13px] text-white/60">
+          <span className="text-white/40">New:</span> Multi-agent research is now available
+        </span>
+        <Link href="/changelog" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors">
+          Changelog
         </Link>
-      ))}
+      </div>
     </div>
   )
 }
 
 function SolutionsDropdown() {
   return (
-    <div className="py-2 px-2 min-w-[200px]">
-      <span className="block px-3 py-2 text-[11px] uppercase tracking-wider text-white/40 font-medium">
-        For Industries
-      </span>
-      {INDUSTRY_ITEMS.map((item) => (
-        <Link
-          key={item.id}
-          href={item.href}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
-        >
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: item.color }}
-          />
-          <span className="text-[14px] font-medium text-white/90">{item.title}</span>
+    <div className="w-[580px]">
+      <div className="flex">
+        {/* Left Column - Industries */}
+        <div className="w-[240px] p-4 border-r border-white/10">
+          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
+            Industries
+          </span>
+          
+          <Link href="/solutions/finance" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white">Finance</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Investment research & due diligence</p>
+          </Link>
+          
+          <Link href="/solutions/consulting" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white">Consulting</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Client deliverables & research</p>
+          </Link>
+          
+          <Link href="/solutions/government" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white">Government</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Intelligence analysis & briefs</p>
+          </Link>
+          
+          <Link href="/solutions/legal" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+            <span className="text-[14px] font-semibold text-white">Legal</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Document review & case research</p>
+          </Link>
+        </div>
+
+        {/* Right Column - Use Cases */}
+        <div className="flex-1 p-4">
+          <span className="block px-2 mb-3 text-[12px] uppercase tracking-wider text-white/40 font-medium">
+            Use Cases
+          </span>
+          
+          <div className="grid grid-cols-2 gap-x-4">
+            <Link href="/use-cases/due-diligence" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Due Diligence</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Data room analysis</p>
+            </Link>
+            
+            <Link href="/use-cases/market-research" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Market Research</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Competitive intelligence</p>
+            </Link>
+            
+            <Link href="/use-cases/investment-memos" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Investment Memos</span>
+              <p className="text-[13px] text-white/50 mt-0.5">From research to report</p>
+            </Link>
+            
+            <Link href="/use-cases/client-reports" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Client Reports</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Professional deliverables</p>
+            </Link>
+            
+            <Link href="/use-cases/earnings-analysis" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Earnings Analysis</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Filings & transcripts</p>
+            </Link>
+            
+            <Link href="/use-cases/contract-review" className="block px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors group">
+              <span className="text-[14px] font-semibold text-white">Contract Review</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Extract key terms at scale</p>
+            </Link>
+          </div>
+        </div>
+      </div>
+      
+      {/* Bottom Bar */}
+      <div className="flex items-center justify-between px-6 py-3 bg-white/[0.02] border-t border-white/10">
+        <span className="text-[13px] text-white/60">
+          See how teams use Raven
+        </span>
+        <Link href="/customers" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors">
+          Customer Stories
         </Link>
-      ))}
+      </div>
     </div>
   )
 }
@@ -151,6 +260,13 @@ export default function MainNav() {
               className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded"
             >
               Pricing
+            </Link>
+            
+            <Link
+              href="/docs"
+              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded"
+            >
+              Docs
             </Link>
           </div>
         </div>
