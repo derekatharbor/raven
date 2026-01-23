@@ -108,7 +108,7 @@ function CapabilitiesSection() {
     {
       badge: 'INTEGRATIONS',
       title: 'Connect your sources',
-      description: 'Plug into your existing stack. Pull from PitchBook, internal databases, CRMs, and more. Your research stays connected to the systems you already use.',
+      description: 'Plug into your existing stack. Pull from SEC EDGAR, Google Drive, internal documents, and more. Your research stays connected to the systems you already use.',
       image: '/images/marketing/cap-sources.png',
       link: '/sources',
     },
