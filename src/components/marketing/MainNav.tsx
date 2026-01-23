@@ -7,178 +7,21 @@ import Link from 'next/link'
 import { Menu } from 'lucide-react'
 import MobileMenu from './MobileMenu'
 
-// Product dropdown - left items control right content
-const PRODUCT_LEFT = [
-  {
-    id: 'search',
-    color: '#3B82F6',
-    title: 'Search',
-    description: 'Find answers across any dataset',
-  },
-  {
-    id: 'create',
-    color: '#22C55E',
-    title: 'Create',
-    description: 'Write with intelligence built in',
-  },
-  {
-    id: 'track',
-    color: '#F97316',
-    title: 'Track',
-    description: 'Stay current without the noise',
-  },
-  {
-    id: 'analyze',
-    color: '#8B5CF6',
-    title: 'Analyze',
-    description: 'See how your work lands',
-  },
+// Product dropdown items - muted pastel colors
+const PRODUCT_ITEMS = [
+  { id: 'search', color: '#7C9EB2', title: 'Search', href: '/features/search' },
+  { id: 'create', color: '#8BAF9C', title: 'Create', href: '/features/create' },
+  { id: 'track', color: '#C9A87C', title: 'Track', href: '/features/track' },
+  { id: 'analyze', color: '#9B8EC4', title: 'Analyze', href: '/features/analyze' },
 ]
 
-const PRODUCT_RIGHT: Record<string, { title: string; description: string; href: string; isNew?: boolean }[]> = {
-  search: [
-    { title: 'Matrix Extraction', description: 'Structured answers from unstructured docs', href: '/features/search' },
-    { title: 'SEC EDGAR', description: 'Instant access to public filings', href: '/features/search' },
-  ],
-  create: [
-    { title: 'Smart Blocks', description: 'Tables, charts, and citations that stay linked', href: '/features/create' },
-    { title: 'AI Autocomplete', description: 'Suggestions grounded in your sources', href: '/features/create' },
-    { title: 'Multi-agent Research', description: 'Parallel research across angles', href: '/features/create', isNew: true },
-  ],
-  track: [
-    { title: 'Topic Monitoring', description: 'Scheduled searches and alerts', href: '/features/track' },
-    { title: 'Digest Summaries', description: 'Daily or weekly briefings', href: '/features/track' },
-  ],
-  analyze: [
-    { title: 'Reader Analytics', description: 'Heatmaps and engagement tracking', href: '/features/analyze' },
-    { title: 'Interactive Documents', description: 'AI Q&A for your readers', href: '/features/analyze', isNew: true },
-  ],
-}
-
-// Solutions dropdown - left items control right content
-const SOLUTIONS_LEFT = [
-  {
-    id: 'finance',
-    color: '#3B82F6',
-    title: 'Finance',
-    description: 'Investment research and due diligence',
-  },
-  {
-    id: 'consulting',
-    color: '#F97316',
-    title: 'Consulting',
-    description: 'Client deliverables and research',
-  },
-  {
-    id: 'government',
-    color: '#22C55E',
-    title: 'Government',
-    description: 'Intelligence analysis',
-  },
-  {
-    id: 'legal',
-    color: '#8B5CF6',
-    title: 'Legal',
-    description: 'Document review and case research',
-  },
+// Solutions dropdown items
+const INDUSTRY_ITEMS = [
+  { id: 'finance', color: '#7C9EB2', title: 'Finance', href: '/solutions/finance' },
+  { id: 'legal', color: '#9B8EC4', title: 'Legal', href: '/solutions/legal' },
+  { id: 'government', color: '#8BAF9C', title: 'Government', href: '/solutions/government' },
+  { id: 'consulting', color: '#C9A87C', title: 'Consulting', href: '/solutions/consulting' },
 ]
-
-const SOLUTIONS_RIGHT: Record<string, { title: string; description: string; href: string; isNew?: boolean }[]> = {
-  finance: [
-    { title: 'Investment Memos', description: 'From data room to deliverable', href: '/solutions/finance' },
-    { title: 'Earnings Analysis', description: 'Track filings and transcripts', href: '/solutions/finance' },
-  ],
-  consulting: [
-    { title: 'Market Research', description: 'Comprehensive industry analysis', href: '/solutions/consulting' },
-    { title: 'Client Reports', description: 'Professional deliverables fast', href: '/solutions/consulting' },
-  ],
-  government: [
-    { title: 'Intel Briefs', description: 'Synthesis across classified and open sources', href: '/solutions/government' },
-    { title: 'Threat Monitoring', description: 'Track topics and entities', href: '/solutions/government' },
-  ],
-  legal: [
-    { title: 'Case Research', description: 'Search precedents and filings', href: '/solutions/legal' },
-    { title: 'Contract Review', description: 'Extract key terms at scale', href: '/solutions/legal' },
-  ],
-}
-
-interface DropdownProps {
-  items: typeof PRODUCT_LEFT
-  rightContent: typeof PRODUCT_RIGHT
-  defaultActive: string
-}
-
-function DropdownContent({ items, rightContent, defaultActive }: DropdownProps) {
-  const [activeItem, setActiveItem] = useState(defaultActive)
-
-  return (
-    <div className="flex">
-      {/* Left Column */}
-      <div className="w-[260px] py-3 px-2">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            onMouseEnter={() => setActiveItem(item.id)}
-            className={`group flex items-start gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
-              activeItem === item.id ? 'bg-neutral-100' : 'hover:bg-neutral-100'
-            }`}
-          >
-            <div
-              className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-              style={{ backgroundColor: item.color }}
-            />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-semibold text-black">
-                  {item.title}
-                </span>
-                <svg
-                  className={`w-3.5 h-3.5 transition-all ${
-                    activeItem === item.id ? 'text-black/50 translate-x-0.5' : 'text-black/30'
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <p className="text-[12px] text-neutral-500 mt-0.5">
-                {item.description}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Divider */}
-      <div className="w-px bg-neutral-200 my-3" />
-
-      {/* Right Column - Dynamic based on hover */}
-      <div className="w-[260px] py-3 pl-2">
-        {rightContent[activeItem]?.map((item, idx) => (
-          <Link
-            key={idx}
-            href={item.href}
-            className="block px-4 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors"
-          >
-            <span className="text-[13px] font-semibold text-black flex items-center gap-2">
-              {item.title}
-              {item.isNew && (
-                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-500 text-white rounded uppercase">
-                  New
-                </span>
-              )}
-            </span>
-            <p className="text-[11px] text-neutral-500 mt-0.5">
-              {item.description}
-            </p>
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 interface NavDropdownProps {
   label: string
@@ -220,9 +63,9 @@ function NavDropdown({ label, children }: NavDropdownProps) {
         </svg>
       </button>
 
-      {/* Dropdown Panel */}
+      {/* Dropdown Panel - Black */}
       <div
-        className={`absolute top-full left-0 mt-2 bg-white rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.2)] border border-black/5 transition-all duration-150 overflow-hidden ${
+        className={`absolute top-full left-0 mt-2 bg-black rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.4)] border border-white/10 transition-all duration-150 overflow-hidden ${
           isOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -230,6 +73,49 @@ function NavDropdown({ label, children }: NavDropdownProps) {
       >
         {children}
       </div>
+    </div>
+  )
+}
+
+function ProductDropdown() {
+  return (
+    <div className="py-2 px-2 min-w-[200px]">
+      {PRODUCT_ITEMS.map((item) => (
+        <Link
+          key={item.id}
+          href={item.href}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: item.color }}
+          />
+          <span className="text-[14px] font-medium text-white/90">{item.title}</span>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+function SolutionsDropdown() {
+  return (
+    <div className="py-2 px-2 min-w-[200px]">
+      <span className="block px-3 py-2 text-[11px] uppercase tracking-wider text-white/40 font-medium">
+        For Industries
+      </span>
+      {INDUSTRY_ITEMS.map((item) => (
+        <Link
+          key={item.id}
+          href={item.href}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: item.color }}
+          />
+          <span className="text-[14px] font-medium text-white/90">{item.title}</span>
+        </Link>
+      ))}
     </div>
   )
 }
@@ -253,19 +139,11 @@ export default function MainNav() {
           {/* Desktop Nav Dropdowns */}
           <div className="hidden lg:flex items-center gap-1">
             <NavDropdown label="Product">
-              <DropdownContent 
-                items={PRODUCT_LEFT} 
-                rightContent={PRODUCT_RIGHT} 
-                defaultActive="search"
-              />
+              <ProductDropdown />
             </NavDropdown>
 
             <NavDropdown label="Solutions">
-              <DropdownContent 
-                items={SOLUTIONS_LEFT} 
-                rightContent={SOLUTIONS_RIGHT} 
-                defaultActive="finance" 
-              />
+              <SolutionsDropdown />
             </NavDropdown>
 
             <Link

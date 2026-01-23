@@ -12,17 +12,17 @@ interface MobileMenuProps {
 }
 
 const PRODUCT_ITEMS = [
-  { title: 'Search', description: 'Matrix extraction across documents', href: '/features/search' },
-  { title: 'Create', description: 'AI-guided writing and Smart Blocks', href: '/features/create' },
-  { title: 'Track', description: 'Monitoring and alerts', href: '/features/track' },
-  { title: 'Analyze', description: 'Reader analytics and engagement', href: '/features/analyze' },
+  { title: 'Search', href: '/features/search' },
+  { title: 'Create', href: '/features/create' },
+  { title: 'Track', href: '/features/track' },
+  { title: 'Analyze', href: '/features/analyze' },
 ]
 
-const SOLUTIONS_ITEMS = [
-  { title: 'Finance', description: 'Investment research and due diligence', href: '/solutions/finance' },
-  { title: 'Consulting', description: 'Client deliverables and research', href: '/solutions/consulting' },
-  { title: 'Government', description: 'Intelligence analysis', href: '/solutions/government' },
-  { title: 'Legal', description: 'Document review and case research', href: '/solutions/legal' },
+const INDUSTRY_ITEMS = [
+  { title: 'Finance', href: '/solutions/finance' },
+  { title: 'Legal', href: '/solutions/legal' },
+  { title: 'Government', href: '/solutions/government' },
+  { title: 'Consulting', href: '/solutions/consulting' },
 ]
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
@@ -39,9 +39,9 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         onClick={onClose}
       />
 
-      {/* Menu Panel */}
+      {/* Menu Panel - Full Height */}
       <div
-        className={`fixed top-0 right-0 h-full w-[300px] bg-[#111] z-50 transition-transform duration-300 ${
+        className={`fixed top-0 right-0 bottom-0 w-[300px] bg-black z-50 transition-transform duration-300 flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -56,13 +56,13 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </button>
         </div>
 
-        {/* Links */}
-        <div className="p-4 space-y-2">
+        {/* Links - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-1">
           {/* Product Accordion */}
           <div>
             <button
               onClick={() => setProductOpen(!productOpen)}
-              className="flex items-center justify-between w-full px-3 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="flex items-center justify-between w-full px-3 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
             >
               <span className="text-[15px] font-medium">Product</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${productOpen ? 'rotate-180' : ''}`} />
@@ -74,10 +74,9 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     key={item.href}
                     href={item.href}
                     onClick={onClose}
-                    className="block px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                    className="block px-3 py-2.5 rounded-lg text-[14px] text-white/70 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <span className="text-[14px] text-white">{item.title}</span>
-                    <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
+                    {item.title}
                   </Link>
                 ))}
               </div>
@@ -88,24 +87,28 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           <div>
             <button
               onClick={() => setSolutionsOpen(!solutionsOpen)}
-              className="flex items-center justify-between w-full px-3 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="flex items-center justify-between w-full px-3 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
             >
               <span className="text-[15px] font-medium">Solutions</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${solutionsOpen ? 'rotate-180' : ''}`} />
             </button>
             {solutionsOpen && (
-              <div className="ml-3 mt-1 space-y-1">
-                {SOLUTIONS_ITEMS.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onClose}
-                    className="block px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    <span className="text-[14px] text-white">{item.title}</span>
-                    <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
-                  </Link>
-                ))}
+              <div className="ml-3 mt-1">
+                <span className="block px-3 py-2 text-[11px] uppercase tracking-wider text-white/40 font-medium">
+                  For Industries
+                </span>
+                <div className="space-y-1">
+                  {INDUSTRY_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onClose}
+                      className="block px-3 py-2.5 rounded-lg text-[14px] text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -114,14 +117,14 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           <Link
             href="/pricing"
             onClick={onClose}
-            className="block px-3 py-2.5 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            className="block px-3 py-3 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
           >
             Pricing
           </Link>
         </div>
 
-        {/* Bottom Buttons */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 space-y-2">
+        {/* Bottom Buttons - Fixed */}
+        <div className="p-4 border-t border-white/10 space-y-2">
           <Link
             href="/login"
             onClick={onClose}
