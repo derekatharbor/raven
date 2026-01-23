@@ -53,9 +53,9 @@ export default function GovernmentPage() {
             </div>
           </div>
 
-          {/* Hero Image - 2:1 ratio, contained within columns */}
+          {/* Hero Image - 2:1 ratio, spans to gutters */}
           {/* IMAGE: /public/images/marketing/solutions/government-hero.png */}
-          <div className="px-10 md:px-16 pb-16 md:pb-24">
+          <div className="px-5 md:px-6 pb-16 md:pb-24">
             <div className="w-full aspect-[2/1] bg-white/5 rounded-sm flex items-center justify-center">
               <span className="text-white/20 text-sm">government-hero.png (2:1)</span>
             </div>
