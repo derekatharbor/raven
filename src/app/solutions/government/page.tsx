@@ -105,27 +105,27 @@ export default function GovernmentPage() {
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
           <div className="ml-5 md:ml-6 mr-5 md:mr-6 grid grid-cols-2 md:grid-cols-5">
-            <div className="h-[236px] p-6 md:p-8 border-r border-b md:border-b-0 border-white/10 flex items-center">
+            <div className="h-[236px] p-6 md:p-8 border-r border-b md:border-b-0 border-white/10 flex items-center justify-center text-center">
               <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Your brief needs to cite every cable and report
               </p>
             </div>
-            <div className="h-[236px] p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 flex items-center">
+            <div className="h-[236px] p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 flex items-center justify-center text-center">
               <p className="text-base md:text-lg font-medium text-white leading-snug">
                 You're tracking an entity across 5 years of reporting
               </p>
             </div>
-            <div className="h-[236px] p-6 md:p-8 border-r md:border-r border-white/10 flex items-center">
+            <div className="h-[236px] p-6 md:p-8 border-r md:border-r border-white/10 flex items-center justify-center text-center">
               <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Assessment confidence needs justification
               </p>
             </div>
-            <div className="h-[236px] p-6 md:p-8 md:border-r border-white/10 flex items-center">
+            <div className="h-[236px] p-6 md:p-8 md:border-r border-white/10 flex items-center justify-center text-center">
               <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Sources can't be exposed to commercial AI
               </p>
             </div>
-            <div className="h-[236px] p-6 md:p-8 col-span-2 md:col-span-1 flex items-center">
+            <div className="h-[236px] p-6 md:p-8 col-span-2 md:col-span-1 flex items-center justify-center text-center">
               <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Your product needs to survive coordination
               </p>
@@ -133,6 +133,61 @@ export default function GovernmentPage() {
           </div>
         </div>
 
+        {/* Horizontal line below */}
+        <div className="w-full h-px bg-white/10" />
+      </section>
+
+      {/* Features Section - Raven keeps you in control */}
+      <section className="relative">
+        <div className="max-w-7xl mx-auto relative">
+          {/* Left vertical line */}
+          <div className="absolute top-0 bottom-0 left-5 md:left-6 w-px bg-white/10" />
+          {/* Right vertical line */}
+          <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
+          
+          <div className="px-10 md:px-16 py-16 md:py-24">
+            <div className="grid md:grid-cols-2 gap-12 md:gap-20">
+              {/* Left - Headline */}
+              <div>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+                  Raven keeps you in control.
+                </h2>
+              </div>
+              
+              {/* Right - Features */}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Every claim traced to source</h3>
+                  <p className="text-white/60 leading-relaxed">
+                    Click any statement to see the exact passage it came from. No black boxes, no hallucinations that survive review.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Confidence with justification</h3>
+                  <p className="text-white/60 leading-relaxed">
+                    Assessments include reasoning chains. When leadership asks "how do we know this," you have the answer.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Audit trails for coordination</h3>
+                  <p className="text-white/60 leading-relaxed">
+                    Full provenance history for every edit. Your product arrives at review with its sources intact.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Your data stays yours</h3>
+                  <p className="text-white/60 leading-relaxed">
+                    No model training on your inputs. Air-gapped deployment options available for sensitive environments.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Horizontal line below */}
         <div className="w-full h-px bg-white/10" />
       </section>
