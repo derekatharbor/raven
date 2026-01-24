@@ -11,9 +11,6 @@ import {
 import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 
-// GOV MOCK DATA FOR SEARCH PAGE
-// Replace lines 14-350 in /src/app/(dashboard)/search/page.tsx with this content
-// Remember to undo after screenshots!
 
 // Document type colors - Government palette
 const docTypeColors: Record<string, { bg: string; text: string }> = {
@@ -266,12 +263,6 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
   },
 ]
 
-// Keep the rest of the file unchanged...
-
-// ============================================================================
-// ALSO REPLACE MOCK_MESSAGES (around line 290-350)
-// ============================================================================
-
 const MOCK_MESSAGES: Message[] = [
   {
     id: 'msg-1',
@@ -305,6 +296,111 @@ Partner reporting indicates increased MSS focus on semiconductor sector targetin
     query: 'Summarize the key findings on PRC activity in the South China Sea and flag any information gaps.'
   },
 ]
+
+const MOCK_USER_DOCS = [
+  { id: 'doc-1', name: 'PRC South China Sea Brief' },
+  { id: 'doc-2', name: 'Entity Tracking - Huawei Network' },
+  { id: 'doc-3', name: 'Regional Assessment Draft' },
+]
+
+export default function SearchPage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+  
+  const [columns, setColumns] = useState<MatrixColumn[]>([])  // Start with no columns
+  const [matrixData, setMatrixData] = useState<MatrixRow[]>([])  // Start empty
+  const [messages, setMessages] = useState<Message[]>([])  // Start empty
+  const [query, setQuery] = useState('')
+  const [showEditorPane, setShowEditorPane] = useState(false)
+  const [editorWidth, setEditorWidth] = useState(400)
+  const [selectedDocForEditor, setSelectedDocForEditor] = useState(MOCK_USER_DOCS[0].id)
+  const [editorContent, setEditorContent] = useState('')
+  const [showAddColumnModal, setShowAddColumnModal] = useState(false)
+  const [newColumnQuestion, setNewColumnQuestion] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [selectedCell, setSelectedCell] = useState<Cell | null>(null)
+  const [selectedDocument, setSelectedDocument] = useState<MatrixRow | null>(null)
+  const [highlightedCell, setHighlightedCell] = useState<string | null>(null)
+  const [chatExpanded, setChatExpanded] = useState(true)
+  const [chatHeight, setChatHeight] = useState(280)
+  const [isResizingChat, setIsResizingChat] = useState(false)
+  const [stepsExpanded, setStepsExpanded] = useState(false)
+  
+  // Upload modal state
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [uploadTab, setUploadTab] = useState<'upload' | 'edgar'>('upload')
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [edgarTicker, setEdgarTicker] = useState('')
+  const [edgarFormTypes, setEdgarFormTypes] = useState<string[]>(['10-K'])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const tableRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      const newWidth = window.innerWidth - e.clientX
+      setEditorWidth(Math.max(300, Math.min(600, newWidth)))
+    }
+    
+    const handleMouseUp = () => setIsResizing(false)
+    
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    } else {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing])
+
+  // Chat section resize
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingChat) return
+      const container = document.getElementById('search-main-container')
+      if (container) {
+        const containerTop = container.getBoundingClientRect().top
+        const newHeight = e.clientY - containerTop
+        setChatHeight(Math.max(100, Math.min(500, newHeight)))
+      }
+    }
+    
+    const handleMouseUp = () => setIsResizingChat(false)
+    
+    if (isResizingChat) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'row-resize'
+      document.body.style.userSelect = 'none'
+    } else {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizingChat])
 
   // Clear highlight after delay
   useEffect(() => {
