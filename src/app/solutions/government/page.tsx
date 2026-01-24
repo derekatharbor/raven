@@ -86,10 +86,10 @@ export default function GovernmentPage() {
           {/* Right vertical line */}
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
-          {/* Header */}
-          <div className="px-10 md:px-16 py-16 md:py-20 text-center">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
-              Generic AI fails intelligence analysts<br />because...
+          {/* Header - narrower container */}
+          <div className="px-10 md:px-16 py-16 md:py-20">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight max-w-2xl">
+              Generic AI fails intelligence analysts because...
             </h2>
           </div>
         </div>
@@ -105,28 +105,28 @@ export default function GovernmentPage() {
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
           <div className="ml-5 md:ml-6 mr-5 md:mr-6 grid grid-cols-2 md:grid-cols-5">
-            <div className="p-6 md:p-8 border-r border-b md:border-b-0 border-white/10">
-              <p className="text-sm md:text-base text-white/80 leading-relaxed">
+            <div className="h-[236px] p-6 md:p-8 border-r border-b md:border-b-0 border-white/10 flex items-center">
+              <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Your brief needs to cite every cable and report
               </p>
             </div>
-            <div className="p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10">
-              <p className="text-sm md:text-base text-white/80 leading-relaxed">
+            <div className="h-[236px] p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 flex items-center">
+              <p className="text-base md:text-lg font-medium text-white leading-snug">
                 You're tracking an entity across 5 years of reporting
               </p>
             </div>
-            <div className="p-6 md:p-8 border-r md:border-r border-white/10">
-              <p className="text-sm md:text-base text-white/80 leading-relaxed">
+            <div className="h-[236px] p-6 md:p-8 border-r md:border-r border-white/10 flex items-center">
+              <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Assessment confidence needs justification
               </p>
             </div>
-            <div className="p-6 md:p-8 md:border-r border-white/10">
-              <p className="text-sm md:text-base text-white/80 leading-relaxed">
+            <div className="h-[236px] p-6 md:p-8 md:border-r border-white/10 flex items-center">
+              <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Sources can't be exposed to commercial AI
               </p>
             </div>
-            <div className="p-6 md:p-8 col-span-2 md:col-span-1">
-              <p className="text-sm md:text-base text-white/80 leading-relaxed">
+            <div className="h-[236px] p-6 md:p-8 col-span-2 md:col-span-1 flex items-center">
+              <p className="text-base md:text-lg font-medium text-white leading-snug">
                 Your product needs to survive coordination
               </p>
             </div>
