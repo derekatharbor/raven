@@ -83,7 +83,7 @@ const MOCK_COLUMNS: MatrixColumn[] = [
 const MOCK_MATRIX_DATA: MatrixRow[] = [
   {
     id: 'doc-1',
-    documentName: 'Acme Corp CIM',
+    documentName: 'Project Falcon CIM',
     documentType: 'CIM',
     date: 'Jan 12, 2026',
     logoUrl: 'https://cdn.brandfetch.io/jpmorgan.com?c=1id1Fyz-h7an5-5KR_y',
@@ -204,14 +204,14 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
   },
   {
     id: 'doc-5',
-    documentName: 'Gartner Market Report 2025',
+    documentName: 'McKinsey SaaS Market Report',
     documentType: 'Industry Report',
     date: 'Dec 15, 2025',
-    logoUrl: 'https://cdn.brandfetch.io/gartner.com?c=1id1Fyz-h7an5-5KR_y',
+    logoUrl: 'https://cdn.brandfetch.io/mckinsey.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-5-1',
-        value: 'Market commoditization risk: Gartner predicts 60% of current market leaders will face pricing pressure from AI-native entrants by 2027.',
+        value: 'Market commoditization risk: McKinsey predicts 60% of current market leaders will face pricing pressure from AI-native entrants by 2027.',
         status: 'complete',
         sourceDocId: 'doc-5',
         sourceLocation: 'Page 42, Competitive Dynamics',
@@ -233,10 +233,10 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
   },
   {
     id: 'doc-6',
-    documentName: 'Customer Reference - Globex Inc',
+    documentName: 'Customer Call - Stripe',
     documentType: 'Expert Call',
     date: 'Jan 10, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
+    logoUrl: 'https://cdn.brandfetch.io/stripe.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
@@ -269,17 +269,17 @@ const MOCK_MESSAGES: Message[] = [
   {
     id: 'msg-1',
     role: 'user',
-    content: 'Summarize the key risks and growth drivers for Acme Corp. What should we focus on in management meetings?'
+    content: 'Summarize the key risks and growth drivers for Project Falcon. What should we focus on in management meetings?'
   },
   {
     id: 'msg-2',
     role: 'assistant',
-    content: `Based on my analysis across 6 documents, here's the investment picture:
+    content: `Based on my analysis across 6 data room documents, here's the investment picture:
 
 **Key Risks**
 Customer concentration is the top concern—58% of revenue from three accounts creates meaningful downside exposure. [1] This is compounded by sales execution challenges: 40% AE turnover in 2025 raises questions about the team's ability to diversify the base. [2]
 
-Margin trajectory also warrants attention. Gross margin declined 400bps to 68%, and Gartner predicts AI-native competitors will pressure pricing further. [3]
+Margin trajectory also warrants attention. Gross margin declined 400bps to 68%, and McKinsey predicts AI-native competitors will pressure pricing further. [3]
 
 **Growth Drivers**
 The enterprise motion is working: ACV up 40% YoY with 12 new $500K+ logos. [1] Net retention of 118% shows strong expansion within accounts. [4] Product differentiation remains a moat—expert calls confirm meaningful time-to-value advantage vs. incumbents. [5]
@@ -294,14 +294,14 @@ Focus diligence on: (1) Customer concentration mitigation plan, (2) Sales comp r
       { cellId: 'cell-4-2', label: '5' },
     ],
     stepsCompleted: 14,
-    query: 'Summarize the key risks and growth drivers for Acme Corp. What should we focus on in management meetings?'
+    query: 'Summarize the key risks and growth drivers for Project Falcon. What should we focus on in management meetings?'
   },
 ]
 
 const MOCK_USER_DOCS = [
-  { id: 'doc-1', name: 'Acme Corp IC Memo Draft' },
+  { id: 'doc-1', name: 'Project Falcon IC Memo' },
   { id: 'doc-2', name: 'Management Meeting Prep' },
-  { id: 'doc-3', name: 'Competitive Analysis' },
+  { id: 'doc-3', name: 'Competitive Landscape' },
 ]
 
 export default function SearchPage() {
@@ -829,7 +829,7 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">Q1 Strategy Research</span>
+            <span className="text-sm font-semibold text-gray-900">Project Falcon DD</span>
             <span className="text-xs text-gray-400">Saved at 2:34pm</span>
           </div>
           <div className="flex items-center gap-2">
