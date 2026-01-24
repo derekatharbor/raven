@@ -49,7 +49,7 @@ function NavDropdown({ label, children }: NavDropdownProps) {
 
       {/* Dropdown Panel */}
       <div
-        className={`absolute top-full left-0 mt-2 bg-[#0a0a0a] rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-150 overflow-hidden ${
+        className={`absolute top-full left-0 mt-2 z-50 bg-[#0a0a0a] rounded-xl shadow-[0px_8px_30px_rgba(0,0,0,0.5)] border border-white/10 transition-all duration-150 overflow-hidden ${
           isOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -168,7 +168,7 @@ export default function MainNav() {
 
   return (
     <>
-      <nav className="flex items-center justify-between px-5 md:px-6 lg:px-14 py-4 lg:py-6">
+      <nav className="relative z-40 flex items-center justify-between px-5 md:px-6 lg:px-14 py-4 lg:py-6">
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center mr-4 cursor-pointer">
