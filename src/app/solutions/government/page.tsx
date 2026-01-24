@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { ShieldCheck, Lock, Ban } from 'lucide-react'
 import MainNav from '@/components/marketing/MainNav'
 import StickyNav from '@/components/marketing/StickyNav'
 
@@ -11,6 +12,7 @@ const FEATURES = [
   { id: 'feature-citations', label: 'Every claim traced' },
   { id: 'feature-confidence', label: 'Confidence with justification' },
   { id: 'feature-audit', label: 'Audit trails' },
+  { id: 'feature-security', label: 'Your data stays yours' },
 ]
 
 export default function GovernmentPage() {
@@ -232,7 +234,7 @@ export default function GovernmentPage() {
                 </div>
                 
                 {/* Feature 3: Audit */}
-                <div id="feature-audit" className="py-16 md:py-24">
+                <div id="feature-audit" className="py-16 md:py-24 border-b border-white/10">
                   <h3 className="text-2xl md:text-3xl font-semibold mb-3">Audit trails for coordination</h3>
                   <p className="text-white/60 mb-8 max-w-lg">
                     Full provenance history for every edit. Your product arrives at review with its sources intact.
@@ -244,6 +246,33 @@ export default function GovernmentPage() {
                     className="w-full aspect-[4/3] object-cover rounded-sm"
                   />
                 </div>
+                
+                {/* Feature 4: Security - 2x2 icon grid */}
+                <div id="feature-security" className="py-16 md:py-24">
+                  <h3 className="text-2xl md:text-3xl font-semibold mb-3">Your data stays yours</h3>
+                  <p className="text-white/60 mb-8 max-w-lg">
+                    Enterprise-grade security for sensitive work. No compromises.
+                  </p>
+                  {/* 2x2 Security Grid - Light background style */}
+                  <div className="grid grid-cols-2 bg-[#F5F3F0] rounded-sm overflow-hidden">
+                    <div className="aspect-square flex flex-col items-center justify-center p-6 border-r border-b border-black/10">
+                      <ShieldCheck className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
+                      <span className="text-base font-semibold text-black">SOC2 I</span>
+                    </div>
+                    <div className="aspect-square flex flex-col items-center justify-center p-6 border-b border-black/10">
+                      <ShieldCheck className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
+                      <span className="text-base font-semibold text-black">SOC2 II</span>
+                    </div>
+                    <div className="aspect-square flex flex-col items-center justify-center p-6 border-r border-black/10">
+                      <Lock className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
+                      <span className="text-base font-semibold text-black text-center">Encrypted in transit<br />and at rest</span>
+                    </div>
+                    <div className="aspect-square flex flex-col items-center justify-center p-6">
+                      <Ban className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
+                      <span className="text-base font-semibold text-black text-center">No training on<br />user data</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -253,7 +282,7 @@ export default function GovernmentPage() {
         <div className="w-full h-px bg-white/10" />
       </section>
 
-      {/* Security Section - 1x2 layout */}
+      {/* CTA Section */}
       <section className="relative">
         <div className="max-w-7xl mx-auto relative">
           {/* Left vertical line */}
@@ -261,42 +290,42 @@ export default function GovernmentPage() {
           {/* Right vertical line */}
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
-          <div className="px-10 md:px-16 py-16 md:py-24">
-            <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-              {/* Left - Headline */}
-              <div>
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
-                  Your data stays yours.
-                </h2>
-              </div>
-              
-              {/* Right - Details */}
-              <div className="space-y-6">
-                <p className="text-lg text-white/60 leading-relaxed">
-                  No model training on your inputs. Your documents and queries are never used to improve our models or shared with third parties.
-                </p>
-                <ul className="space-y-3 text-white/80">
-                  <li className="flex items-start gap-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 mt-2 shrink-0" />
-                    <span>SOC 2 Type II certified</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 mt-2 shrink-0" />
-                    <span>Air-gapped deployment available</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 mt-2 shrink-0" />
-                    <span>FedRAMP authorization in progress</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <div className="px-10 md:px-16 py-24 md:py-32 text-center">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-6">
+              Ready to get started?
+            </h2>
+            <p className="text-lg text-white/60 mb-8 max-w-xl mx-auto">
+              See how Raven can help your team build better intelligence products.
+            </p>
+            <Link 
+              href="/contact"
+              className="inline-flex px-8 py-3.5 bg-white text-black text-sm font-medium rounded hover:bg-white/90 transition-colors cursor-pointer"
+            >
+              Contact Sales
+            </Link>
           </div>
         </div>
         
         {/* Horizontal line below */}
         <div className="w-full h-px bg-white/10" />
       </section>
+
+      {/* Footer */}
+      <footer className="py-8 px-5 md:px-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Link href="/" className="cursor-pointer">
+            <img src="/images/raven-logo-white.png" alt="Raven" className="h-5 w-auto" />
+          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer">
+              Terms of Service
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
