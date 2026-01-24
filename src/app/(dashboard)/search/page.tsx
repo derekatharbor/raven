@@ -307,9 +307,9 @@ export default function SearchPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   
-  const [columns, setColumns] = useState<MatrixColumn[]>([])  // Start with no columns
-  const [matrixData, setMatrixData] = useState<MatrixRow[]>([])  // Start empty
-  const [messages, setMessages] = useState<Message[]>([])  // Start empty
+  const [columns, setColumns] = useState<MatrixColumn[]>(MOCK_COLUMNS)
+  const [matrixData, setMatrixData] = useState<MatrixRow[]>(MOCK_MATRIX_DATA)
+  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES)
   const [query, setQuery] = useState('')
   const [showEditorPane, setShowEditorPane] = useState(false)
   const [editorWidth, setEditorWidth] = useState(400)
