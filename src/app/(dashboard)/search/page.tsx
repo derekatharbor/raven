@@ -12,14 +12,14 @@ import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 
-// Document type colors - Government palette
+// Document type colors - Finance palette
 const docTypeColors: Record<string, { bg: string; text: string }> = {
-  'OSINT Report': { bg: '#EEF2F6', text: '#4B5C6B' },
-  'Partner Intel': { bg: '#FDF6E3', text: '#8B7355' },
-  'State Cable': { bg: '#E8F4EF', text: '#5B7B6B' },
-  'Internal Assessment': { bg: '#F3F0F7', text: '#6B5B7B' },
-  'Open Source': { bg: '#FAECEC', text: '#8B6B6B' },
-  'Field Report': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'CIM': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Financials': { bg: '#FDF6E3', text: '#8B7355' },
+  'Management Presentation': { bg: '#E8F4EF', text: '#5B7B6B' },
+  'Expert Call': { bg: '#F3F0F7', text: '#6B5B7B' },
+  'Industry Report': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Legal': { bg: '#EEF2F6', text: '#4B5C6B' },
 }
 
 // Cell interface - the core unit of extracted information
@@ -74,190 +74,192 @@ interface Message {
   extractedCells?: Record<string, Cell>  // Cells extracted for this query
 }
 
-// Mock data with full cell structure - GOVERNMENT VERSION
+// Mock data with full cell structure - FINANCE VERSION
 const MOCK_COLUMNS: MatrixColumn[] = [
-  { id: 'col-1', question: 'Key Actors & Affiliations' },
-  { id: 'col-2', question: 'Assessed Intent' },
+  { id: 'col-1', question: 'Key Risks' },
+  { id: 'col-2', question: 'Growth Drivers' },
 ]
 
 const MOCK_MATRIX_DATA: MatrixRow[] = [
   {
     id: 'doc-1',
-    documentName: 'South China Sea OSINT Summary',
-    documentType: 'OSINT Report',
-    date: 'Jan 15, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/reuters.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Acme Corp CIM',
+    documentType: 'CIM',
+    date: 'Jan 12, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/jpmorgan.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-1-1',
-        value: 'PLA Navy vessels identified: 3 Type 054A frigates, 1 Type 052D destroyer. Commercial satellite imagery confirms presence at Fiery Cross Reef.',
+        value: 'Customer concentration risk: Top 3 customers represent 58% of revenue. Loss of any major account would materially impact financials.',
         status: 'complete',
         sourceDocId: 'doc-1',
-        sourceLocation: 'Section 2.1, Maritime Activity',
-        sourceSnippet: '"Commercial satellite imagery from January 12 shows three Type 054A frigates and one Type 052D destroyer at anchor near Fiery Cross Reef, consistent with rotation patterns observed in Q4 2025."',
-        reasoning: 'Identified vessel classes from imagery analysis cross-referenced with known PLA Navy order of battle. High confidence based on hull number visibility.',
+        sourceLocation: 'Page 24, Risk Factors',
+        sourceSnippet: '"The Company derives approximately 58% of total revenue from its three largest customers. The loss of any of these relationships could have a material adverse effect on results of operations."',
+        reasoning: 'Identified as key risk due to explicit mention in Risk Factors section. 58% concentration exceeds typical threshold of 30%.',
         confidence: 0.94,
         verified: true,
-        verifiedBy: 'J. Morrison'
+        verifiedBy: 'M. Thompson'
       },
       'col-2': { 
         id: 'cell-1-2',
-        value: 'Assessed routine patrol rotation. No indicators of heightened readiness or unusual activity patterns.',
+        value: 'Enterprise expansion motion showing traction: ACV up 40% YoY, with 12 new logos >$500K in trailing twelve months.',
         status: 'complete',
         sourceDocId: 'doc-1',
-        sourceLocation: 'Section 3, Assessment',
-        sourceSnippet: '"Current deployment is consistent with established rotation schedules. No deviation from normal operating patterns detected."',
-        reasoning: 'Compared against 18-month baseline of activity. Current posture within normal parameters.',
-        confidence: 0.88
+        sourceLocation: 'Page 18, Go-to-Market',
+        sourceSnippet: '"Average contract value increased 40% year-over-year as the sales team successfully moved upmarket. The Company added 12 new enterprise customers with ACV exceeding $500,000 in the past twelve months."',
+        reasoning: 'Enterprise traction identified as growth driver. 40% ACV growth indicates successful upmarket motion.',
+        confidence: 0.91
       },
     }
   },
   {
     id: 'doc-2',
-    documentName: 'Partner Intel Summary - FVEY',
-    documentType: 'Partner Intel',
-    date: 'Jan 18, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/gov.uk?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Q3 2025 Financials',
+    documentType: 'Financials',
+    date: 'Jan 8, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/quickbooks.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-2-1',
-        value: 'Senior MSS officer identified as coordinator for regional HUMINT operations. Previous posting: Beijing, 2019-2023.',
+        value: 'Gross margin compression: GM declined 400bps YoY to 68% due to increased cloud infrastructure costs and customer support investments.',
         status: 'complete',
         sourceDocId: 'doc-2',
-        sourceLocation: 'Para 4, Key Personalities',
-        sourceSnippet: '"Subject has been identified coordinating collection activities across three Southeast Asian stations since assuming current position in late 2023."',
-        reasoning: 'Corroborated across two independent partner reports. Career progression consistent with MSS advancement patterns.',
-        confidence: 0.82,
+        sourceLocation: 'Page 8, Margin Analysis',
+        sourceSnippet: '"Gross margin was 68% for Q3 2025, compared to 72% in the prior year period. The decline reflects increased cloud hosting costs and investments in customer success headcount."',
+        reasoning: 'Margin compression flagged as risk. 400bps decline significant for SaaS business; need to understand if structural or temporary.',
+        confidence: 0.89,
         relatedCells: ['cell-4-1']
       },
       'col-2': { 
         id: 'cell-2-2',
-        value: 'Focus on technology acquisition and academic recruitment. Increased tempo noted in semiconductor sector targeting.',
+        value: 'Net revenue retention of 118% indicates strong expansion within existing accounts despite macro headwinds.',
         status: 'complete',
         sourceDocId: 'doc-2',
-        sourceLocation: 'Para 7, Collection Priorities',
-        sourceSnippet: '"Partner reporting indicates a marked increase in collection activity targeting semiconductor manufacturing processes and talent recruitment at regional universities."',
-        reasoning: 'Aligns with broader PRC technology acquisition priorities identified in multiple open-source strategy documents.',
-        confidence: 0.79
+        sourceLocation: 'Page 12, Key Metrics',
+        sourceSnippet: '"Net Revenue Retention was 118% for the trailing twelve months, driven by upsells and cross-sells within the existing customer base."',
+        reasoning: 'NRR above 110% is best-in-class for B2B SaaS. Strong indicator of product-market fit and expansion potential.',
+        confidence: 0.93
       },
     }
   },
   {
     id: 'doc-3',
-    documentName: 'State Dept Cable - Beijing',
-    documentType: 'State Cable',
-    date: 'Jan 10, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/state.gov?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Management Presentation',
+    documentType: 'Management Presentation',
+    date: 'Jan 5, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/pitch.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-3-1',
-        value: 'MFA contacts indicate internal debate on Taiwan policy timeline. Hardliner faction gaining influence in recent Politburo discussions.',
+        value: 'Founder departure risk: CTO and co-founder transitioning to advisory role in Q2. Technical leadership succession plan unclear.',
         status: 'complete',
         sourceDocId: 'doc-3',
-        sourceLocation: 'Para 3, Political Dynamics',
-        sourceSnippet: '"Embassy contacts describe ongoing internal deliberations regarding cross-strait policy. Sources indicate hardline voices have gained traction in recent leadership discussions."',
-        reasoning: 'Single-source reporting. Assessed credible based on source access and track record, but requires corroboration.',
-        confidence: 0.71
+        sourceLocation: 'Slide 32, Leadership',
+        sourceSnippet: '"Co-founder and CTO Jane Smith will transition to a strategic advisor role effective Q2 2026 to pursue other interests. Search for successor underway."',
+        reasoning: 'Key person risk identified. CTO departure during growth phase could impact product roadmap execution.',
+        confidence: 0.86
       },
       'col-2': { 
         id: 'cell-3-2',
-        value: 'No near-term action anticipated. Internal consensus remains focused on economic stabilization through 2026.',
+        value: 'AI roadmap positions company for next growth wave: New ML-powered features launching Q2 expected to unlock $2M+ ARR from existing base.',
         status: 'complete',
         sourceDocId: 'doc-3',
-        sourceLocation: 'Para 5, Assessment',
-        sourceSnippet: '"Despite rhetorical escalation, contacts assess that near-term economic priorities will continue to dominate leadership attention through at least mid-2026."',
-        reasoning: 'Consistent with economic indicators and public leadership statements. Moderate confidence.',
-        confidence: 0.75
+        sourceLocation: 'Slide 18, Product Roadmap',
+        sourceSnippet: '"AI-powered automation suite launching Q2 2026. Based on beta feedback, we project $2-3M in incremental ARR from existing customers in first 12 months."',
+        reasoning: 'Product expansion into AI features identified as growth catalyst. $2M+ ARR opportunity from installed base is meaningful.',
+        confidence: 0.78
       },
     }
   },
   {
     id: 'doc-4',
-    documentName: 'Entity Profile - Huawei Subsidiaries',
-    documentType: 'Internal Assessment',
-    date: 'Dec 28, 2025',
-    logoUrl: 'https://cdn.brandfetch.io/commerce.gov?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Expert Call - Former VP Sales',
+    documentType: 'Expert Call',
+    date: 'Jan 14, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/alphasights.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-4-1',
-        value: 'Three previously unidentified shell companies linked to Huawei procurement network. Registration in Singapore, UAE, and Malaysia.',
+        value: 'Sales team turnover concerns: Expert noted 40% attrition in enterprise AE team in 2025, attributed to below-market comp and unrealistic quotas.',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'Section 4, Corporate Network',
-        sourceSnippet: '"Analysis of trade data and corporate registrations reveals three entities with indirect ownership ties to Huawei Technologies, incorporated between 2022-2024 in jurisdictions with limited disclosure requirements."',
-        reasoning: 'Corporate registry analysis combined with trade flow data. Shell company indicators present: minimal employees, shared registered agents, trade volumes inconsistent with stated business purpose.',
-        confidence: 0.87,
+        sourceLocation: 'Timestamp 18:32',
+        sourceSnippet: '"They lost probably 40% of the enterprise team last year. The comp plans were not competitive and the quotas were set based on the 2021 market, not reality."',
+        reasoning: 'Sales turnover is execution risk. 40% attrition significantly higher than industry average of 15-20%. May impact growth targets.',
+        confidence: 0.82,
         verified: true,
-        verifiedBy: 'K. Patel'
+        verifiedBy: 'S. Patel'
       },
       'col-2': { 
         id: 'cell-4-2',
-        value: 'Assessed sanctions evasion for controlled technology acquisition. Pattern consistent with previously identified procurement networks.',
+        value: 'Product differentiation strong vs. incumbents: Expert rated product as "significantly better" on ease of use and time-to-value metrics.',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'Section 5, Assessment',
-        sourceSnippet: '"Procurement patterns mirror those of previously designated entities, suggesting deliberate structuring to circumvent export controls on advanced semiconductor manufacturing equipment."',
-        reasoning: 'Behavioral analysis matches known TTPs for sanctions evasion. Recommended for interagency review.',
-        confidence: 0.84
+        sourceLocation: 'Timestamp 34:15',
+        sourceSnippet: '"The product is significantly better than the legacy players. Customers can get value in days instead of months. That is their moat right now."',
+        reasoning: 'Expert validation of product differentiation. Time-to-value advantage is sustainable competitive moat.',
+        confidence: 0.85
       },
     }
   },
   {
     id: 'doc-5',
-    documentName: 'Regional Threat Brief - Southeast Asia',
-    documentType: 'Internal Assessment',
-    date: 'Jan 8, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/dni.gov?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Gartner Market Report 2025',
+    documentType: 'Industry Report',
+    date: 'Dec 15, 2025',
+    logoUrl: 'https://cdn.brandfetch.io/gartner.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-5-1',
-        value: 'Increased PRC diplomatic engagement with Philippines, Vietnam, and Indonesia. New infrastructure commitments totaling $4.2B announced in Q4.',
+        value: 'Market commoditization risk: Gartner predicts 60% of current market leaders will face pricing pressure from AI-native entrants by 2027.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Section 2, Diplomatic Activity',
-        sourceSnippet: '"PRC has accelerated diplomatic outreach across Southeast Asia, with new BRI-adjacent infrastructure commitments announced to Philippines ($1.8B), Vietnam ($1.5B), and Indonesia ($0.9B) in the final quarter of 2025."',
-        reasoning: 'Compiled from official announcements and embassy reporting. Dollar figures verified against PRC state media.',
-        confidence: 0.92
+        sourceLocation: 'Page 42, Competitive Dynamics',
+        sourceSnippet: '"By 2027, we predict that 60% of established vendors in this category will face significant pricing pressure from AI-native competitors offering comparable functionality at 40-50% lower price points."',
+        reasoning: 'Structural market risk. AI disruption could compress margins and accelerate commoditization.',
+        confidence: 0.88
       },
       'col-2': { 
         id: 'cell-5-2',
-        value: 'Dual-use infrastructure concerns at two proposed port facilities. Military utility assessment requested.',
+        value: 'TAM expanding to $18B by 2028: Market growing at 24% CAGR driven by digital transformation spend and compliance requirements.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Section 4, Military Implications',
-        sourceSnippet: '"Proposed port developments at Subic Bay and Cam Ranh exhibit design characteristics consistent with dual-use capability. Interagency assessment of potential military utility has been requested."',
-        reasoning: 'Based on preliminary engineering analysis of published plans. Full assessment pending.',
-        confidence: 0.68
+        sourceLocation: 'Page 15, Market Sizing',
+        sourceSnippet: '"The total addressable market is projected to reach $18 billion by 2028, representing a 24% CAGR from 2024. Growth is driven by accelerating digital transformation initiatives and increasing regulatory compliance requirements."',
+        reasoning: 'Large and growing TAM supports investment thesis. 24% CAGR indicates healthy end-market demand.',
+        confidence: 0.92
       },
     }
   },
   {
     id: 'doc-6',
-    documentName: 'Open Source Analysis - PLA Exercises',
-    documentType: 'Open Source',
-    date: 'Jan 20, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/twitter.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Customer Reference - Globex Inc',
+    documentType: 'Expert Call',
+    date: 'Jan 10, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
-        value: 'Social media analysis indicates large-scale exercise preparation in Fujian province. Troop movements and equipment transport observed via civilian posts.',
+        value: 'Implementation complexity: Customer reported 14-week implementation vs. 6-week estimate. Required 2 FTEs dedicated to project.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: 'Section 1, Social Media Indicators',
-        sourceSnippet: '"Geolocated social media posts from Fujian province show increased military vehicle movements along coastal highways. Train spotters report unusual frequency of equipment transport on Nanchang-Fuzhou rail line."',
-        reasoning: 'Crowdsourced OSINT aggregation. Individual posts corroborated across multiple platforms and accounts with no apparent coordination.',
-        confidence: 0.76,
-        relatedCells: ['cell-1-1']
+        sourceLocation: 'Timestamp 22:45',
+        sourceSnippet: '"They told us six weeks but it took us closer to fourteen. We had to pull two people off other projects full-time to get it done. The ROI is there but the implementation was painful."',
+        reasoning: 'Implementation risk flagged. 2.3x longer than promised. May impact customer satisfaction and expansion velocity.',
+        confidence: 0.87,
+        relatedCells: ['cell-4-1']
       },
       'col-2': { 
         id: 'cell-6-2',
-        value: 'Likely preparation for annual spring exercises. Scale appears consistent with 2024 and 2025 precedent.',
+        value: 'Strong ROI realization: Customer achieved 3.2x ROI in first year, primarily from labor cost savings and error reduction.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: 'Section 3, Historical Comparison',
-        sourceSnippet: '"Current indicators are consistent with preparation for annual spring exercise series. Observed activity levels do not exceed those documented in February 2024 and 2025."',
-        reasoning: 'Baseline comparison with previous years. No anomalies detected that would indicate deviation from routine exercise schedule.',
-        confidence: 0.81
+        sourceLocation: 'Timestamp 38:20',
+        sourceSnippet: '"Despite the rough start, we calculated a 3.2x ROI in the first twelve months. Mostly from headcount we did not have to add and errors we caught before they became problems."',
+        reasoning: 'Strong proof point for value proposition. 3.2x first-year ROI is compelling; supports premium pricing.',
+        confidence: 0.90,
+        verified: true,
+        verifiedBy: 'M. Thompson'
       },
     }
   },
@@ -267,40 +269,39 @@ const MOCK_MESSAGES: Message[] = [
   {
     id: 'msg-1',
     role: 'user',
-    content: 'Summarize the key findings on PRC activity in the South China Sea and flag any information gaps.'
+    content: 'Summarize the key risks and growth drivers for Acme Corp. What should we focus on in management meetings?'
   },
   {
     id: 'msg-2',
     role: 'assistant',
-    content: `Based on my analysis across 6 documents, here are the key findings:
+    content: `Based on my analysis across 6 documents, here's the investment picture:
 
-**Military Posture**
-Current PLA Navy deployments at Fiery Cross Reef appear routine, with 3 Type 054A frigates and 1 Type 052D destroyer identified via commercial satellite imagery. [1] Activity levels are consistent with established rotation patterns observed over the past 18 months.
+**Key Risks**
+Customer concentration is the top concern—58% of revenue from three accounts creates meaningful downside exposure. [1] This is compounded by sales execution challenges: 40% AE turnover in 2025 raises questions about the team's ability to diversify the base. [2]
 
-**Diplomatic & Economic Activity**
-PRC has accelerated regional engagement with $4.2B in new infrastructure commitments to Philippines, Vietnam, and Indonesia in Q4 2025. [2] Two proposed port facilities have raised dual-use concerns pending military utility assessment.
+Margin trajectory also warrants attention. Gross margin declined 400bps to 68%, and Gartner predicts AI-native competitors will pressure pricing further. [3]
 
-**Technology Acquisition**
-Partner reporting indicates increased MSS focus on semiconductor sector targeting, with three newly identified shell companies linked to Huawei procurement networks. [3]
+**Growth Drivers**
+The enterprise motion is working: ACV up 40% YoY with 12 new $500K+ logos. [1] Net retention of 118% shows strong expansion within accounts. [4] Product differentiation remains a moat—expert calls confirm meaningful time-to-value advantage vs. incumbents. [5]
 
-**Information Gaps**
-- Limited visibility into Politburo deliberations on Taiwan policy timeline
-- Single-source reporting on hardliner faction influence requires corroboration
-- Military utility assessment for dual-use ports still pending`,
+**For Management Meetings**
+Focus diligence on: (1) Customer concentration mitigation plan, (2) Sales comp restructuring and hiring pipeline, (3) Gross margin roadmap—is 68% the floor?, (4) CTO succession plan given Q2 departure.`,
     sources: [
       { cellId: 'cell-1-1', label: '1' },
-      { cellId: 'cell-5-1', label: '2' },
-      { cellId: 'cell-2-1', label: '3' },
+      { cellId: 'cell-4-1', label: '2' },
+      { cellId: 'cell-5-1', label: '3' },
+      { cellId: 'cell-2-2', label: '4' },
+      { cellId: 'cell-4-2', label: '5' },
     ],
-    stepsCompleted: 12,
-    query: 'Summarize the key findings on PRC activity in the South China Sea and flag any information gaps.'
+    stepsCompleted: 14,
+    query: 'Summarize the key risks and growth drivers for Acme Corp. What should we focus on in management meetings?'
   },
 ]
 
 const MOCK_USER_DOCS = [
-  { id: 'doc-1', name: 'PRC South China Sea Brief' },
-  { id: 'doc-2', name: 'Entity Tracking - Huawei Network' },
-  { id: 'doc-3', name: 'Regional Assessment Draft' },
+  { id: 'doc-1', name: 'Acme Corp IC Memo Draft' },
+  { id: 'doc-2', name: 'Management Meeting Prep' },
+  { id: 'doc-3', name: 'Competitive Analysis' },
 ]
 
 export default function SearchPage() {
