@@ -98,19 +98,6 @@ function ProductDropdown() {
           </div>
         </Link>
       </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] border-t border-white/10">
-        <span className="text-[12px] text-white/60">
-          <span className="text-white/40">New:</span> Multi-agent research
-        </span>
-        <Link 
-          href="/changelog" 
-          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer"
-        >
-          Changelog
-        </Link>
-      </div>
     </div>
   )
 }
@@ -152,17 +139,36 @@ function SolutionsDropdown() {
           </div>
         </Link>
       </div>
+    </div>
+  )
+}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] border-t border-white/10">
-        <span className="text-[12px] text-white/60">
-          See how teams use Raven
-        </span>
-        <Link 
-          href="/customers" 
-          className="text-[12px] font-medium text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer"
-        >
-          Customer Stories
+function CompanyDropdown() {
+  return (
+    <div className="w-[240px]">
+      <div className="p-3 space-y-0.5">
+        <Link href="/about" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">About</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Our story and approach</p>
+          </div>
+        </Link>
+        
+        <Link href="/manifesto" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Manifesto</span>
+            <p className="text-[12px] text-white/50 mt-0.5">Where documents should be</p>
+          </div>
+        </Link>
+        
+        <Link href="/security" className="flex items-start gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+          <div>
+            <span className="text-[13px] font-semibold text-white">Security</span>
+            <p className="text-[12px] text-white/50 mt-0.5">How we protect your data</p>
+          </div>
         </Link>
       </div>
     </div>
@@ -213,18 +219,15 @@ export default function StickyNav() {
               <SolutionsDropdown />
             </NavDropdown>
 
+            <NavDropdown label="Company">
+              <CompanyDropdown />
+            </NavDropdown>
+
             <Link
               href="/pricing"
               className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded cursor-pointer"
             >
               Pricing
-            </Link>
-
-            <Link
-              href="/docs"
-              className="px-2 py-1.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors rounded cursor-pointer"
-            >
-              Docs
             </Link>
           </div>
 

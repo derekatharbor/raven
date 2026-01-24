@@ -98,16 +98,6 @@ function ProductDropdown() {
           </div>
         </Link>
       </div>
-      
-      {/* Bottom Bar */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white/[0.02] border-t border-white/10">
-        <span className="text-[13px] text-white/60">
-          <span className="text-white/40">New:</span> Multi-agent research is now available
-        </span>
-        <Link href="/changelog" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer">
-          Changelog
-        </Link>
-      </div>
     </div>
   )
 }
@@ -149,14 +139,36 @@ function SolutionsDropdown() {
           </div>
         </Link>
       </div>
-      
-      {/* Bottom Bar */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white/[0.02] border-t border-white/10">
-        <span className="text-[13px] text-white/60">
-          See how teams use Raven
-        </span>
-        <Link href="/customers" className="text-[13px] text-[#7C9EB2] hover:text-[#9BB8CC] transition-colors cursor-pointer">
-          Customer Stories
+    </div>
+  )
+}
+
+function CompanyDropdown() {
+  return (
+    <div className="w-[280px]">
+      <div className="p-4 space-y-1">
+        <Link href="/about" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">About</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Our story and approach</p>
+          </div>
+        </Link>
+        
+        <Link href="/manifesto" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Manifesto</span>
+            <p className="text-[13px] text-white/50 mt-0.5">Where documents should be</p>
+          </div>
+        </Link>
+        
+        <Link href="/security" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+          <div>
+            <span className="text-[14px] font-semibold text-white">Security</span>
+            <p className="text-[13px] text-white/50 mt-0.5">How we protect your data</p>
+          </div>
         </Link>
       </div>
     </div>
@@ -189,18 +201,15 @@ export default function MainNav() {
               <SolutionsDropdown />
             </NavDropdown>
 
+            <NavDropdown label="Company">
+              <CompanyDropdown />
+            </NavDropdown>
+
             <Link
               href="/pricing"
               className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded cursor-pointer"
             >
               Pricing
-            </Link>
-            
-            <Link
-              href="/docs"
-              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded cursor-pointer"
-            >
-              Docs
             </Link>
           </div>
         </div>
