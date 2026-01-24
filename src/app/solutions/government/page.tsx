@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ShieldCheck, Lock, Ban } from 'lucide-react'
+import { ShieldCheck, Lock, Ban, KeyRound } from 'lucide-react'
 import MainNav from '@/components/marketing/MainNav'
 import StickyNav from '@/components/marketing/StickyNav'
 
@@ -253,23 +253,23 @@ export default function GovernmentPage() {
                   <p className="text-white/60 mb-8 max-w-lg">
                     Enterprise-grade security for sensitive work. No compromises.
                   </p>
-                  {/* 2x2 Security Grid - Light background style */}
-                  <div className="grid grid-cols-2 bg-[#F5F3F0] rounded-sm overflow-hidden">
-                    <div className="aspect-square flex flex-col items-center justify-center p-6 border-r border-b border-black/10">
-                      <ShieldCheck className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
-                      <span className="text-base font-semibold text-black">SOC2 I</span>
+                  {/* 2x2 Security Grid - Black background */}
+                  <div className="grid grid-cols-2">
+                    <div className="aspect-[4/3] flex flex-col items-center justify-center p-8 bg-black border border-white/10">
+                      <ShieldCheck className="w-16 h-16 text-white/80 mb-6" strokeWidth={1} />
+                      <span className="text-lg font-semibold text-white">GDPR Compliant</span>
                     </div>
-                    <div className="aspect-square flex flex-col items-center justify-center p-6 border-b border-black/10">
-                      <ShieldCheck className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
-                      <span className="text-base font-semibold text-black">SOC2 II</span>
+                    <div className="aspect-[4/3] flex flex-col items-center justify-center p-8 bg-black border border-white/10 border-l-0">
+                      <Ban className="w-16 h-16 text-white/80 mb-6" strokeWidth={1} />
+                      <span className="text-lg font-semibold text-white">No model training</span>
                     </div>
-                    <div className="aspect-square flex flex-col items-center justify-center p-6 border-r border-black/10">
-                      <Lock className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
-                      <span className="text-base font-semibold text-black text-center">Encrypted in transit<br />and at rest</span>
+                    <div className="aspect-[4/3] flex flex-col items-center justify-center p-8 bg-black border border-white/10 border-t-0">
+                      <Lock className="w-16 h-16 text-white/80 mb-6" strokeWidth={1} />
+                      <span className="text-lg font-semibold text-white text-center">Encrypted everywhere</span>
                     </div>
-                    <div className="aspect-square flex flex-col items-center justify-center p-6">
-                      <Ban className="w-12 h-12 text-black/70 mb-4" strokeWidth={1} />
-                      <span className="text-base font-semibold text-black text-center">No training on<br />user data</span>
+                    <div className="aspect-[4/3] flex flex-col items-center justify-center p-8 bg-black border border-white/10 border-l-0 border-t-0">
+                      <KeyRound className="w-16 h-16 text-white/80 mb-6" strokeWidth={1} />
+                      <span className="text-lg font-semibold text-white">Enterprise SSO</span>
                     </div>
                   </div>
                 </div>
