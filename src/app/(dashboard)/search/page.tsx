@@ -11,329 +11,242 @@ import {
 import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 
-// Document type colors - MUTED enterprise palette
+// GOV MOCK DATA FOR SEARCH PAGE
+// Copy this over lines 14-290 in /src/app/(dashboard)/search/page.tsx
+// Remember to undo after screenshots!
+
+// Document type colors - Government palette
 const docTypeColors: Record<string, { bg: string; text: string }> = {
-  'Financials': { bg: '#EEF2F6', text: '#4B5C6B' },
-  'Marketing Materials': { bg: '#FDF6E3', text: '#8B7355' },
-  'Product': { bg: '#FAECEC', text: '#8B6B6B' },
-  'Customer': { bg: '#E8F4EF', text: '#5B7B6B' },
-  'Public Report': { bg: '#F3F0F7', text: '#6B5B7B' },
-  // Consulting document types
-  'Industry Report': { bg: '#EEF2F6', text: '#4B5C6B' },
-  'Client Materials': { bg: '#FDF6E3', text: '#8B7355' },
-  'Competitive Intel': { bg: '#FAECEC', text: '#8B6B6B' },
-  'Internal Notes': { bg: '#E8F4EF', text: '#5B7B6B' },
+  'OSINT Report': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Partner Intel': { bg: '#FDF6E3', text: '#8B7355' },
+  'State Cable': { bg: '#E8F4EF', text: '#5B7B6B' },
+  'Internal Assessment': { bg: '#F3F0F7', text: '#6B5B7B' },
+  'Open Source': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Field Report': { bg: '#EEF2F6', text: '#4B5C6B' },
 }
 
-// Cell interface - the core unit of extracted information
-interface Cell {
-  id: string
-  value: string
-  status: 'complete' | 'loading' | 'empty' | 'error'
-  
-  // Citation layer
-  sourceDocId: string
-  sourceLocation?: string      // "Page 12, Paragraph 3"
-  sourceSnippet?: string       // Actual quoted text
-  
-  // Transparency layer
-  reasoning?: string           // How Ranger arrived at this
-  confidence?: number          // 0-1 score
-  relatedCells?: string[]      // Cross-references
-  
-  // Verification
-  verified?: boolean
-  verifiedBy?: string
-}
+// ... keep the Cell, MatrixRow, MatrixColumn, SourceReference, Message interfaces as-is ...
 
-interface MatrixRow {
-  id: string
-  documentName: string
-  documentType: string
-  date: string
-  logoUrl?: string  // Favicon/logo for the document source
-  cells: Record<string, Cell>
-}
-
-interface MatrixColumn {
-  id: string
-  question: string
-}
-
-// Source pill in chat responses
-interface SourceReference {
-  cellId: string
-  label: string  // [1], [2], etc.
-}
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  sources?: SourceReference[]
-  stepsCompleted?: number
-  isSearching?: boolean
-  query?: string  // Original question (for "Add as column")
-  extractedCells?: Record<string, Cell>  // Cells extracted for this query
-}
-
-// Mock data with full cell structure
+// Mock data with full cell structure - GOVERNMENT VERSION
 const MOCK_COLUMNS: MatrixColumn[] = [
-  { id: 'col-1', question: 'Investment Risks' },
-  { id: 'col-2', question: 'Market Considerations' },
+  { id: 'col-1', question: 'Key Actors & Affiliations' },
+  { id: 'col-2', question: 'Assessed Intent' },
 ]
 
 const MOCK_MATRIX_DATA: MatrixRow[] = [
   {
     id: 'doc-1',
-    documentName: 'FY2024 P&L',
-    documentType: 'Financials',
-    date: 'Jan 18, 2024',
-    logoUrl: 'https://logo.clearbit.com/quickbooks.com',
+    documentName: 'South China Sea OSINT Summary',
+    documentType: 'OSINT Report',
+    date: 'Jan 15, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/reuters.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-1-1',
-        value: 'There have been increasing costs related to raw materials and supply chain disruptions, with a 23% YoY increase in COGS.',
+        value: 'PLA Navy vessels identified: 3 Type 054A frigates, 1 Type 052D destroyer. Commercial satellite imagery confirms presence at Fiery Cross Reef.',
         status: 'complete',
         sourceDocId: 'doc-1',
-        sourceLocation: 'Page 12, Section 3.2',
-        sourceSnippet: '"Cost of goods sold increased by 23% year-over-year, primarily driven by elevated raw material costs and ongoing supply chain challenges affecting procurement timelines."',
-        reasoning: 'Identified as investment risk due to presence in Risk Factors section and explicit mention of cost increases impacting margins.',
-        confidence: 0.92,
+        sourceLocation: 'Section 2.1, Maritime Activity',
+        sourceSnippet: '"Commercial satellite imagery from January 12 shows three Type 054A frigates and one Type 052D destroyer at anchor near Fiery Cross Reef, consistent with rotation patterns observed in Q4 2025."',
+        reasoning: 'Identified vessel classes from imagery analysis cross-referenced with known PLA Navy order of battle. High confidence based on hull number visibility.',
+        confidence: 0.94,
         verified: true,
-        verifiedBy: 'Sarah Chen'
+        verifiedBy: 'J. Morrison'
       },
       'col-2': { 
         id: 'cell-1-2',
-        value: 'Not found in document',
-        status: 'empty',
+        value: 'Assessed routine patrol rotation. No indicators of heightened readiness or unusual activity patterns.',
+        status: 'complete',
         sourceDocId: 'doc-1',
-        reasoning: 'Searched for market considerations, competitive positioning, and TAM references. No relevant content found in this financial document.',
+        sourceLocation: 'Section 3, Assessment',
+        sourceSnippet: '"Current deployment is consistent with established rotation schedules. No deviation from normal operating patterns detected."',
+        reasoning: 'Compared against 18-month baseline of activity. Current posture within normal parameters.',
         confidence: 0.88
       },
     }
   },
   {
     id: 'doc-2',
-    documentName: 'Project Alpha CIM',
-    documentType: 'Marketing Materials',
-    date: 'Apr 29, 2024',
-    logoUrl: 'https://logo.clearbit.com/canva.com',
+    documentName: 'Partner Intel Summary - FVEY',
+    documentType: 'Partner Intel',
+    date: 'Jan 18, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/gov.uk?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-2-1',
-        value: 'Risk factors not detailed in the CIM include regulatory exposure in EU markets and dependency on three key enterprise clients representing 67% of ARR.',
+        value: 'Senior MSS officer identified as coordinator for regional HUMINT operations. Previous posting: Beijing, 2019-2023.',
         status: 'complete',
         sourceDocId: 'doc-2',
-        sourceLocation: 'Page 8, Customer Concentration',
-        sourceSnippet: '"Top three enterprise customers represent approximately 67% of annual recurring revenue as of Q4 2023."',
-        reasoning: 'Customer concentration identified as risk factor. Cross-referenced with industry benchmarks where >50% concentration is flagged as elevated risk.',
-        confidence: 0.89,
-        relatedCells: ['cell-6-1']
+        sourceLocation: 'Para 4, Key Personalities',
+        sourceSnippet: '"Subject has been identified coordinating collection activities across three Southeast Asian stations since assuming current position in late 2023."',
+        reasoning: 'Corroborated across two independent partner reports. Career progression consistent with MSS advancement patterns.',
+        confidence: 0.82,
+        relatedCells: ['cell-4-1']
       },
       'col-2': { 
         id: 'cell-2-2',
-        value: 'Despite the growing TAM ($4.2B by 2027), competition is intensifying with 12 new entrants in the past 18 months.',
+        value: 'Focus on technology acquisition and academic recruitment. Increased tempo noted in semiconductor sector targeting.',
         status: 'complete',
         sourceDocId: 'doc-2',
-        sourceLocation: 'Page 15, Market Analysis',
-        sourceSnippet: '"The total addressable market is projected to reach $4.2 billion by 2027, representing a 18% CAGR. However, the competitive landscape has evolved significantly with twelve new market entrants since Q2 2022."',
-        reasoning: 'Market consideration identified from dedicated Market Analysis section. Extracted both opportunity (TAM growth) and risk (competition).',
-        confidence: 0.94
+        sourceLocation: 'Para 7, Collection Priorities',
+        sourceSnippet: '"Partner reporting indicates a marked increase in collection activity targeting semiconductor manufacturing processes and talent recruitment at regional universities."',
+        reasoning: 'Aligns with broader PRC technology acquisition priorities identified in multiple open-source strategy documents.',
+        confidence: 0.79
       },
     }
   },
   {
     id: 'doc-3',
-    documentName: 'Product Overview Alpha',
-    documentType: 'Product',
-    date: 'Feb 26, 2024',
-    logoUrl: 'https://logo.clearbit.com/notion.so',
+    documentName: 'State Dept Cable - Beijing',
+    documentType: 'State Cable',
+    date: 'Jan 10, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/state.gov?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-3-1',
-        value: 'Current product lacks detail regarding the moat and defensibility. No patents filed, open-source alternatives exist.',
+        value: 'MFA contacts indicate internal debate on Taiwan policy timeline. Hardliner faction gaining influence in recent Politburo discussions.',
         status: 'complete',
         sourceDocId: 'doc-3',
-        sourceLocation: 'Page 4, Technology Stack',
-        sourceSnippet: '"Built on modern cloud-native architecture utilizing industry-standard frameworks and open-source components."',
-        reasoning: 'Risk inferred from absence of IP protection mentions and explicit use of open-source. Verified no patent filings in USPTO database.',
-        confidence: 0.78
+        sourceLocation: 'Para 3, Political Dynamics',
+        sourceSnippet: '"Embassy contacts describe ongoing internal deliberations regarding cross-strait policy. Sources indicate hardline voices have gained traction in recent leadership discussions."',
+        reasoning: 'Single-source reporting. Assessed credible based on source access and track record, but requires corroboration.',
+        confidence: 0.71
       },
       'col-2': { 
         id: 'cell-3-2',
-        value: 'Not found in document',
-        status: 'empty',
+        value: 'No near-term action anticipated. Internal consensus remains focused on economic stabilization through 2026.',
+        status: 'complete',
         sourceDocId: 'doc-3',
-        reasoning: 'Product document focuses on features and technical specifications. No market analysis content present.',
-        confidence: 0.91
+        sourceLocation: 'Para 5, Assessment',
+        sourceSnippet: '"Despite rhetorical escalation, contacts assess that near-term economic priorities will continue to dominate leadership attention through at least mid-2026."',
+        reasoning: 'Consistent with economic indicators and public leadership statements. Moderate confidence.',
+        confidence: 0.75
       },
     }
   },
   {
     id: 'doc-4',
-    documentName: 'Product Roadmap',
-    documentType: 'Product',
-    date: 'Feb 26, 2024',
-    logoUrl: 'https://logo.clearbit.com/productboard.com',
+    documentName: 'Entity Profile - Huawei Subsidiaries',
+    documentType: 'Internal Assessment',
+    date: 'Dec 28, 2025',
+    logoUrl: 'https://cdn.brandfetch.io/commerce.gov?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-4-1',
-        value: 'Several integrations listed within the roadmap have uncertain timelines, with 4 of 7 marked as "TBD" for delivery.',
+        value: 'Three previously unidentified shell companies linked to Huawei procurement network. Registration in Singapore, UAE, and Malaysia.',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'Page 6, Integration Roadmap',
-        sourceSnippet: '"Salesforce Integration: Q3 2024 | SAP Integration: TBD | Workday Integration: TBD | Oracle Integration: TBD | HubSpot Integration: Q4 2024 | Slack Integration: Q2 2024 | Teams Integration: TBD"',
-        reasoning: 'Execution risk identified from roadmap analysis. 57% of planned integrations lack committed timelines.',
-        confidence: 0.95
+        sourceLocation: 'Section 4, Corporate Network',
+        sourceSnippet: '"Analysis of trade data and corporate registrations reveals three entities with indirect ownership ties to Huawei Technologies, incorporated between 2022-2024 in jurisdictions with limited disclosure requirements."',
+        reasoning: 'Corporate registry analysis combined with trade flow data. Shell company indicators present: minimal employees, shared registered agents, trade volumes inconsistent with stated business purpose.',
+        confidence: 0.87,
+        verified: true,
+        verifiedBy: 'K. Patel'
       },
       'col-2': { 
         id: 'cell-4-2',
-        value: 'Roadmap details particularities that align with enterprise buyer requirements, including SOC2 compliance by Q3.',
+        value: 'Assessed sanctions evasion for controlled technology acquisition. Pattern consistent with previously identified procurement networks.',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'Page 3, Compliance Milestones',
-        sourceSnippet: '"SOC2 Type II certification targeted for Q3 2024, enabling enterprise sales motion."',
-        reasoning: 'Market consideration: compliance requirements are table-stakes for enterprise sales. Timeline alignment is positive signal.',
-        confidence: 0.87
+        sourceLocation: 'Section 5, Assessment',
+        sourceSnippet: '"Procurement patterns mirror those of previously designated entities, suggesting deliberate structuring to circumvent export controls on advanced semiconductor manufacturing equipment."',
+        reasoning: 'Behavioral analysis matches known TTPs for sanctions evasion. Recommended for interagency review.',
+        confidence: 0.84
       },
     }
   },
   {
     id: 'doc-5',
-    documentName: 'Expert Calls Project Alpha',
-    documentType: 'Customer',
-    date: 'Mar 12, 2024',
-    logoUrl: 'https://logo.clearbit.com/gong.io',
+    documentName: 'Regional Threat Brief - Southeast Asia',
+    documentType: 'Internal Assessment',
+    date: 'Jan 8, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/dni.gov?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-5-1',
-        value: 'Experts hesitate on defensibility of the technology long-term. Two of three experts cited "commoditization risk" within 3-5 years.',
+        value: 'Increased PRC diplomatic engagement with Philippines, Vietnam, and Indonesia. New infrastructure commitments totaling $4.2B announced in Q4.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Call 2, Timestamp 34:12',
-        sourceSnippet: '"I think the core technology is solid today, but honestly, I see this becoming commoditized within three to five years. The barriers just aren\'t high enough."',
-        reasoning: 'Synthesized from three expert interviews. Sentiment analysis indicates 67% negative outlook on long-term defensibility.',
-        confidence: 0.82,
-        relatedCells: ['cell-3-1']
+        sourceLocation: 'Section 2, Diplomatic Activity',
+        sourceSnippet: '"PRC has accelerated diplomatic outreach across Southeast Asia, with new BRI-adjacent infrastructure commitments announced to Philippines ($1.8B), Vietnam ($1.5B), and Indonesia ($0.9B) in the final quarter of 2025."',
+        reasoning: 'Compiled from official announcements and embassy reporting. Dollar figures verified against PRC state media.',
+        confidence: 0.92
       },
       'col-2': { 
         id: 'cell-5-2',
-        value: 'Experts differ in opinion regarding the growth trajectory. Range of estimates from 15% to 45% annual growth.',
+        value: 'Dual-use infrastructure concerns at two proposed port facilities. Military utility assessment requested.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Summary, Page 2',
-        sourceSnippet: '"Expert A projects 40-45% growth based on enterprise adoption trends. Expert B is more conservative at 15-20%, citing market saturation concerns."',
-        reasoning: 'Wide variance in expert projections indicates uncertainty. Flagged for further diligence.',
-        confidence: 0.76
+        sourceLocation: 'Section 4, Military Implications',
+        sourceSnippet: '"Proposed port developments at Subic Bay and Cam Ranh exhibit design characteristics consistent with dual-use capability. Interagency assessment of potential military utility has been requested."',
+        reasoning: 'Based on preliminary engineering analysis of published plans. Full assessment pending.',
+        confidence: 0.68
       },
     }
   },
   {
     id: 'doc-6',
-    documentName: 'Customer Reference Calls',
-    documentType: 'Customer',
-    date: 'Mar 18, 2024',
-    logoUrl: 'https://logo.clearbit.com/zoom.us',
+    documentName: 'Open Source Analysis - PLA Exercises',
+    documentType: 'Open Source',
+    date: 'Jan 20, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/twitter.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
-        value: 'Common negative feedback across customers regarding onboarding complexity. Average implementation time: 12 weeks vs. 4 weeks promised.',
+        value: 'Social media analysis indicates large-scale exercise preparation in Fujian province. Troop movements and equipment transport observed via civilian posts.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: 'Call Summary, Implementation Feedback',
-        sourceSnippet: '"We were told four weeks, but it took us almost three months to get fully operational. The complexity was significantly underestimated."',
-        reasoning: 'Implementation risk identified across multiple customer interviews. 3x delta between promised and actual timelines.',
-        confidence: 0.91,
-        verified: true,
-        verifiedBy: 'Mike Torres'
+        sourceLocation: 'Section 1, Social Media Indicators',
+        sourceSnippet: '"Geolocated social media posts from Fujian province show increased military vehicle movements along coastal highways. Train spotters report unusual frequency of equipment transport on Nanchang-Fuzhou rail line."',
+        reasoning: 'Crowdsourced OSINT aggregation. Individual posts corroborated across multiple platforms and accounts with no apparent coordination.',
+        confidence: 0.76,
+        relatedCells: ['cell-1-1']
       },
       'col-2': { 
         id: 'cell-6-2',
-        value: 'Customers list several tailwinds including regulatory pressure driving adoption and lack of viable alternatives in the mid-market.',
+        value: 'Likely preparation for annual spring exercises. Scale appears consistent with 2024 and 2025 precedent.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: 'Call 4, Timestamp 12:45',
-        sourceSnippet: '"Honestly, we didn\'t have many options in our price range. And with the new regulations coming, we had to move fast."',
-        reasoning: 'Positive market signal: regulatory tailwind and limited competition in segment creates favorable dynamics.',
-        confidence: 0.88
-      },
-    }
-  },
-  {
-    id: 'doc-7',
-    documentName: 'Market Report',
-    documentType: 'Public Report',
-    date: 'Mar 30, 2024',
-    logoUrl: 'https://logo.clearbit.com/gartner.com',
-    cells: {
-      'col-1': { 
-        id: 'cell-7-1',
-        value: 'Headwinds raised across this report include macro uncertainty affecting enterprise IT budgets and extended sales cycles in H2.',
-        status: 'complete',
-        sourceDocId: 'doc-7',
-        sourceLocation: 'Section 5.1, Market Headwinds',
-        sourceSnippet: '"Enterprise IT budget surveys indicate 23% of organizations plan to reduce software spending in H2 2024, with sales cycles extending an average of 2.3 months versus H1."',
-        reasoning: 'Macro risk factor with quantified impact metrics. Relevant for revenue projections and sales planning.',
-        confidence: 0.93
-      },
-      'col-2': { 
-        id: 'cell-7-2',
-        value: 'The TAM is estimated at approximately $72B by 2028, with the served addressable market (SAM) at $8.4B for mid-market segment.',
-        status: 'complete',
-        sourceDocId: 'doc-7',
-        sourceLocation: 'Section 3.2, Market Sizing',
-        sourceSnippet: '"Total addressable market reaches $72 billion by 2028. The mid-market segment, defined as companies with 500-5000 employees, represents a serviceable addressable market of $8.4 billion."',
-        reasoning: 'Key market sizing data from third-party research. SAM more relevant than TAM for investment thesis given company positioning.',
-        confidence: 0.96,
-        verified: true,
-        verifiedBy: 'Sarah Chen'
+        sourceLocation: 'Section 3, Historical Comparison',
+        sourceSnippet: '"Current indicators are consistent with preparation for annual spring exercise series. Observed activity levels do not exceed those documented in February 2024 and 2025."',
+        reasoning: 'Baseline comparison with previous years. No anomalies detected that would indicate deviation from routine exercise schedule.',
+        confidence: 0.81
       },
     }
   },
 ]
-
 const MOCK_MESSAGES: Message[] = [
   {
     id: 'msg-1',
     role: 'user',
-    content: 'We are meeting the management team of Project Alpha tomorrow. Draft some key DD questions based on your assessment of these documents.'
+    content: 'Summarize the key findings on PRC activity in the South China Sea and flag any information gaps.'
   },
   {
     id: 'msg-2',
     role: 'assistant',
-    content: `Based on my analysis of the documents, here are key DD questions for your meeting:
+    content: `Based on my analysis across 6 documents, here are the key findings:
 
-**On Customer Concentration & Implementation:**
-The top 3 customers represent 67% of ARR [1], and implementation times are running 3x longer than promised [2]. Questions:
-- What's your strategy to diversify the customer base over the next 18 months?
-- What's causing the implementation delays, and what's being done to address them?
+**Military Posture**
+Current PLA Navy deployments at Fiery Cross Reef appear routine, with 3 Type 054A frigates and 1 Type 052D destroyer identified via commercial satellite imagery. [1] Activity levels are consistent with established rotation patterns observed over the past 18 months.
 
-**On Competitive Positioning:**
-Experts raised commoditization concerns [3], and there's no apparent IP protection [4]. Questions:
-- What sustainable competitive advantages do you see beyond the current feature set?
-- Any plans for patent filings or proprietary technology development?
+**Diplomatic & Economic Activity**
+PRC has accelerated regional engagement with $4.2B in new infrastructure commitments to Philippines, Vietnam, and Indonesia in Q4 2025. [2] Two proposed port facilities have raised dual-use concerns pending military utility assessment.
 
-**On Roadmap Execution:**
-57% of planned integrations lack committed timelines [5]. Questions:
-- What's driving the TBD status on key integrations like SAP and Workday?
-- How does this impact enterprise sales conversations?
+**Technology Acquisition**
+Partner reporting indicates increased MSS focus on semiconductor sector targeting, with three newly identified shell companies linked to Huawei procurement networks. [3]
 
-**On Market Dynamics:**
-Despite macro headwinds affecting IT budgets [6], regulatory pressure is driving adoption [7]. Questions:
-- How are you seeing sales cycles evolve in the current environment?
-- Which regulatory drivers are most relevant to your pipeline?`,
+**Information Gaps**
+- Limited visibility into Politburo deliberations on Taiwan policy timeline
+- Single-source reporting on hardliner faction influence requires corroboration
+- Military utility assessment for dual-use ports still pending`,
     sources: [
-      { cellId: 'cell-2-1', label: '1' },
-      { cellId: 'cell-6-1', label: '2' },
-      { cellId: 'cell-5-1', label: '3' },
-      { cellId: 'cell-3-1', label: '4' },
-      { cellId: 'cell-4-1', label: '5' },
-      { cellId: 'cell-7-1', label: '6' },
-      { cellId: 'cell-6-2', label: '7' },
+      { cellId: 'cell-1-1', label: '1' },
+      { cellId: 'cell-5-1', label: '2' },
+      { cellId: 'cell-2-1', label: '3' },
     ],
-    stepsCompleted: 12
-  }
+    stepsCompleted: 12,
+    query: 'Summarize the key findings on PRC activity in the South China Sea and flag any information gaps.'
+  },
 ]
 
 const MOCK_USER_DOCS = [
