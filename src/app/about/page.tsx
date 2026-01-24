@@ -58,27 +58,35 @@ export default function AboutPage() {
           
           <div className="px-10 md:px-16 py-16 md:py-24">
             <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-              {/* Left - Headline */}
-              <div>
-                <h2 className="text-3xl md:text-4xl font-semibold leading-tight">
-                  AI-native, not AI-added.
-                </h2>
+              {/* Left - Image */}
+              <div className="flex items-center justify-center">
+                {/* IMAGE: /public/images/about/ai-native-diagram.png */}
+                <img 
+                  src="/images/about/ai-native-diagram.png"
+                  alt="AI-native architecture"
+                  className="w-full max-w-[400px]"
+                />
               </div>
               
               {/* Right - Content */}
-              <div className="space-y-6 text-lg text-white/60 leading-relaxed">
-                <p>
-                  Every software company is rushing to add AI. A chatbot here, an "AI assistant" there. Features bolted onto architectures designed before the transformer existed.
-                </p>
-                <p>
-                  Raven is different. We didn't add AI to a document tool—we built a document tool around AI. The model isn't a feature. It's the foundation.
-                </p>
-                <p>
-                  This isn't a philosophical distinction. It's a practical one. AI-native means every claim can be traced to source. Every conclusion shows its reasoning. Every document knows when its underlying facts have changed.
-                </p>
-                <p>
-                  You can't bolt that onto legacy software. You have to build for it from day one.
-                </p>
+              <div>
+                <h2 className="text-3xl md:text-4xl font-semibold leading-tight mb-8">
+                  AI-native, not AI-added.
+                </h2>
+                <div className="space-y-6 text-lg text-white/60 leading-relaxed">
+                  <p>
+                    Every software company is rushing to add AI. A chatbot here, an "AI assistant" there. Features bolted onto architectures designed before the transformer existed.
+                  </p>
+                  <p>
+                    Raven is different. We didn't add AI to a document tool—we built a document tool around AI. The model isn't a feature. It's the foundation.
+                  </p>
+                  <p>
+                    This isn't a philosophical distinction. It's a practical one. AI-native means every claim can be traced to source. Every conclusion shows its reasoning. Every document knows when its underlying facts have changed.
+                  </p>
+                  <p>
+                    You can't bolt that onto legacy software. You have to build for it from day one.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -103,7 +111,7 @@ export default function AboutPage() {
                 {/* IMAGE: /public/images/about/founder.jpg */}
                 <div className="aspect-[4/5] bg-white/5 rounded-sm overflow-hidden">
                   <img 
-                    src="/images/about/founder.jpg"
+                    src="/images/about/founder.jpeg"
                     alt="Founder"
                     className="w-full h-full object-cover"
                   />
