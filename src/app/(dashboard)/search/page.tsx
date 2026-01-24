@@ -305,11 +305,6 @@ Partner reporting indicates increased MSS focus on semiconductor sector targetin
     query: 'Summarize the key findings on PRC activity in the South China Sea and flag any information gaps.'
   },
 ]
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isResizingChat])
 
   // Clear highlight after delay
   useEffect(() => {
