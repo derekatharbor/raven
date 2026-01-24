@@ -11,7 +11,6 @@ const FEATURES = [
   { id: 'feature-citations', label: 'Every claim traced' },
   { id: 'feature-confidence', label: 'Confidence with justification' },
   { id: 'feature-audit', label: 'Audit trails' },
-  { id: 'feature-security', label: 'Your data stays yours' },
 ]
 
 export default function GovernmentPage() {
@@ -211,9 +210,11 @@ export default function GovernmentPage() {
                     Click any statement to see the exact passage it came from. No black boxes, no hallucinations that survive review.
                   </p>
                   {/* IMAGE: /public/images/marketing/solutions/gov-feature-citations.png */}
-                  <div className="aspect-[4/3] bg-white/5 rounded-sm flex items-center justify-center">
-                    <span className="text-white/20 text-sm">gov-feature-citations.png</span>
-                  </div>
+                  <img 
+                    src="/images/marketing/solutions/gov-feature-citations.png"
+                    alt="Every claim traced to source"
+                    className="w-full aspect-[4/3] object-cover rounded-sm"
+                  />
                 </div>
                 
                 {/* Feature 2: Confidence */}
@@ -223,34 +224,71 @@ export default function GovernmentPage() {
                     Assessments include reasoning chains. When leadership asks "how do we know this," you have the answer.
                   </p>
                   {/* IMAGE: /public/images/marketing/solutions/gov-feature-confidence.png */}
-                  <div className="aspect-[4/3] bg-white/5 rounded-sm flex items-center justify-center">
-                    <span className="text-white/20 text-sm">gov-feature-confidence.png</span>
-                  </div>
+                  <img 
+                    src="/images/marketing/solutions/gov-feature-confidence.png"
+                    alt="Confidence with justification"
+                    className="w-full aspect-[4/3] object-cover rounded-sm"
+                  />
                 </div>
                 
                 {/* Feature 3: Audit */}
-                <div id="feature-audit" className="py-16 md:py-24 border-b border-white/10">
+                <div id="feature-audit" className="py-16 md:py-24">
                   <h3 className="text-2xl md:text-3xl font-semibold mb-3">Audit trails for coordination</h3>
                   <p className="text-white/60 mb-8 max-w-lg">
                     Full provenance history for every edit. Your product arrives at review with its sources intact.
                   </p>
                   {/* IMAGE: /public/images/marketing/solutions/gov-feature-audit.png */}
-                  <div className="aspect-[4/3] bg-white/5 rounded-sm flex items-center justify-center">
-                    <span className="text-white/20 text-sm">gov-feature-audit.png</span>
-                  </div>
+                  <img 
+                    src="/images/marketing/solutions/gov-feature-audit.png"
+                    alt="Audit trails for coordination"
+                    className="w-full aspect-[4/3] object-cover rounded-sm"
+                  />
                 </div>
-                
-                {/* Feature 4: Security */}
-                <div id="feature-security" className="py-16 md:py-24">
-                  <h3 className="text-2xl md:text-3xl font-semibold mb-3">Your data stays yours</h3>
-                  <p className="text-white/60 mb-8 max-w-lg">
-                    No model training on your inputs. Air-gapped deployment options available for sensitive environments.
-                  </p>
-                  {/* IMAGE: /public/images/marketing/solutions/gov-feature-security.png */}
-                  <div className="aspect-[4/3] bg-white/5 rounded-sm flex items-center justify-center">
-                    <span className="text-white/20 text-sm">gov-feature-security.png</span>
-                  </div>
-                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Horizontal line below */}
+        <div className="w-full h-px bg-white/10" />
+      </section>
+
+      {/* Security Section - 1x2 layout */}
+      <section className="relative">
+        <div className="max-w-7xl mx-auto relative">
+          {/* Left vertical line */}
+          <div className="absolute top-0 bottom-0 left-5 md:left-6 w-px bg-white/10" />
+          {/* Right vertical line */}
+          <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
+          
+          <div className="px-10 md:px-16 py-16 md:py-24">
+            <div className="grid md:grid-cols-2 gap-12 md:gap-20">
+              {/* Left - Headline */}
+              <div>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+                  Your data stays yours.
+                </h2>
+              </div>
+              
+              {/* Right - Details */}
+              <div className="space-y-6">
+                <p className="text-lg text-white/60 leading-relaxed">
+                  No model training on your inputs. Your documents and queries are never used to improve our models or shared with third parties.
+                </p>
+                <ul className="space-y-3 text-white/80">
+                  <li className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 mt-2 shrink-0" />
+                    <span>SOC 2 Type II certified</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 mt-2 shrink-0" />
+                    <span>Air-gapped deployment available</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/40 mt-2 shrink-0" />
+                    <span>FedRAMP authorization in progress</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
