@@ -12,14 +12,14 @@ import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 
-// Document type colors - Legal palette
+// Document type colors - Consulting palette
 const docTypeColors: Record<string, { bg: string; text: string }> = {
-  'Case Law': { bg: '#EEF2F6', text: '#4B5C6B' },
-  'Deposition': { bg: '#FDF6E3', text: '#8B7355' },
-  'Contract': { bg: '#E8F4EF', text: '#5B7B6B' },
-  'Pleading': { bg: '#F3F0F7', text: '#6B5B7B' },
-  'Discovery': { bg: '#FAECEC', text: '#8B6B6B' },
-  'Memo': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Interview': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Industry Report': { bg: '#FDF6E3', text: '#8B7355' },
+  'Client Data': { bg: '#E8F4EF', text: '#5B7B6B' },
+  'Benchmark': { bg: '#F3F0F7', text: '#6B5B7B' },
+  'Internal Analysis': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Survey': { bg: '#EEF2F6', text: '#4B5C6B' },
 }
 
 // Cell interface - the core unit of extracted information
@@ -74,191 +74,192 @@ interface Message {
   extractedCells?: Record<string, Cell>  // Cells extracted for this query
 }
 
-// Mock data with full cell structure - LEGAL VERSION
+// Mock data with full cell structure - CONSULTING VERSION
 const MOCK_COLUMNS: MatrixColumn[] = [
-  { id: 'col-1', question: 'Key Holdings' },
-  { id: 'col-2', question: 'Relevance to Our Case' },
+  { id: 'col-1', question: 'Key Findings' },
+  { id: 'col-2', question: 'Strategic Implications' },
 ]
 
 const MOCK_MATRIX_DATA: MatrixRow[] = [
   {
     id: 'doc-1',
-    documentName: 'Morrison v. National Australia Bank (2010)',
-    documentType: 'Case Law',
-    date: 'Jun 24, 2010',
-    cells: {
-      'col-1': { 
-        id: 'cell-1-1',
-        value: 'Section 10(b) of the Securities Exchange Act does not provide a cause of action for foreign plaintiffs suing foreign and American defendants for misconduct in connection with securities traded on foreign exchanges.',
-        status: 'complete',
-        sourceDocId: 'doc-1',
-        sourceLocation: '561 U.S. 247, Syllabus',
-        sourceSnippet: '"Section 10(b) reaches the use of a manipulative or deceptive device or contrivance only in connection with the purchase or sale of a security listed on an American stock exchange, and the purchase or sale of any other security in the United States."',
-        reasoning: 'Key holding establishes territorial limits of Section 10(b). Supreme Court adopted "transactional test" replacing prior "conduct and effects" tests.',
-        confidence: 0.96,
-        verified: true,
-        verifiedBy: 'J. Martinez'
-      },
-      'col-2': { 
-        id: 'cell-1-2',
-        value: 'Strongly supports motion to dismiss foreign transaction claims. Plaintiffs purchased shares on London exchange—Morrison requires dismissal of these claims.',
-        status: 'complete',
-        sourceDocId: 'doc-1',
-        sourceLocation: '561 U.S. at 267',
-        sourceSnippet: '"The Exchange Act applies only to transactions in securities listed on domestic exchanges and domestic transactions in other securities."',
-        reasoning: 'Direct precedent. Our case involves London-listed securities purchased by foreign investors. Morrison mandates dismissal.',
-        confidence: 0.94
-      },
-    }
-  },
-  {
-    id: 'doc-2',
-    documentName: 'Defendant CEO Deposition',
-    documentType: 'Deposition',
-    date: 'Jan 15, 2026',
+    documentName: 'VP Operations Interview - Midwest Region',
+    documentType: 'Interview',
+    date: 'Jan 12, 2026',
     logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
-        id: 'cell-2-1',
-        value: 'CEO testified he was unaware of accounting irregularities until October 2025 board meeting. Claims CFO handled all financial reporting independently.',
+        id: 'cell-1-1',
+        value: 'Distribution center consolidation created 23% cost savings but increased delivery times by 1.2 days. Customer complaints up 34% in affected regions since Q3.',
         status: 'complete',
-        sourceDocId: 'doc-2',
-        sourceLocation: 'Tr. 145:12-146:8',
-        sourceSnippet: '"Q: When did you first learn of the revenue recognition issues? A: It was at the October board meeting. That was the first I heard of it. Q: You had no prior knowledge? A: No, financial reporting was entirely within the CFO\'s domain."',
-        reasoning: 'Key testimony on scienter. CEO claims lack of knowledge—but see contradicting emails in discovery.',
-        confidence: 0.91,
-        relatedCells: ['cell-4-1']
+        sourceDocId: 'doc-1',
+        sourceLocation: 'Transcript, 14:32-16:45',
+        sourceSnippet: '"The consolidation saved us money, no question—about 23% on logistics costs. But we\'re hearing it from customers now. Delivery times went from 2.1 days to 3.3 days average, and complaints are through the roof."',
+        reasoning: 'Quantifies cost-service tradeoff from consolidation. Customer impact data directly from regional leadership.',
+        confidence: 0.94,
+        verified: true,
+        verifiedBy: 'M. Torres'
       },
       'col-2': { 
-        id: 'cell-2-2',
-        value: 'Testimony creates factual dispute on scienter. CEO denial contradicted by Oct 3 email showing prior knowledge. Strong basis to oppose summary judgment.',
+        id: 'cell-1-2',
+        value: 'Consolidation savings at risk if customer churn accelerates. Recommend modeling breakeven point where logistics savings are offset by revenue loss.',
         status: 'complete',
-        sourceDocId: 'doc-2',
-        sourceLocation: 'Tr. 147:3-18',
-        sourceSnippet: '"Q: Did you receive any emails about revenue recognition prior to October? A: I receive hundreds of emails a day. I cannot recall every email."',
-        reasoning: 'Evasive answer on emails combined with Oct 3 document creates genuine dispute of material fact.',
+        sourceDocId: 'doc-1',
+        sourceLocation: 'Transcript, 18:20-19:15',
+        sourceSnippet: '"We\'ve already lost two mid-size accounts who cited delivery times. If this continues through Q1, we\'re looking at real revenue impact."',
+        reasoning: 'VP flagged early churn signals. Financial modeling needed to quantify risk.',
         confidence: 0.89
       },
     }
   },
   {
-    id: 'doc-3',
-    documentName: 'Tellabs v. Makor Issues (2007)',
-    documentType: 'Case Law',
-    date: 'Jun 21, 2007',
+    id: 'doc-2',
+    documentName: 'McKinsey Logistics Benchmark 2025',
+    documentType: 'Benchmark',
+    date: 'Nov 2025',
+    logoUrl: 'https://cdn.brandfetch.io/mckinsey.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
-        id: 'cell-3-1',
-        value: 'To survive motion to dismiss, securities fraud complaint must state facts giving rise to "strong inference" of scienter—inference must be "at least as compelling" as any opposing innocent inference.',
+        id: 'cell-2-1',
+        value: 'Industry leaders average 2.4-day delivery in comparable markets. Top quartile achieves 1.8 days with hub-and-spoke models retaining regional nodes.',
         status: 'complete',
-        sourceDocId: 'doc-3',
-        sourceLocation: '551 U.S. 308, 314',
-        sourceSnippet: '"A complaint will survive only if a reasonable person would deem the inference of scienter cogent and at least as compelling as any opposing inference one could draw from the facts alleged."',
-        reasoning: 'Establishes heightened pleading standard for scienter under PSLRA. Must weigh competing inferences.',
-        confidence: 0.95,
+        sourceDocId: 'doc-2',
+        sourceLocation: 'Page 34, Exhibit 12',
+        sourceSnippet: '"Best-in-class operators maintain delivery windows of 1.8-2.4 days through hybrid distribution models that balance consolidation efficiency with regional responsiveness."',
+        reasoning: 'External benchmark establishes competitive context. Client at 3.3 days is significantly below industry standard.',
+        confidence: 0.92,
         verified: true,
-        verifiedBy: 'J. Martinez'
+        verifiedBy: 'M. Torres'
       },
       'col-2': { 
-        id: 'cell-3-2',
-        value: 'Sets the standard we must meet. Oct 3 email plus CEO access to weekly reports should satisfy "strong inference" test, but need to address innocent explanations.',
+        id: 'cell-2-2',
+        value: 'Client underperforming benchmark by 0.9-1.5 days. Hybrid model (partial reconsolidation) could recover service levels while retaining ~60% of cost savings.',
         status: 'complete',
-        sourceDocId: 'doc-3',
-        sourceLocation: '551 U.S. at 323-24',
-        sourceSnippet: '"The inquiry is inherently comparative: courts must consider plausible, nonculpable explanations for the defendant\'s conduct, as well as inferences favoring the plaintiff."',
-        reasoning: 'We should preemptively address CEO\'s "delegation to CFO" defense in our opposition brief.',
+        sourceDocId: 'doc-2',
+        sourceLocation: 'Page 41, Exhibit 17',
+        sourceSnippet: '"Organizations that reversed full consolidation to hybrid models typically retained 55-65% of logistics savings while recovering 80%+ of service level performance."',
+        reasoning: 'Benchmark suggests partial rollback is viable. Provides data point for recommendation.',
         confidence: 0.88
       },
     }
   },
   {
+    id: 'doc-3',
+    documentName: 'Customer Satisfaction Survey - Q4 2025',
+    documentType: 'Survey',
+    date: 'Dec 2025',
+    logoUrl: 'https://cdn.brandfetch.io/qualtrics.com?c=1id1Fyz-h7an5-5KR_y',
+    cells: {
+      'col-1': { 
+        id: 'cell-3-1',
+        value: 'NPS dropped from 42 to 28 since consolidation. "Delivery speed" now #1 detractor, cited by 67% of detractors. Previously ranked #4.',
+        status: 'complete',
+        sourceDocId: 'doc-3',
+        sourceLocation: 'Executive Summary, Page 3',
+        sourceSnippet: '"Net Promoter Score declined 14 points from Q2 (42) to Q4 (28). Delivery speed emerged as the primary driver of detractor sentiment, cited by 67% of respondents scoring 0-6."',
+        reasoning: 'Quantifies customer sentiment impact. NPS decline is significant and directly attributable to delivery times.',
+        confidence: 0.95,
+        verified: true,
+        verifiedBy: 'S. Patel'
+      },
+      'col-2': { 
+        id: 'cell-3-2',
+        value: 'NPS trajectory suggests continued erosion without intervention. Each 0.5-day improvement in delivery correlates with ~4 point NPS recovery based on driver analysis.',
+        status: 'complete',
+        sourceDocId: 'doc-3',
+        sourceLocation: 'Driver Analysis, Page 18',
+        sourceSnippet: '"Regression analysis indicates delivery time improvements of 0.5 days correlate with NPS improvements of 3.8-4.2 points, controlling for other factors."',
+        reasoning: 'Survey provides quantified relationship between delivery time and NPS. Useful for modeling intervention impact.',
+        confidence: 0.87
+      },
+    }
+  },
+  {
     id: 'doc-4',
-    documentName: 'October 3, 2025 Email Chain',
-    documentType: 'Discovery',
-    date: 'Oct 3, 2025',
-    logoUrl: 'https://cdn.brandfetch.io/gmail.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'CFO Interview - Cost Structure Deep Dive',
+    documentType: 'Interview',
+    date: 'Jan 8, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-4-1',
-        value: 'CFO emailed CEO directly: "We need to discuss the Q3 numbers before the call. The recognition issues I mentioned last month are getting worse." CEO replied "Let\'s talk tomorrow."',
+        value: 'Logistics consolidation saves $14M annually. Reopening 2 regional hubs would cost $8M but CFO open to "partial reversal if customer data supports it."',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'DEF-00047823',
-        sourceSnippet: '"From: CFO\nTo: CEO\nSubject: Q3 Numbers - Urgent\n\nWe need to discuss the Q3 numbers before the call. The recognition issues I mentioned last month are getting worse. Can we sync tomorrow morning?\n\nReply from CEO: Let\'s talk tomorrow. 8am works."',
-        reasoning: 'Smoking gun document. Directly contradicts CEO deposition testimony about lack of prior knowledge.',
-        confidence: 0.97,
-        verified: true,
-        verifiedBy: 'S. Chen'
+        sourceLocation: 'Transcript, 23:10-25:40',
+        sourceSnippet: '"Look, we\'re saving $14 million a year from the consolidation. Reopening two hubs would run us about $8 million annually. But if you can show me the customer impact justifies it, I\'m willing to have that conversation with the board."',
+        reasoning: 'CFO quantified financial tradeoffs and signaled openness to reversal. Key stakeholder buy-in for recommendation.',
+        confidence: 0.93,
+        relatedCells: ['cell-1-1', 'cell-2-2']
       },
       'col-2': { 
         id: 'cell-4-2',
-        value: 'Critical evidence for scienter. Email predates October board meeting by 3 weeks. "Issues I mentioned last month" suggests even earlier knowledge. Key exhibit for opposition.',
+        value: 'Net cost of hybrid model: ~$8M. But preserves $6M of original savings vs. full reversal. CFO receptive—frame recommendation around "optimizing" not "reversing."',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'DEF-00047823-24',
-        sourceSnippet: '"The recognition issues I mentioned last month are getting worse."',
-        reasoning: 'Reference to "last month" suggests September knowledge. Should subpoena September communications.',
-        confidence: 0.93,
-        relatedCells: ['cell-2-1']
+        sourceLocation: 'Transcript, 27:15-28:30',
+        sourceSnippet: '"Whatever you recommend, don\'t call it a reversal. The board approved consolidation 18 months ago. Frame it as optimization based on new customer data."',
+        reasoning: 'CFO provided explicit guidance on positioning. Political context important for recommendation acceptance.',
+        confidence: 0.91
       },
     }
   },
   {
     id: 'doc-5',
-    documentName: 'Expert Report - Dr. Williams',
-    documentType: 'Discovery',
-    date: 'Jan 8, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/deloitte.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Competitor Analysis - Regional Players',
+    documentType: 'Internal Analysis',
+    date: 'Jan 5, 2026',
     cells: {
       'col-1': { 
         id: 'cell-5-1',
-        value: 'Accounting expert opines revenue was overstated by $47M in Q3 2025 due to improper recognition of contingent sales. Concludes misstatements were material under SAB 99.',
+        value: 'Two regional competitors (FastTrack, RegionalPro) gained 4.2% combined market share in affected territories since Q3. Both emphasize "next-day delivery" in marketing.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Expert Report, pp. 23-24',
-        sourceSnippet: '"In my opinion, the Company\'s Q3 2025 revenue was overstated by approximately $47 million due to premature recognition of sales subject to significant contingencies. This misstatement was material under both quantitative and qualitative factors outlined in SAB 99."',
-        reasoning: 'Expert establishes materiality element. $47M = 12% of quarterly revenue, exceeding 5% quantitative threshold.',
-        confidence: 0.92
+        sourceLocation: 'Market Share Analysis, Slide 8',
+        sourceSnippet: '"FastTrack and RegionalPro have captured 4.2% market share in the Midwest region since Q3 2025. Both competitors have increased marketing spend on delivery speed messaging by 40%+."',
+        reasoning: 'Competitor data validates customer churn risk. Market share loss is measurable and ongoing.',
+        confidence: 0.90
       },
       'col-2': { 
         id: 'cell-5-2',
-        value: 'Supports materiality element. 12% overstatement exceeds quantitative thresholds. Expert\'s SAB 99 analysis addresses qualitative factors defendants may raise.',
+        value: 'Competitor gains accelerating—1.8% in Q3, 2.4% in Q4. Without service improvement, projected 6-8% additional share loss by end of 2026.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Expert Report, pp. 31-32',
-        sourceSnippet: '"The misstatement also meets qualitative materiality factors: it masked a trend of declining organic growth, affected management compensation metrics, and would have impacted debt covenant calculations."',
-        reasoning: 'Qualitative factors strengthen case even if defendants challenge 12% figure.',
-        confidence: 0.90
+        sourceLocation: 'Projection Model, Slide 14',
+        sourceSnippet: '"At current trajectory, regional competitors are projected to capture an additional 6-8% market share by Q4 2026, representing $22-29M in annual revenue at risk."',
+        reasoning: 'Trajectory analysis quantifies urgency. Revenue-at-risk figure useful for business case.',
+        confidence: 0.85
       },
     }
   },
   {
     id: 'doc-6',
-    documentName: 'Matrixx Initiatives v. Siracusano (2011)',
-    documentType: 'Case Law',
-    date: 'Mar 22, 2011',
+    documentName: 'Gartner Supply Chain Report 2025',
+    documentType: 'Industry Report',
+    date: 'Oct 2025',
+    logoUrl: 'https://cdn.brandfetch.io/gartner.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
-        value: 'Materiality is not governed by bright-line rules. Information is material if there is "substantial likelihood" a reasonable investor would consider it important in making investment decision.',
+        value: 'Post-pandemic, 78% of B2B buyers rank delivery speed in top 3 purchase criteria, up from 45% in 2019. Tolerance for delays has "permanently decreased."',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: '563 U.S. 27, 38',
-        sourceSnippet: '"We have consistently held that materiality is to be determined on the particular facts of each case and cannot be reduced to a bright-line rule."',
-        reasoning: 'Rejects defendant arguments that materiality requires statistical significance or specific thresholds.',
-        confidence: 0.94,
+        sourceLocation: 'Key Findings, Page 12',
+        sourceSnippet: '"Our survey of 2,400 B2B procurement leaders found that 78% now rank delivery speed among their top 3 vendor selection criteria, compared to 45% pre-pandemic. This shift appears structural rather than temporary."',
+        reasoning: 'Industry trend validates strategic importance of delivery speed. Not just a client-specific issue.',
+        confidence: 0.93,
         verified: true,
-        verifiedBy: 'J. Martinez'
+        verifiedBy: 'M. Torres'
       },
       'col-2': { 
         id: 'cell-6-2',
-        value: 'Counters anticipated defense argument that 12% is "borderline." Matrixx holds no bright-line rule—focus on reasonable investor standard and total mix of information.',
+        value: 'Industry-wide shift means delivery speed is now table stakes, not differentiator. Client\'s 3.3-day average is strategic liability, not just operational issue.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: '563 U.S. at 44',
-        sourceSnippet: '"The question is whether a reasonable investor would have viewed the nondisclosed information as having significantly altered the total mix of information made available."',
-        reasoning: 'Useful for rebutting defense materiality arguments in opposition brief.',
-        confidence: 0.91
+        sourceLocation: 'Strategic Implications, Page 28',
+        sourceSnippet: '"Organizations unable to meet 2.5-day delivery expectations face structural competitive disadvantage. Speed has shifted from differentiator to baseline expectation."',
+        reasoning: 'Gartner framing elevates recommendation from operational fix to strategic imperative.',
+        confidence: 0.89
       },
     }
   },
@@ -268,41 +269,44 @@ const MOCK_MESSAGES: Message[] = [
   {
     id: 'msg-1',
     role: 'user',
-    content: 'Summarize the key evidence for scienter and identify any gaps in our case for the opposition brief.'
+    content: 'What\'s the business case for reopening regional distribution hubs? Summarize the key data points for the steering committee.'
   },
   {
     id: 'msg-2',
     role: 'assistant',
-    content: `Based on my review of the case file, here's the scienter analysis:
+    content: `Here's the business case summary for the steering committee:
 
-**Evidence Supporting Scienter**
-The October 3 email is the strongest evidence—CEO received direct notice of "recognition issues" three weeks before claiming ignorance at the board meeting. [1] The phrase "issues I mentioned last month" suggests knowledge dating to September. [2]
+**The Problem**
+Distribution consolidation saved $14M annually but increased delivery times from 2.1 to 3.3 days. [1] This has triggered a 34% increase in customer complaints and a 14-point NPS drop (42 → 28). [2]
 
-CEO's deposition testimony that he was "unaware until October board meeting" is directly contradicted by this email. His evasive answer about emails ("I cannot recall every email") further undermines credibility. [3]
+**Competitive Impact**
+Regional competitors have captured 4.2% market share since Q3, with delivery speed as their primary message. [3] At current trajectory, we're projecting $22-29M in annual revenue at risk by end of 2026.
 
-**Gaps to Address**
-The CEO will argue delegation to CFO as an innocent explanation per Tellabs. [4] We should preemptively address this by:
-1. Subpoenaing September communications referenced in the Oct 3 email
-2. Obtaining CEO's calendar to show regular CFO meetings
-3. Highlighting CEO's access to weekly financial reports
+**Industry Context**
+This isn't just our problem—78% of B2B buyers now rank delivery speed in their top 3 criteria, up from 45% pre-pandemic. [4] The benchmark for our segment is 2.4 days; we're nearly a full day behind.
 
-**Recommendation**
-Strong circumstantial case for scienter under Tellabs "strong inference" standard, but should pursue additional discovery on September communications before opposition deadline.`,
+**The Recommendation**
+Reopen 2 regional hubs at $8M annual cost. This retains ~$6M of the original $14M savings while recovering service levels. [5] CFO is supportive if framed as "optimization based on new customer data." [6]
+
+**Bottom Line**
+Net $6M in retained savings vs. $22-29M revenue at risk. The math favors action.`,
     sources: [
-      { cellId: 'cell-4-1', label: '1' },
-      { cellId: 'cell-4-2', label: '2' },
-      { cellId: 'cell-2-1', label: '3' },
-      { cellId: 'cell-3-2', label: '4' },
+      { cellId: 'cell-1-1', label: '1' },
+      { cellId: 'cell-3-1', label: '2' },
+      { cellId: 'cell-5-1', label: '3' },
+      { cellId: 'cell-6-1', label: '4' },
+      { cellId: 'cell-4-1', label: '5' },
+      { cellId: 'cell-4-2', label: '6' },
     ],
-    stepsCompleted: 12,
-    query: 'Summarize the key evidence for scienter and identify any gaps in our case for the opposition brief.'
+    stepsCompleted: 14,
+    query: 'What\'s the business case for reopening regional distribution hubs? Summarize the key data points for the steering committee.'
   },
 ]
 
 const MOCK_USER_DOCS = [
-  { id: 'doc-1', name: 'Opposition Brief Draft' },
-  { id: 'doc-2', name: 'Deposition Summary Memo' },
-  { id: 'doc-3', name: 'Case Strategy Outline' },
+  { id: 'doc-1', name: 'Steering Committee Deck Draft' },
+  { id: 'doc-2', name: 'Interview Synthesis' },
+  { id: 'doc-3', name: 'Financial Model - Hub Scenarios' },
 ]
 
 export default function SearchPage() {
@@ -830,7 +834,7 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">Securities Litigation</span>
+            <span className="text-sm font-semibold text-gray-900">Distribution Network Study</span>
             <span className="text-xs text-gray-400">Saved at 2:34pm</span>
           </div>
           <div className="flex items-center gap-2">
