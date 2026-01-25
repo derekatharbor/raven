@@ -8,11 +8,11 @@ import StickyNav from '@/components/marketing/StickyNav'
 function YesBadge({ children }: { children?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className="px-3 py-1 bg-[#1a1a1a] text-white text-xs font-semibold rounded">
+      <span className="px-3 py-1 bg-white text-black text-xs font-semibold rounded">
         YES
       </span>
       {children && (
-        <p className="text-sm text-gray-600 text-center max-w-[220px]">{children}</p>
+        <p className="text-sm text-white/50 text-center max-w-[220px]">{children}</p>
       )}
     </div>
   )
@@ -20,7 +20,7 @@ function YesBadge({ children }: { children?: React.ReactNode }) {
 
 function NoBadge() {
   return (
-    <span className="px-3 py-1 bg-white text-gray-400 text-xs font-semibold rounded border border-gray-200">
+    <span className="px-3 py-1 bg-transparent text-white/40 text-xs font-semibold rounded border border-white/20">
       NO
     </span>
   )
@@ -29,11 +29,11 @@ function NoBadge() {
 function PartialBadge({ children }: { children?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded">
+      <span className="px-3 py-1 bg-white/10 text-white/60 text-xs font-semibold rounded">
         PARTIAL
       </span>
       {children && (
-        <p className="text-sm text-gray-500 text-center max-w-[220px]">{children}</p>
+        <p className="text-sm text-white/40 text-center max-w-[220px]">{children}</p>
       )}
     </div>
   )
@@ -50,10 +50,10 @@ interface FeatureRowProps {
 
 function FeatureRow({ feature, description, raven, competitor, highlighted }: FeatureRowProps) {
   return (
-    <div className={`grid grid-cols-3 py-6 ${highlighted ? 'bg-gray-50' : ''}`}>
+    <div className={`grid grid-cols-3 py-6 ${highlighted ? 'bg-white/[0.02]' : ''}`}>
       <div className="px-6">
-        <h3 className="font-semibold text-gray-900">{feature}</h3>
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <h3 className="font-semibold text-white">{feature}</h3>
+        <p className="text-sm text-white/50 mt-1">{description}</p>
       </div>
       <div className="flex justify-center items-start">
         {raven}
@@ -67,27 +67,28 @@ function FeatureRow({ feature, description, raven, competitor, highlighted }: Fe
 
 export default function CompareNotionPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <div className="bg-black">
-        <MainNav />
-        <StickyNav />
-      </div>
+    <div className="min-h-screen bg-black text-white">
+      <MainNav />
+      <StickyNav />
 
       {/* Hero Section */}
-      <section className="py-16 md:py-24 border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 text-center">
+      <section className="relative border-b border-white/10">
+        {/* Horizontal line under nav */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />
+        
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-24 text-center">
           {/* Logos */}
           <div className="flex items-center justify-center gap-4 mb-8">
             <img 
-              src="/images/raven-logo-black.png" 
+              src="/images/raven-logo-white.png" 
               alt="Raven" 
               className="h-8"
             />
-            <span className="text-gray-300 text-2xl font-light">vs</span>
+            <span className="text-white/30 text-2xl font-light">vs</span>
             <img 
               src="https://cdn.brandfetch.io/notion.so/w/512/h/512" 
               alt="Notion" 
-              className="h-8"
+              className="h-8 invert"
             />
           </div>
           
@@ -95,13 +96,13 @@ export default function CompareNotionPage() {
             Looking for a Notion alternative?
           </h1>
           
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+          <p className="text-xl text-white/60 max-w-2xl mx-auto mb-10">
             Notion is a wiki with AI sprinkled on top. Raven is an end-to-end platform for research, writing, and publishing—where documents actually work.
           </p>
           
           <Link 
             href="/signup"
-            className="inline-flex px-8 py-3.5 bg-[#1a1a1a] text-white text-sm font-medium rounded hover:bg-black transition-colors cursor-pointer"
+            className="inline-flex px-8 py-3.5 bg-white text-black text-sm font-medium rounded hover:bg-white/90 transition-colors cursor-pointer"
           >
             Try Raven Free
           </Link>
@@ -109,19 +110,19 @@ export default function CompareNotionPage() {
       </section>
 
       {/* The Problem */}
-      <section className="py-16 md:py-20 border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6">
+      <section className="border-b border-white/10">
+        <div className="max-w-3xl mx-auto px-6 py-16 md:py-20">
           <h2 className="text-2xl md:text-3xl font-semibold mb-6">
             Notion is great at what it does
           </h2>
-          <div className="space-y-4 text-lg text-gray-600 leading-relaxed">
+          <div className="space-y-4 text-lg text-white/60 leading-relaxed">
             <p>
               Team wikis. Project documentation. Meeting notes. Internal knowledge bases. Notion handles all of that well. The block system is flexible, collaboration works, and the AI features help with basic writing tasks.
             </p>
             <p>
               But Notion wasn't built for high-stakes deliverables. There's no way to trace where information came from. No way to know if your sources have changed. No way for readers to interrogate the document. No way to see if anyone actually read it.
             </p>
-            <p className="text-gray-900 font-medium">
+            <p className="text-white font-medium">
               For internal docs and team collaboration, Notion is fine. For work that leaves the building—work you have to defend—you need something built for that.
             </p>
           </div>
@@ -129,51 +130,51 @@ export default function CompareNotionPage() {
       </section>
 
       {/* What Raven Actually Does */}
-      <section className="py-16 md:py-20 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-6">
+      <section className="border-b border-white/10">
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-20">
           <h2 className="text-2xl md:text-3xl font-semibold mb-12 text-center">
             What Raven actually does
           </h2>
           
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-lg border border-gray-100">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
               <h3 className="text-xl font-semibold mb-3">Research that doesn't start from scratch</h3>
-              <p className="text-gray-600">
+              <p className="text-white/60">
                 Multi-agent analysis across your entire document set. Ask a question, get answers from hundreds of sources with full citations. Not a chatbot—an actual research engine.
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-lg border border-gray-100">
+            <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
               <h3 className="text-xl font-semibold mb-3">Writing that doesn't hallucinate</h3>
-              <p className="text-gray-600">
+              <p className="text-white/60">
                 Smart autocomplete grounded in your sources. Every suggestion tied to real data. Consultants, lawyers, and analysts can actually use it without getting fired.
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-lg border border-gray-100">
+            <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
               <h3 className="text-xl font-semibold mb-3">Documents people can talk to</h3>
-              <p className="text-gray-600">
+              <p className="text-white/60">
                 Share a Raven doc and readers can ask it questions. Scoped AI Q&A on your content—not the entire internet. Your deliverable becomes interactive.
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-lg border border-gray-100">
+            <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
               <h3 className="text-xl font-semibold mb-3">Analytics on who actually read it</h3>
-              <p className="text-gray-600">
+              <p className="text-white/60">
                 Reader engagement tracking. Know who opened your doc, what they focused on, what questions they asked. Your work doesn't disappear into a void.
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-lg border border-gray-100">
+            <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
               <h3 className="text-xl font-semibold mb-3">Monitoring that catches problems</h3>
-              <p className="text-gray-600">
+              <p className="text-white/60">
                 Track keywords, phrases, and topics across your sources. Get alerts when something changes. Your documents know when they're going stale.
               </p>
             </div>
             
-            <div className="bg-white p-8 rounded-lg border border-gray-100">
+            <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
               <h3 className="text-xl font-semibold mb-3">Search that actually finds things</h3>
-              <p className="text-gray-600">
+              <p className="text-white/60">
                 Natural language search across all your data. Not keyword matching—semantic understanding. Find the needle without knowing which haystack it's in.
               </p>
             </div>
@@ -182,31 +183,31 @@ export default function CompareNotionPage() {
       </section>
 
       {/* Feature Comparison Table */}
-      <section className="py-16 md:py-20">
-        <div className="max-w-5xl mx-auto px-6">
+      <section className="border-b border-white/10">
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-20">
           <h2 className="text-3xl font-semibold text-center mb-12">
             Side by side
           </h2>
           
           {/* Table Header */}
-          <div className="grid grid-cols-3 py-4 border-b-2 border-gray-200 mb-2">
+          <div className="grid grid-cols-3 py-4 border-b border-white/20 mb-2">
             <div className="px-6">
-              <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Capability</span>
+              <span className="text-sm font-semibold text-white/50 uppercase tracking-wider">Capability</span>
             </div>
             <div className="flex justify-center">
-              <img src="/images/raven-logo-black.png" alt="Raven" className="h-6" />
+              <img src="/images/raven-logo-white.png" alt="Raven" className="h-6" />
             </div>
             <div className="flex justify-center">
-              <img src="https://cdn.brandfetch.io/notion.so/w/512/h/512" alt="Notion" className="h-6" />
+              <img src="https://cdn.brandfetch.io/notion.so/w/512/h/512" alt="Notion" className="h-6 invert" />
             </div>
           </div>
           
           {/* Section: Research & Analysis */}
           <div className="mt-8 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 px-6">Research & Analysis</h3>
+            <h3 className="text-lg font-semibold text-white px-6">Research & Analysis</h3>
           </div>
           
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Multi-Document Analysis"
               description="Extract insights across entire document sets"
@@ -240,10 +241,10 @@ export default function CompareNotionPage() {
           
           {/* Section: Writing & Editing */}
           <div className="mt-12 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 px-6">Writing & Editing</h3>
+            <h3 className="text-lg font-semibold text-white px-6">Writing & Editing</h3>
           </div>
           
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Grounded Autocomplete"
               description="Suggestions based on your actual sources"
@@ -270,10 +271,10 @@ export default function CompareNotionPage() {
           
           {/* Section: Publishing & Sharing */}
           <div className="mt-12 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 px-6">Publishing & Sharing</h3>
+            <h3 className="text-lg font-semibold text-white px-6">Publishing & Sharing</h3>
           </div>
           
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Interactive Documents"
               description="Readers can ask questions about your content"
@@ -300,10 +301,10 @@ export default function CompareNotionPage() {
           
           {/* Section: Monitoring & Verification */}
           <div className="mt-12 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 px-6">Monitoring & Verification</h3>
+            <h3 className="text-lg font-semibold text-white px-6">Monitoring & Verification</h3>
           </div>
           
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Keyword & Topic Tracking"
               description="Monitor sources for changes that matter"
@@ -330,10 +331,10 @@ export default function CompareNotionPage() {
           
           {/* Section: Platform */}
           <div className="mt-12 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 px-6">Platform</h3>
+            <h3 className="text-lg font-semibold text-white px-6">Platform</h3>
           </div>
           
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-white/10">
             <FeatureRow
               feature="End-to-End Workflow"
               description="Research → Write → Publish in one place"
@@ -361,13 +362,13 @@ export default function CompareNotionPage() {
       </section>
 
       {/* The Real Difference */}
-      <section className="py-16 md:py-24 bg-gray-50">
-        <div className="max-w-3xl mx-auto px-6">
+      <section className="border-b border-white/10">
+        <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
           <h2 className="text-3xl font-semibold mb-8">
             Different tools for different jobs
           </h2>
           
-          <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
+          <div className="space-y-6 text-lg text-white/60 leading-relaxed">
             <p>
               Notion is built for internal collaboration. Team wikis, project tracking, shared knowledge bases. It does those things well, and its AI helps with everyday writing tasks.
             </p>
@@ -376,7 +377,7 @@ export default function CompareNotionPage() {
               Raven is built for external deliverables. The investment memo going to the IC. The legal brief going to court. The client deck going to the steering committee. Work where someone's going to ask "where did this come from?"
             </p>
             
-            <p className="text-gray-900 font-medium">
+            <p className="text-white font-medium">
               The difference isn't features—it's what the tool assumes about your work.
             </p>
             
@@ -392,24 +393,24 @@ export default function CompareNotionPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+      <section className="border-b border-white/10">
+        <div className="max-w-3xl mx-auto px-6 py-16 md:py-24 text-center">
           <h2 className="text-3xl md:text-4xl font-semibold mb-6">
-            Ready to kill the static doc?
+            Ready to try Raven?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-white/60 mb-8">
             See what documents look like when they actually work.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/signup"
-              className="inline-flex justify-center px-8 py-3.5 bg-[#1a1a1a] text-white text-sm font-medium rounded hover:bg-black transition-colors cursor-pointer"
+              className="inline-flex justify-center px-8 py-3.5 bg-white text-black text-sm font-medium rounded hover:bg-white/90 transition-colors cursor-pointer"
             >
               Start Free Trial
             </Link>
             <Link 
               href="/contact"
-              className="inline-flex justify-center px-8 py-3.5 bg-white text-gray-900 text-sm font-medium rounded border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+              className="inline-flex justify-center px-8 py-3.5 bg-transparent text-white text-sm font-medium rounded border border-white/20 hover:bg-white/5 transition-colors cursor-pointer"
             >
               Talk to Sales
             </Link>
@@ -418,16 +419,16 @@ export default function CompareNotionPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-gray-100">
+      <footer className="py-8 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link href="/" className="cursor-pointer">
-            <img src="/images/raven-logo-black.png" alt="Raven" className="h-5 w-auto" />
+            <img src="/images/raven-logo-white.png" alt="Raven" className="h-5 w-auto" />
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+            <Link href="/privacy" className="text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+            <Link href="/terms" className="text-xs text-white/40 hover:text-white/70 transition-colors cursor-pointer">
               Terms of Service
             </Link>
           </div>

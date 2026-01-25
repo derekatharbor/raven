@@ -120,7 +120,7 @@ export default function ManifestoPage() {
                   Research in one tool. Writing in another. Storage somewhere else. Collaboration in Slack. Version control in email. Citations done manually at the end, if at all.
                 </p>
                 <p>
-                  The startup market has become "we connect your 800 apps together!" The AI market has become "we'll hallucinate answers but at least we can diagnose your symptoms."
+                  The startup market has become "we connect your 800 apps together!" The AI market is selling you writing assistants and then—in the same product—tools to make your writing sound less like AI. That's the state of innovation.
                 </p>
                 <p>
                   Nobody built the thing that actually needed to exist: a place where research, writing, verification, and publishing work together. Where the document isn't just a container for text—it's an intelligent system that knows where its information came from and what's happened to it since.
