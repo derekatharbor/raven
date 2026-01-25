@@ -145,31 +145,59 @@ function SolutionsDropdown() {
 
 function CompanyDropdown() {
   return (
-    <div className="w-[280px]">
-      <div className="p-4 space-y-1">
-        <Link href="/about" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">About</span>
-            <p className="text-[13px] text-white/50 mt-0.5">Our story and approach</p>
-          </div>
-        </Link>
+    <div className="w-[520px]">
+      <div className="grid grid-cols-2">
+        {/* Left column - Company */}
+        <div className="p-4 space-y-1">
+          <span className="text-[11px] uppercase tracking-wider text-white/40 px-3 mb-2 block">Company</span>
+          <Link href="/about" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
+            <div>
+              <span className="text-[14px] font-semibold text-white">About</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Our story and approach</p>
+            </div>
+          </Link>
+          
+          <Link href="/manifesto" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
+            <div>
+              <span className="text-[14px] font-semibold text-white">Manifesto</span>
+              <p className="text-[13px] text-white/50 mt-0.5">Where documents should be</p>
+            </div>
+          </Link>
+          
+          <Link href="/security" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
+            <div>
+              <span className="text-[14px] font-semibold text-white">Security</span>
+              <p className="text-[13px] text-white/50 mt-0.5">How we protect your data</p>
+            </div>
+          </Link>
+        </div>
         
-        <Link href="/manifesto" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">Manifesto</span>
-            <p className="text-[13px] text-white/50 mt-0.5">Where documents should be</p>
-          </div>
-        </Link>
-        
-        <Link href="/security" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">Security</span>
-            <p className="text-[13px] text-white/50 mt-0.5">How we protect your data</p>
-          </div>
-        </Link>
+        {/* Right column - Compare */}
+        <div className="p-4 space-y-1 border-l border-white/10">
+          <span className="text-[11px] uppercase tracking-wider text-white/40 px-3 mb-2 block">Compare</span>
+          <Link href="/compare/notion" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <img src="https://cdn.brandfetch.io/notion.so/w/32/h/32" alt="Notion" className="w-5 h-5 rounded" />
+            <span className="text-[14px] font-medium text-white">Raven vs Notion</span>
+          </Link>
+          
+          <Link href="/compare/google-docs" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <img src="https://cdn.brandfetch.io/google.com/w/32/h/32" alt="Google Docs" className="w-5 h-5 rounded" />
+            <span className="text-[14px] font-medium text-white">Raven vs Google Docs</span>
+          </Link>
+          
+          <Link href="/compare/microsoft-word" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <img src="https://cdn.brandfetch.io/microsoft.com/w/32/h/32" alt="Microsoft" className="w-5 h-5 rounded" />
+            <span className="text-[14px] font-medium text-white">Raven vs Word</span>
+          </Link>
+          
+          <Link href="/compare/hebbia" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <img src="https://cdn.brandfetch.io/hebbia.ai/w/32/h/32" alt="Hebbia" className="w-5 h-5 rounded" />
+            <span className="text-[14px] font-medium text-white">Raven vs Hebbia</span>
+          </Link>
+        </div>
       </div>
     </div>
   )

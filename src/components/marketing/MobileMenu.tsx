@@ -31,10 +31,18 @@ const COMPANY = [
   { title: 'Security', description: 'How we protect your data', href: '/security', color: '#C9A87C' },
 ]
 
+const COMPARE = [
+  { title: 'Raven vs Notion', href: '/compare/notion', logo: 'https://cdn.brandfetch.io/notion.so/w/32/h/32' },
+  { title: 'Raven vs Google Docs', href: '/compare/google-docs', logo: 'https://cdn.brandfetch.io/google.com/w/32/h/32' },
+  { title: 'Raven vs Word', href: '/compare/microsoft-word', logo: 'https://cdn.brandfetch.io/microsoft.com/w/32/h/32' },
+  { title: 'Raven vs Hebbia', href: '/compare/hebbia', logo: 'https://cdn.brandfetch.io/hebbia.ai/w/32/h/32' },
+]
+
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const [productOpen, setProductOpen] = useState(false)
   const [solutionsOpen, setSolutionsOpen] = useState(false)
   const [companyOpen, setCompanyOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
 
   return (
     <>
@@ -160,6 +168,34 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         <span className="text-[14px] font-medium text-white">{item.title}</span>
                         <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
                       </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Compare Accordion */}
+          <div>
+            <button
+              onClick={() => setCompareOpen(!compareOpen)}
+              className="flex items-center justify-between w-full px-3 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+            >
+              <span className="text-[15px] font-medium">Compare</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${compareOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {compareOpen && (
+              <div className="mt-2 px-3 pb-3">
+                <div className="space-y-2">
+                  {COMPARE.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onClose}
+                      className="flex items-center gap-2.5 py-1.5 cursor-pointer"
+                    >
+                      <img src={item.logo} alt="" className="w-5 h-5 rounded" />
+                      <span className="text-[14px] font-medium text-white">{item.title}</span>
                     </Link>
                   ))}
                 </div>
