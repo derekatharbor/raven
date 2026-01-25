@@ -184,18 +184,23 @@ function CompanyDropdown() {
           </Link>
           
           <Link href="/compare/google-docs" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-            <img src="https://cdn.brandfetch.io/google.com/w/32/h/32" alt="Google Docs" className="w-5 h-5 rounded" />
+            <img src="https://cdn.brandfetch.io/idCQPygB73/w/32/h/32" alt="Google Docs" className="w-5 h-5 rounded" />
             <span className="text-[14px] font-medium text-white">Raven vs Google Docs</span>
           </Link>
           
           <Link href="/compare/microsoft-word" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-            <img src="https://cdn.brandfetch.io/microsoft.com/w/32/h/32" alt="Microsoft" className="w-5 h-5 rounded" />
+            <img src="https://cdn.brandfetch.io/idchmboHEZ/w/32/h/32" alt="Microsoft" className="w-5 h-5 rounded" />
             <span className="text-[14px] font-medium text-white">Raven vs Word</span>
           </Link>
           
           <Link href="/compare/hebbia" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-            <img src="https://cdn.brandfetch.io/hebbia.ai/w/32/h/32" alt="Hebbia" className="w-5 h-5 rounded" />
+            <img src="https://cdn.brandfetch.io/idjYOMaBaJ/w/32/h/32" alt="Hebbia" className="w-5 h-5 rounded" />
             <span className="text-[14px] font-medium text-white">Raven vs Hebbia</span>
+          </Link>
+          
+          <Link href="/compare/grammarly" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+            <img src="https://cdn.brandfetch.io/idZAyF9rlg/w/32/h/32" alt="Grammarly" className="w-5 h-5 rounded" />
+            <span className="text-[14px] font-medium text-white">Raven vs Grammarly</span>
           </Link>
         </div>
       </div>

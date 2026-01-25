@@ -33,9 +33,10 @@ const COMPANY = [
 
 const COMPARE = [
   { title: 'Raven vs Notion', href: '/compare/notion', logo: 'https://cdn.brandfetch.io/notion.so/w/32/h/32' },
-  { title: 'Raven vs Google Docs', href: '/compare/google-docs', logo: 'https://cdn.brandfetch.io/google.com/w/32/h/32' },
-  { title: 'Raven vs Word', href: '/compare/microsoft-word', logo: 'https://cdn.brandfetch.io/microsoft.com/w/32/h/32' },
-  { title: 'Raven vs Hebbia', href: '/compare/hebbia', logo: 'https://cdn.brandfetch.io/hebbia.ai/w/32/h/32' },
+  { title: 'Raven vs Google Docs', href: '/compare/google-docs', logo: 'https://cdn.brandfetch.io/idCQPygB73/w/32/h/32' },
+  { title: 'Raven vs Word', href: '/compare/microsoft-word', logo: 'https://cdn.brandfetch.io/idchmboHEZ/w/32/h/32' },
+  { title: 'Raven vs Hebbia', href: '/compare/hebbia', logo: 'https://cdn.brandfetch.io/idjYOMaBaJ/w/32/h/32' },
+  { title: 'Raven vs Grammarly', href: '/compare/grammarly', logo: 'https://cdn.brandfetch.io/idZAyF9rlg/w/32/h/32' },
 ]
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
