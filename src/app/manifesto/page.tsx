@@ -26,7 +26,7 @@ export default function ManifestoPage() {
               Manifesto
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.1] tracking-tight max-w-4xl">
-              Documents were supposed to get smarter. They didn't.
+              Kill the static doc.
             </h1>
           </div>
         </div>
@@ -35,7 +35,7 @@ export default function ManifestoPage() {
         <div className="w-full h-px bg-white/10" />
       </section>
 
-      {/* The Problem */}
+      {/* The State of Documents */}
       <section className="relative">
         <div className="max-w-7xl mx-auto relative">
           {/* Left vertical line */}
@@ -46,20 +46,17 @@ export default function ManifestoPage() {
           <div className="px-10 md:px-16 py-16 md:py-24">
             <div className="max-w-3xl">
               <h2 className="text-2xl md:text-3xl font-semibold mb-8">
-                The problem
+                Documents carry everything that matters
               </h2>
               <div className="space-y-6 text-lg text-white/60 leading-relaxed">
                 <p>
-                  Every report you've ever written became a fossil the moment you hit save.
+                  Investment memos. Legal briefs. Intelligence assessments. Board decks. Policy recommendations. The decisions that move markets, win cases, and shape strategy—they all live in documents.
                 </p>
                 <p>
-                  The market moved. The policy changed. The competitor launched. But your document didn't know. It sat there, confidently wrong, waiting to embarrass you in the next meeting.
+                  And in 2026, we're still copying from ChatGPT into Word and hoping nobody asks where the numbers came from.
                 </p>
-                <p>
-                  We've had "smart documents" for decades now. Track changes. Version history. Comments. Real-time collaboration. But none of that made documents actually intelligent. It just made them easier to edit together.
-                </p>
-                <p>
-                  The fundamental problem remained: a document is a snapshot. The world keeps moving. The document doesn't.
+                <p className="text-white">
+                  This is embarrassing.
                 </p>
               </div>
             </div>
@@ -70,7 +67,7 @@ export default function ManifestoPage() {
         <div className="w-full h-px bg-white/10" />
       </section>
 
-      {/* The Deeper Issue */}
+      {/* The Innovation That Wasn't */}
       <section className="relative">
         <div className="max-w-7xl mx-auto relative">
           {/* Left vertical line */}
@@ -81,23 +78,20 @@ export default function ManifestoPage() {
           <div className="px-10 md:px-16 py-16 md:py-24">
             <div className="max-w-3xl ml-auto">
               <h2 className="text-2xl md:text-3xl font-semibold mb-8">
-                It's worse than that
+                The innovation that wasn't
               </h2>
               <div className="space-y-6 text-lg text-white/60 leading-relaxed">
                 <p>
-                  Even when documents are current, we have no idea if they're right.
+                  Google gave us real-time collaboration. That was 2006.
                 </p>
                 <p>
-                  Where did that revenue number come from? What's the source for that market size claim? Who verified that the CEO actually said that?
+                  Notion gave us blocks and emojis. Microsoft bolted Copilot onto a 40-year-old word processor. Dropbox added "AI search." Everyone's racing to sprinkle AI on top of software that was never designed for it.
                 </p>
                 <p>
-                  In most documents, citations are an afterthought—a chore performed at the end, if at all. The claims come first. The sourcing comes later. Or never.
+                  Meanwhile, documents are still static. They still go stale the moment you hit save. They still can't tell you where the claims came from. They still disappear into inboxes and never get read.
                 </p>
-                <p>
-                  This is backwards. It's how misinformation spreads. It's how embarrassing corrections happen. It's why your IC memo gets torn apart in review.
-                </p>
-                <p>
-                  The document doesn't know where its claims came from. So neither do you.
+                <p className="text-white">
+                  Two decades of "innovation" and the best we got was a block system that lets you label pages with emojis.
                 </p>
               </div>
             </div>
@@ -108,7 +102,7 @@ export default function ManifestoPage() {
         <div className="w-full h-px bg-white/10" />
       </section>
 
-      {/* The Vision */}
+      {/* The Fragmentation Problem */}
       <section className="relative">
         <div className="max-w-7xl mx-auto relative">
           {/* Left vertical line */}
@@ -119,23 +113,55 @@ export default function ManifestoPage() {
           <div className="px-10 md:px-16 py-16 md:py-24">
             <div className="max-w-3xl">
               <h2 className="text-2xl md:text-3xl font-semibold mb-8">
-                Where documents should be
+                The fragmentation problem
+              </h2>
+              <div className="space-y-6 text-lg text-white/60 leading-relaxed">
+                <p>
+                  Research in one tool. Writing in another. Storage somewhere else. Collaboration in Slack. Version control in email. Citations done manually at the end, if at all.
+                </p>
+                <p>
+                  The startup market has become "we connect your 800 apps together!" The AI market has become "we'll hallucinate answers but at least we can diagnose your symptoms."
+                </p>
+                <p>
+                  Nobody built the thing that actually needed to exist: a place where research, writing, verification, and publishing work together. Where the document isn't just a container for text—it's an intelligent system that knows where its information came from and what's happened to it since.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Horizontal line */}
+        <div className="w-full h-px bg-white/10" />
+      </section>
+
+      {/* What Documents Should Be */}
+      <section className="relative">
+        <div className="max-w-7xl mx-auto relative">
+          {/* Left vertical line */}
+          <div className="absolute top-0 bottom-0 left-5 md:left-6 w-px bg-white/10" />
+          {/* Right vertical line */}
+          <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
+          
+          <div className="px-10 md:px-16 py-16 md:py-24">
+            <div className="max-w-3xl ml-auto">
+              <h2 className="text-2xl md:text-3xl font-semibold mb-8">
+                What documents should be
               </h2>
               <div className="space-y-6 text-lg text-white/60 leading-relaxed">
                 <p className="text-white text-xl">
-                  We believe documents should know where their claims come from—and tell you when those claims are wrong.
+                  Documents should work. Actually work.
                 </p>
                 <p>
-                  Every statement should trace back to a source. Not as a footnote added later, but as the foundation the statement was built on.
+                  They should know where every claim came from. Not as footnotes added later, but as the foundation each statement was built on.
                 </p>
                 <p>
-                  Every conclusion should show its reasoning. Not "the AI said so," but "here's the evidence, here's the logic, here's the confidence level."
+                  They should know when they're going stale. When the source changes, when the market moves, when the facts shift—the document should know before you do.
                 </p>
                 <p>
-                  Every document should monitor itself. When the underlying facts change, you should know—before someone else tells you.
+                  They should be interactive. Readers should be able to ask questions, drill into sources, interrogate the reasoning. A document shouldn't be a wall of text you hope someone reads.
                 </p>
                 <p>
-                  This isn't science fiction. This is what documents would look like if we designed them today, with AI at the foundation instead of bolted on top.
+                  They should tell you what happened to them. Who read it. What they focused on. What questions they asked. Your work shouldn't disappear into a void.
                 </p>
               </div>
             </div>
@@ -146,7 +172,7 @@ export default function ManifestoPage() {
         <div className="w-full h-px bg-white/10" />
       </section>
 
-      {/* The Implication */}
+      {/* Why This Requires Starting Over */}
       <section className="relative">
         <div className="max-w-7xl mx-auto relative">
           {/* Left vertical line */}
@@ -155,22 +181,19 @@ export default function ManifestoPage() {
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
           <div className="px-10 md:px-16 py-16 md:py-24">
-            <div className="max-w-3xl ml-auto">
+            <div className="max-w-3xl">
               <h2 className="text-2xl md:text-3xl font-semibold mb-8">
-                What this changes
+                You can't bolt this onto Word
               </h2>
               <div className="space-y-6 text-lg text-white/60 leading-relaxed">
                 <p>
-                  Verification stops being a final step. It becomes continuous—baked into every claim from the moment of creation.
+                  This isn't a feature request for Microsoft. You can't add "continuous verification" to software designed before the internet existed. You can't retrofit "source tracing" onto a word processor that treats text as text.
                 </p>
                 <p>
-                  Review stops being adversarial. When sources are visible and reasoning is transparent, there's nothing to defend. The document speaks for itself.
+                  The entire architecture has to assume intelligence from the start. The AI isn't a feature—it's the foundation. Every piece of content is a node in a knowledge graph. Every claim has provenance. Every document is alive.
                 </p>
-                <p>
-                  Trust stops being assumed. It becomes earned—through provenance, through transparency, through receipts.
-                </p>
-                <p>
-                  This is the document experience that professionals deserve. Not another AI chatbot stapled to a word processor. A fundamentally new relationship between what you write and what you know.
+                <p className="text-white">
+                  You have to build for this from day one. So that's what we did.
                 </p>
               </div>
             </div>
@@ -189,10 +212,15 @@ export default function ManifestoPage() {
           {/* Right vertical line */}
           <div className="absolute top-0 bottom-0 right-5 md:right-6 w-px bg-white/10" />
           
-          <div className="px-10 md:px-16 py-24 md:py-32 text-center">
-            <p className="text-2xl md:text-3xl font-medium text-white/80 max-w-2xl mx-auto leading-relaxed">
-              That's what we're building.
-            </p>
+          <div className="px-10 md:px-16 py-24 md:py-32">
+            <div className="max-w-3xl ml-auto">
+              <p className="text-2xl md:text-3xl font-medium text-white leading-relaxed mb-6">
+                Down with the PDF. Down with the static doc.
+              </p>
+              <p className="text-lg text-white/60 leading-relaxed">
+                Documents are the operating system of professional work. It's time they started acting like it.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -210,10 +238,10 @@ export default function ManifestoPage() {
           
           <div className="px-10 md:px-16 py-16 md:py-20 text-center">
             <Link 
-              href="/contact"
+              href="/signup"
               className="inline-flex px-8 py-3.5 bg-white text-black text-sm font-medium rounded hover:bg-white/90 transition-colors cursor-pointer"
             >
-              Get Early Access
+              Try Raven
             </Link>
           </div>
         </div>
