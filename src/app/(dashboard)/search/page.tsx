@@ -12,14 +12,14 @@ import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 
-// Document type colors - Finance palette
+// Document type colors - Legal palette
 const docTypeColors: Record<string, { bg: string; text: string }> = {
-  'CIM': { bg: '#EEF2F6', text: '#4B5C6B' },
-  'Financials': { bg: '#FDF6E3', text: '#8B7355' },
-  'Management Presentation': { bg: '#E8F4EF', text: '#5B7B6B' },
-  'Expert Call': { bg: '#F3F0F7', text: '#6B5B7B' },
-  'Industry Report': { bg: '#FAECEC', text: '#8B6B6B' },
-  'Legal': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Case Law': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Deposition': { bg: '#FDF6E3', text: '#8B7355' },
+  'Contract': { bg: '#E8F4EF', text: '#5B7B6B' },
+  'Pleading': { bg: '#F3F0F7', text: '#6B5B7B' },
+  'Discovery': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Memo': { bg: '#EEF2F6', text: '#4B5C6B' },
 }
 
 // Cell interface - the core unit of extracted information
@@ -74,192 +74,194 @@ interface Message {
   extractedCells?: Record<string, Cell>  // Cells extracted for this query
 }
 
-// Mock data with full cell structure - FINANCE VERSION
+// Mock data with full cell structure - LEGAL VERSION
 const MOCK_COLUMNS: MatrixColumn[] = [
-  { id: 'col-1', question: 'Key Risks' },
-  { id: 'col-2', question: 'Growth Drivers' },
+  { id: 'col-1', question: 'Key Holdings' },
+  { id: 'col-2', question: 'Relevance to Our Case' },
 ]
 
 const MOCK_MATRIX_DATA: MatrixRow[] = [
   {
     id: 'doc-1',
-    documentName: 'Project Falcon CIM',
-    documentType: 'CIM',
-    date: 'Jan 12, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/jpmorgan.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Morrison v. National Australia Bank (2010)',
+    documentType: 'Case Law',
+    date: 'Jun 24, 2010',
+    logoUrl: 'https://cdn.brandfetch.io/westlaw.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-1-1',
-        value: 'Customer concentration risk: Top 3 customers represent 58% of revenue. Loss of any major account would materially impact financials.',
+        value: 'Section 10(b) of the Securities Exchange Act does not provide a cause of action for foreign plaintiffs suing foreign and American defendants for misconduct in connection with securities traded on foreign exchanges.',
         status: 'complete',
         sourceDocId: 'doc-1',
-        sourceLocation: 'Page 24, Risk Factors',
-        sourceSnippet: '"The Company derives approximately 58% of total revenue from its three largest customers. The loss of any of these relationships could have a material adverse effect on results of operations."',
-        reasoning: 'Identified as key risk due to explicit mention in Risk Factors section. 58% concentration exceeds typical threshold of 30%.',
-        confidence: 0.94,
+        sourceLocation: '561 U.S. 247, Syllabus',
+        sourceSnippet: '"Section 10(b) reaches the use of a manipulative or deceptive device or contrivance only in connection with the purchase or sale of a security listed on an American stock exchange, and the purchase or sale of any other security in the United States."',
+        reasoning: 'Key holding establishes territorial limits of Section 10(b). Supreme Court adopted "transactional test" replacing prior "conduct and effects" tests.',
+        confidence: 0.96,
         verified: true,
-        verifiedBy: 'M. Thompson'
+        verifiedBy: 'J. Martinez'
       },
       'col-2': { 
         id: 'cell-1-2',
-        value: 'Enterprise expansion motion showing traction: ACV up 40% YoY, with 12 new logos >$500K in trailing twelve months.',
+        value: 'Strongly supports motion to dismiss foreign transaction claims. Plaintiffs purchased shares on London exchange—Morrison requires dismissal of these claims.',
         status: 'complete',
         sourceDocId: 'doc-1',
-        sourceLocation: 'Page 18, Go-to-Market',
-        sourceSnippet: '"Average contract value increased 40% year-over-year as the sales team successfully moved upmarket. The Company added 12 new enterprise customers with ACV exceeding $500,000 in the past twelve months."',
-        reasoning: 'Enterprise traction identified as growth driver. 40% ACV growth indicates successful upmarket motion.',
-        confidence: 0.91
+        sourceLocation: '561 U.S. at 267',
+        sourceSnippet: '"The Exchange Act applies only to transactions in securities listed on domestic exchanges and domestic transactions in other securities."',
+        reasoning: 'Direct precedent. Our case involves London-listed securities purchased by foreign investors. Morrison mandates dismissal.',
+        confidence: 0.94
       },
     }
   },
   {
     id: 'doc-2',
-    documentName: 'Q3 2025 Financials',
-    documentType: 'Financials',
-    date: 'Jan 8, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/quickbooks.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Defendant CEO Deposition',
+    documentType: 'Deposition',
+    date: 'Jan 15, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-2-1',
-        value: 'Gross margin compression: GM declined 400bps YoY to 68% due to increased cloud infrastructure costs and customer support investments.',
+        value: 'CEO testified he was unaware of accounting irregularities until October 2025 board meeting. Claims CFO handled all financial reporting independently.',
         status: 'complete',
         sourceDocId: 'doc-2',
-        sourceLocation: 'Page 8, Margin Analysis',
-        sourceSnippet: '"Gross margin was 68% for Q3 2025, compared to 72% in the prior year period. The decline reflects increased cloud hosting costs and investments in customer success headcount."',
-        reasoning: 'Margin compression flagged as risk. 400bps decline significant for SaaS business; need to understand if structural or temporary.',
-        confidence: 0.89,
+        sourceLocation: 'Tr. 145:12-146:8',
+        sourceSnippet: '"Q: When did you first learn of the revenue recognition issues? A: It was at the October board meeting. That was the first I heard of it. Q: You had no prior knowledge? A: No, financial reporting was entirely within the CFO\'s domain."',
+        reasoning: 'Key testimony on scienter. CEO claims lack of knowledge—but see contradicting emails in discovery.',
+        confidence: 0.91,
         relatedCells: ['cell-4-1']
       },
       'col-2': { 
         id: 'cell-2-2',
-        value: 'Net revenue retention of 118% indicates strong expansion within existing accounts despite macro headwinds.',
+        value: 'Testimony creates factual dispute on scienter. CEO denial contradicted by Oct 3 email showing prior knowledge. Strong basis to oppose summary judgment.',
         status: 'complete',
         sourceDocId: 'doc-2',
-        sourceLocation: 'Page 12, Key Metrics',
-        sourceSnippet: '"Net Revenue Retention was 118% for the trailing twelve months, driven by upsells and cross-sells within the existing customer base."',
-        reasoning: 'NRR above 110% is best-in-class for B2B SaaS. Strong indicator of product-market fit and expansion potential.',
-        confidence: 0.93
+        sourceLocation: 'Tr. 147:3-18',
+        sourceSnippet: '"Q: Did you receive any emails about revenue recognition prior to October? A: I receive hundreds of emails a day. I cannot recall every email."',
+        reasoning: 'Evasive answer on emails combined with Oct 3 document creates genuine dispute of material fact.',
+        confidence: 0.89
       },
     }
   },
   {
     id: 'doc-3',
-    documentName: 'Management Presentation',
-    documentType: 'Management Presentation',
-    date: 'Jan 5, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/pitch.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Tellabs v. Makor Issues (2007)',
+    documentType: 'Case Law',
+    date: 'Jun 21, 2007',
+    logoUrl: 'https://cdn.brandfetch.io/westlaw.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-3-1',
-        value: 'Founder departure risk: CTO and co-founder transitioning to advisory role in Q2. Technical leadership succession plan unclear.',
+        value: 'To survive motion to dismiss, securities fraud complaint must state facts giving rise to "strong inference" of scienter—inference must be "at least as compelling" as any opposing innocent inference.',
         status: 'complete',
         sourceDocId: 'doc-3',
-        sourceLocation: 'Slide 32, Leadership',
-        sourceSnippet: '"Co-founder and CTO Jane Smith will transition to a strategic advisor role effective Q2 2026 to pursue other interests. Search for successor underway."',
-        reasoning: 'Key person risk identified. CTO departure during growth phase could impact product roadmap execution.',
-        confidence: 0.86
+        sourceLocation: '551 U.S. 308, 314',
+        sourceSnippet: '"A complaint will survive only if a reasonable person would deem the inference of scienter cogent and at least as compelling as any opposing inference one could draw from the facts alleged."',
+        reasoning: 'Establishes heightened pleading standard for scienter under PSLRA. Must weigh competing inferences.',
+        confidence: 0.95,
+        verified: true,
+        verifiedBy: 'J. Martinez'
       },
       'col-2': { 
         id: 'cell-3-2',
-        value: 'AI roadmap positions company for next growth wave: New ML-powered features launching Q2 expected to unlock $2M+ ARR from existing base.',
+        value: 'Sets the standard we must meet. Oct 3 email plus CEO access to weekly reports should satisfy "strong inference" test, but need to address innocent explanations.',
         status: 'complete',
         sourceDocId: 'doc-3',
-        sourceLocation: 'Slide 18, Product Roadmap',
-        sourceSnippet: '"AI-powered automation suite launching Q2 2026. Based on beta feedback, we project $2-3M in incremental ARR from existing customers in first 12 months."',
-        reasoning: 'Product expansion into AI features identified as growth catalyst. $2M+ ARR opportunity from installed base is meaningful.',
-        confidence: 0.78
+        sourceLocation: '551 U.S. at 323-24',
+        sourceSnippet: '"The inquiry is inherently comparative: courts must consider plausible, nonculpable explanations for the defendant\'s conduct, as well as inferences favoring the plaintiff."',
+        reasoning: 'We should preemptively address CEO\'s "delegation to CFO" defense in our opposition brief.',
+        confidence: 0.88
       },
     }
   },
   {
     id: 'doc-4',
-    documentName: 'Expert Call - Former VP Sales',
-    documentType: 'Expert Call',
-    date: 'Jan 14, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/alphasights.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'October 3, 2025 Email Chain',
+    documentType: 'Discovery',
+    date: 'Oct 3, 2025',
+    logoUrl: 'https://cdn.brandfetch.io/gmail.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-4-1',
-        value: 'Sales team turnover concerns: Expert noted 40% attrition in enterprise AE team in 2025, attributed to below-market comp and unrealistic quotas.',
+        value: 'CFO emailed CEO directly: "We need to discuss the Q3 numbers before the call. The recognition issues I mentioned last month are getting worse." CEO replied "Let\'s talk tomorrow."',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'Timestamp 18:32',
-        sourceSnippet: '"They lost probably 40% of the enterprise team last year. The comp plans were not competitive and the quotas were set based on the 2021 market, not reality."',
-        reasoning: 'Sales turnover is execution risk. 40% attrition significantly higher than industry average of 15-20%. May impact growth targets.',
-        confidence: 0.82,
+        sourceLocation: 'DEF-00047823',
+        sourceSnippet: '"From: CFO\nTo: CEO\nSubject: Q3 Numbers - Urgent\n\nWe need to discuss the Q3 numbers before the call. The recognition issues I mentioned last month are getting worse. Can we sync tomorrow morning?\n\nReply from CEO: Let\'s talk tomorrow. 8am works."',
+        reasoning: 'Smoking gun document. Directly contradicts CEO deposition testimony about lack of prior knowledge.',
+        confidence: 0.97,
         verified: true,
-        verifiedBy: 'S. Patel'
+        verifiedBy: 'S. Chen'
       },
       'col-2': { 
         id: 'cell-4-2',
-        value: 'Product differentiation strong vs. incumbents: Expert rated product as "significantly better" on ease of use and time-to-value metrics.',
+        value: 'Critical evidence for scienter. Email predates October board meeting by 3 weeks. "Issues I mentioned last month" suggests even earlier knowledge. Key exhibit for opposition.',
         status: 'complete',
         sourceDocId: 'doc-4',
-        sourceLocation: 'Timestamp 34:15',
-        sourceSnippet: '"The product is significantly better than the legacy players. Customers can get value in days instead of months. That is their moat right now."',
-        reasoning: 'Expert validation of product differentiation. Time-to-value advantage is sustainable competitive moat.',
-        confidence: 0.85
+        sourceLocation: 'DEF-00047823-24',
+        sourceSnippet: '"The recognition issues I mentioned last month are getting worse."',
+        reasoning: 'Reference to "last month" suggests September knowledge. Should subpoena September communications.',
+        confidence: 0.93,
+        relatedCells: ['cell-2-1']
       },
     }
   },
   {
     id: 'doc-5',
-    documentName: 'McKinsey SaaS Market Report',
-    documentType: 'Industry Report',
-    date: 'Dec 15, 2025',
-    logoUrl: 'https://cdn.brandfetch.io/mckinsey.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Expert Report - Dr. Williams',
+    documentType: 'Discovery',
+    date: 'Jan 8, 2026',
+    logoUrl: 'https://cdn.brandfetch.io/deloitte.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-5-1',
-        value: 'Market commoditization risk: McKinsey predicts 60% of current market leaders will face pricing pressure from AI-native entrants by 2027.',
+        value: 'Accounting expert opines revenue was overstated by $47M in Q3 2025 due to improper recognition of contingent sales. Concludes misstatements were material under SAB 99.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Page 42, Competitive Dynamics',
-        sourceSnippet: '"By 2027, we predict that 60% of established vendors in this category will face significant pricing pressure from AI-native competitors offering comparable functionality at 40-50% lower price points."',
-        reasoning: 'Structural market risk. AI disruption could compress margins and accelerate commoditization.',
-        confidence: 0.88
+        sourceLocation: 'Expert Report, pp. 23-24',
+        sourceSnippet: '"In my opinion, the Company\'s Q3 2025 revenue was overstated by approximately $47 million due to premature recognition of sales subject to significant contingencies. This misstatement was material under both quantitative and qualitative factors outlined in SAB 99."',
+        reasoning: 'Expert establishes materiality element. $47M = 12% of quarterly revenue, exceeding 5% quantitative threshold.',
+        confidence: 0.92
       },
       'col-2': { 
         id: 'cell-5-2',
-        value: 'TAM expanding to $18B by 2028: Market growing at 24% CAGR driven by digital transformation spend and compliance requirements.',
+        value: 'Supports materiality element. 12% overstatement exceeds quantitative thresholds. Expert\'s SAB 99 analysis addresses qualitative factors defendants may raise.',
         status: 'complete',
         sourceDocId: 'doc-5',
-        sourceLocation: 'Page 15, Market Sizing',
-        sourceSnippet: '"The total addressable market is projected to reach $18 billion by 2028, representing a 24% CAGR from 2024. Growth is driven by accelerating digital transformation initiatives and increasing regulatory compliance requirements."',
-        reasoning: 'Large and growing TAM supports investment thesis. 24% CAGR indicates healthy end-market demand.',
-        confidence: 0.92
+        sourceLocation: 'Expert Report, pp. 31-32',
+        sourceSnippet: '"The misstatement also meets qualitative materiality factors: it masked a trend of declining organic growth, affected management compensation metrics, and would have impacted debt covenant calculations."',
+        reasoning: 'Qualitative factors strengthen case even if defendants challenge 12% figure.',
+        confidence: 0.90
       },
     }
   },
   {
     id: 'doc-6',
-    documentName: 'Customer Call - Stripe',
-    documentType: 'Expert Call',
-    date: 'Jan 10, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/stripe.com?c=1id1Fyz-h7an5-5KR_y',
+    documentName: 'Matrixx Initiatives v. Siracusano (2011)',
+    documentType: 'Case Law',
+    date: 'Mar 22, 2011',
+    logoUrl: 'https://cdn.brandfetch.io/westlaw.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
-        value: 'Implementation complexity: Customer reported 14-week implementation vs. 6-week estimate. Required 2 FTEs dedicated to project.',
+        value: 'Materiality is not governed by bright-line rules. Information is material if there is "substantial likelihood" a reasonable investor would consider it important in making investment decision.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: 'Timestamp 22:45',
-        sourceSnippet: '"They told us six weeks but it took us closer to fourteen. We had to pull two people off other projects full-time to get it done. The ROI is there but the implementation was painful."',
-        reasoning: 'Implementation risk flagged. 2.3x longer than promised. May impact customer satisfaction and expansion velocity.',
-        confidence: 0.87,
-        relatedCells: ['cell-4-1']
+        sourceLocation: '563 U.S. 27, 38',
+        sourceSnippet: '"We have consistently held that materiality is to be determined on the particular facts of each case and cannot be reduced to a bright-line rule."',
+        reasoning: 'Rejects defendant arguments that materiality requires statistical significance or specific thresholds.',
+        confidence: 0.94,
+        verified: true,
+        verifiedBy: 'J. Martinez'
       },
       'col-2': { 
         id: 'cell-6-2',
-        value: 'Strong ROI realization: Customer achieved 3.2x ROI in first year, primarily from labor cost savings and error reduction.',
+        value: 'Counters anticipated defense argument that 12% is "borderline." Matrixx holds no bright-line rule—focus on reasonable investor standard and total mix of information.',
         status: 'complete',
         sourceDocId: 'doc-6',
-        sourceLocation: 'Timestamp 38:20',
-        sourceSnippet: '"Despite the rough start, we calculated a 3.2x ROI in the first twelve months. Mostly from headcount we did not have to add and errors we caught before they became problems."',
-        reasoning: 'Strong proof point for value proposition. 3.2x first-year ROI is compelling; supports premium pricing.',
-        confidence: 0.90,
-        verified: true,
-        verifiedBy: 'M. Thompson'
+        sourceLocation: '563 U.S. at 44',
+        sourceSnippet: '"The question is whether a reasonable investor would have viewed the nondisclosed information as having significantly altered the total mix of information made available."',
+        reasoning: 'Useful for rebutting defense materiality arguments in opposition brief.',
+        confidence: 0.91
       },
     }
   },
@@ -269,39 +271,41 @@ const MOCK_MESSAGES: Message[] = [
   {
     id: 'msg-1',
     role: 'user',
-    content: 'Summarize the key risks and growth drivers for Project Falcon. What should we focus on in management meetings?'
+    content: 'Summarize the key evidence for scienter and identify any gaps in our case for the opposition brief.'
   },
   {
     id: 'msg-2',
     role: 'assistant',
-    content: `Based on my analysis across 6 data room documents, here's the investment picture:
+    content: `Based on my review of the case file, here's the scienter analysis:
 
-**Key Risks**
-Customer concentration is the top concern—58% of revenue from three accounts creates meaningful downside exposure. [1] This is compounded by sales execution challenges: 40% AE turnover in 2025 raises questions about the team's ability to diversify the base. [2]
+**Evidence Supporting Scienter**
+The October 3 email is the strongest evidence—CEO received direct notice of "recognition issues" three weeks before claiming ignorance at the board meeting. [1] The phrase "issues I mentioned last month" suggests knowledge dating to September. [2]
 
-Margin trajectory also warrants attention. Gross margin declined 400bps to 68%, and McKinsey predicts AI-native competitors will pressure pricing further. [3]
+CEO's deposition testimony that he was "unaware until October board meeting" is directly contradicted by this email. His evasive answer about emails ("I cannot recall every email") further undermines credibility. [3]
 
-**Growth Drivers**
-The enterprise motion is working: ACV up 40% YoY with 12 new $500K+ logos. [1] Net retention of 118% shows strong expansion within accounts. [4] Product differentiation remains a moat—expert calls confirm meaningful time-to-value advantage vs. incumbents. [5]
+**Gaps to Address**
+The CEO will argue delegation to CFO as an innocent explanation per Tellabs. [4] We should preemptively address this by:
+1. Subpoenaing September communications referenced in the Oct 3 email
+2. Obtaining CEO's calendar to show regular CFO meetings
+3. Highlighting CEO's access to weekly financial reports
 
-**For Management Meetings**
-Focus diligence on: (1) Customer concentration mitigation plan, (2) Sales comp restructuring and hiring pipeline, (3) Gross margin roadmap—is 68% the floor?, (4) CTO succession plan given Q2 departure.`,
+**Recommendation**
+Strong circumstantial case for scienter under Tellabs "strong inference" standard, but should pursue additional discovery on September communications before opposition deadline.`,
     sources: [
-      { cellId: 'cell-1-1', label: '1' },
-      { cellId: 'cell-4-1', label: '2' },
-      { cellId: 'cell-5-1', label: '3' },
-      { cellId: 'cell-2-2', label: '4' },
-      { cellId: 'cell-4-2', label: '5' },
+      { cellId: 'cell-4-1', label: '1' },
+      { cellId: 'cell-4-2', label: '2' },
+      { cellId: 'cell-2-1', label: '3' },
+      { cellId: 'cell-3-2', label: '4' },
     ],
-    stepsCompleted: 14,
-    query: 'Summarize the key risks and growth drivers for Project Falcon. What should we focus on in management meetings?'
+    stepsCompleted: 12,
+    query: 'Summarize the key evidence for scienter and identify any gaps in our case for the opposition brief.'
   },
 ]
 
 const MOCK_USER_DOCS = [
-  { id: 'doc-1', name: 'Project Falcon IC Memo' },
-  { id: 'doc-2', name: 'Management Meeting Prep' },
-  { id: 'doc-3', name: 'Competitive Landscape' },
+  { id: 'doc-1', name: 'Opposition Brief Draft' },
+  { id: 'doc-2', name: 'Deposition Summary Memo' },
+  { id: 'doc-3', name: 'Case Strategy Outline' },
 ]
 
 export default function SearchPage() {
@@ -829,7 +833,7 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">Project Falcon DD</span>
+            <span className="text-sm font-semibold text-gray-900">Securities Litigation</span>
             <span className="text-xs text-gray-400">Saved at 2:34pm</span>
           </div>
           <div className="flex items-center gap-2">
