@@ -86,7 +86,6 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Morrison v. National Australia Bank (2010)',
     documentType: 'Case Law',
     date: 'Jun 24, 2010',
-    logoUrl: 'https://cdn.brandfetch.io/westlaw.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-1-1',
@@ -147,7 +146,6 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Tellabs v. Makor Issues (2007)',
     documentType: 'Case Law',
     date: 'Jun 21, 2007',
-    logoUrl: 'https://cdn.brandfetch.io/westlaw.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-3-1',
@@ -239,7 +237,6 @@ const MOCK_MATRIX_DATA: MatrixRow[] = [
     documentName: 'Matrixx Initiatives v. Siracusano (2011)',
     documentType: 'Case Law',
     date: 'Mar 22, 2011',
-    logoUrl: 'https://cdn.brandfetch.io/westlaw.com?c=1id1Fyz-h7an5-5KR_y',
     cells: {
       'col-1': { 
         id: 'cell-6-1',
