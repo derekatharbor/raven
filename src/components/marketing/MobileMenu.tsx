@@ -11,13 +11,6 @@ interface MobileMenuProps {
   onClose: () => void
 }
 
-const PRODUCT_CORE = [
-  { title: 'Search', description: 'Matrix extraction across datasets', href: '/features/search', color: '#7C9EB2' },
-  { title: 'Create', description: 'AI-guided editor with Smart Blocks', href: '/features/create', color: '#8BAF9C' },
-  { title: 'Track', description: 'Topic monitoring and alerts', href: '/features/track', color: '#C9A87C' },
-  { title: 'Analyze', description: 'Reader analytics and engagement', href: '/features/analyze', color: '#9B8EC4' },
-]
-
 const INDUSTRIES = [
   { title: 'Finance', description: 'Investment research & diligence', href: '/solutions/finance', color: '#7C9EB2' },
   { title: 'Consulting', description: 'Client deliverables & research', href: '/solutions/consulting', color: '#C9A87C' },
@@ -40,7 +33,6 @@ const COMPARE = [
 ]
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
-  const [productOpen, setProductOpen] = useState(false)
   const [solutionsOpen, setSolutionsOpen] = useState(false)
   const [companyOpen, setCompanyOpen] = useState(false)
   const [compareOpen, setCompareOpen] = useState(false)
@@ -74,39 +66,14 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
         {/* Links - Scrollable */}
         <div className="flex-1 overflow-y-auto p-4 space-y-1">
-          {/* Product Accordion */}
-          <div>
-            <button
-              onClick={() => setProductOpen(!productOpen)}
-              className="flex items-center justify-between w-full px-3 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-            >
-              <span className="text-[15px] font-medium">Product</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${productOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {productOpen && (
-              <div className="mt-2 px-3 pb-3">
-                <div className="space-y-2">
-                  {PRODUCT_CORE.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onClose}
-                      className="flex items-start gap-2.5 py-1.5 cursor-pointer"
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" 
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <div>
-                        <span className="text-[14px] font-medium text-white">{item.title}</span>
-                        <p className="text-[12px] text-white/50 mt-0.5">{item.description}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Product Link */}
+          <Link
+            href="/product"
+            onClick={onClose}
+            className="block px-3 py-3 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+          >
+            Product
+          </Link>
 
           {/* Solutions Accordion */}
           <div>

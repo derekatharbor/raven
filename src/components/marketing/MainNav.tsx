@@ -61,47 +61,6 @@ function NavDropdown({ label, children }: NavDropdownProps) {
   )
 }
 
-function ProductDropdown() {
-  return (
-    <div className="w-[420px]">
-      {/* 2x2 Grid of Core Features */}
-      <div className="grid grid-cols-2 p-4 gap-1">
-        <Link href="/features/search" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#7C9EB2]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">Search</span>
-            <p className="text-[13px] text-white/50 mt-0.5">Matrix extraction across any dataset</p>
-          </div>
-        </Link>
-        
-        <Link href="/features/create" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#8BAF9C]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">Create</span>
-            <p className="text-[13px] text-white/50 mt-0.5">AI-guided editor with Smart Blocks</p>
-          </div>
-        </Link>
-        
-        <Link href="/features/track" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#C9A87C]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">Track</span>
-            <p className="text-[13px] text-white/50 mt-0.5">Topic monitoring and alerts</p>
-          </div>
-        </Link>
-        
-        <Link href="/features/analyze" className="flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-          <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 bg-[#9B8EC4]" />
-          <div>
-            <span className="text-[14px] font-semibold text-white">Analyze</span>
-            <p className="text-[13px] text-white/50 mt-0.5">Reader analytics and engagement</p>
-          </div>
-        </Link>
-      </div>
-    </div>
-  )
-}
-
 function SolutionsDropdown() {
   return (
     <div className="w-[420px]">
@@ -226,9 +185,12 @@ export default function MainNav() {
 
           {/* Desktop Nav Dropdowns */}
           <div className="hidden lg:flex items-center gap-1">
-            <NavDropdown label="Product">
-              <ProductDropdown />
-            </NavDropdown>
+            <Link
+              href="/product"
+              className="px-3 py-2 text-[14px] font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors rounded cursor-pointer"
+            >
+              Product
+            </Link>
 
             <NavDropdown label="Solutions">
               <SolutionsDropdown />
