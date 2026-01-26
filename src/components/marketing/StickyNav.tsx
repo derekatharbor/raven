@@ -184,7 +184,7 @@ function CompanyDropdown() {
           </Link>
           
           <Link href="/compare/google-docs" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-            <img src="https://cdn.brandfetch.io/idCQPygB73/w/32/h/32" alt="Google Docs" className="w-4 h-4 rounded" />
+            <img src="/images/logos/google-docs.jpg" alt="Google Docs" className="w-4 h-4 rounded" />
             <span className="text-[13px] font-medium text-white">Raven vs Google Docs</span>
           </Link>
           
@@ -194,12 +194,12 @@ function CompanyDropdown() {
           </Link>
           
           <Link href="/compare/hebbia" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-            <img src="https://cdn.brandfetch.io/idjYOMaBaJ/w/32/h/32" alt="Hebbia" className="w-4 h-4 rounded" />
+            <img src="/images/logos/hebbia.jpeg" alt="Hebbia" className="w-4 h-4 rounded" />
             <span className="text-[13px] font-medium text-white">Raven vs Hebbia</span>
           </Link>
           
           <Link href="/compare/grammarly" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-            <img src="https://cdn.brandfetch.io/idZAyF9rlg/w/32/h/32" alt="Grammarly" className="w-4 h-4 rounded" />
+            <img src="/images/logos/grammarly.png" alt="Grammarly" className="w-4 h-4 rounded" />
             <span className="text-[13px] font-medium text-white">Raven vs Grammarly</span>
           </Link>
         </div>
