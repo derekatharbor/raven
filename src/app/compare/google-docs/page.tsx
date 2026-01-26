@@ -85,7 +85,7 @@ export default function CompareGoogleDocsPage() {
             />
             <span className="text-white/30 text-3xl font-light">vs</span>
             <img 
-              src="https://cdn.brandfetch.io/idCQPygB73/w/400/h/400/theme/dark/icon.png?c=1bfwsmEH20zzEfSNTed" 
+              src="/images/logos/google-docs.jpg" 
               alt="Google Docs" 
               className="h-10"
             />
@@ -197,7 +197,7 @@ export default function CompareGoogleDocsPage() {
               <img src="/images/raven-logo-white.png" alt="Raven" className="h-7" />
             </div>
             <div className="flex justify-center">
-              <img src="https://cdn.brandfetch.io/idCQPygB73/w/400/h/400/theme/dark/icon.png?c=1bfwsmEH20zzEfSNTed" alt="Google Docs" className="h-7" />
+              <img src="/images/logos/google-docs.jpg" alt="Google Docs" className="h-7" />
             </div>
           </div>
           

@@ -78,17 +78,17 @@ export default function CompareNotionPage() {
         
         <div className="max-w-5xl mx-auto px-6 py-16 md:py-24 text-center">
           {/* Logos */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-6 mb-8">
             <img 
               src="/images/raven-logo-white.png" 
               alt="Raven" 
-              className="h-8"
+              className="h-10"
             />
-            <span className="text-white/30 text-2xl font-light">vs</span>
+            <span className="text-white/30 text-3xl font-light">vs</span>
             <img 
               src="https://cdn.brandfetch.io/notion.so/w/512/h/512" 
               alt="Notion" 
-              className="h-8 invert"
+              className="h-10 invert"
             />
           </div>
           
@@ -195,10 +195,10 @@ export default function CompareNotionPage() {
               <span className="text-sm font-semibold text-white/50 uppercase tracking-wider">Capability</span>
             </div>
             <div className="flex justify-center">
-              <img src="/images/raven-logo-white.png" alt="Raven" className="h-6" />
+              <img src="/images/raven-logo-white.png" alt="Raven" className="h-7" />
             </div>
             <div className="flex justify-center">
-              <img src="https://cdn.brandfetch.io/notion.so/w/512/h/512" alt="Notion" className="h-6 invert" />
+              <img src="https://cdn.brandfetch.io/notion.so/w/512/h/512" alt="Notion" className="h-7 invert" />
             </div>
           </div>
           

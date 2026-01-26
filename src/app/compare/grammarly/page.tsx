@@ -1,4 +1,4 @@
-// src/app/compare/grammarly/page.tsx
+// src/app/compare/notion/page.tsx
 
 import Link from 'next/link'
 import MainNav from '@/components/marketing/MainNav'
@@ -65,7 +65,7 @@ function FeatureRow({ feature, description, raven, competitor, highlighted }: Fe
   )
 }
 
-export default function CompareGrammarlyPage() {
+export default function CompareNotionPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <MainNav />
@@ -73,6 +73,7 @@ export default function CompareGrammarlyPage() {
 
       {/* Hero Section */}
       <section className="relative border-b border-white/10">
+        {/* Horizontal line under nav */}
         <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />
         
         <div className="max-w-5xl mx-auto px-6 py-16 md:py-24 text-center">
@@ -85,18 +86,18 @@ export default function CompareGrammarlyPage() {
             />
             <span className="text-white/30 text-3xl font-light">vs</span>
             <img 
-              src="https://cdn.brandfetch.io/idZAyF9rlg/w/400/h/400/theme/dark/icon.png?c=1bfwsmEH20zzEfSNTed" 
-              alt="Grammarly" 
-              className="h-10"
+              src="https://cdn.brandfetch.io/notion.so/w/512/h/512" 
+              alt="Notion" 
+              className="h-10 invert"
             />
           </div>
           
           <h1 className="text-4xl md:text-5xl font-semibold leading-tight mb-6">
-            Looking for a Grammarly alternative?
+            Looking for a Notion alternative?
           </h1>
           
           <p className="text-xl text-white/60 max-w-2xl mx-auto mb-10">
-            Grammarly makes your writing sound better. Raven makes your writing actually true.
+            Notion is a wiki with AI sprinkled on top. Raven is an end-to-end platform for research, writing, and publishing—where documents actually work.
           </p>
           
           <Link 
@@ -112,17 +113,17 @@ export default function CompareGrammarlyPage() {
       <section className="border-b border-white/10">
         <div className="max-w-3xl mx-auto px-6 py-16 md:py-20">
           <h2 className="text-2xl md:text-3xl font-semibold mb-6">
-            Grammarly polishes writing
+            Notion is great at what it does
           </h2>
           <div className="space-y-4 text-lg text-white/60 leading-relaxed">
             <p>
-              Grammar. Tone. Clarity. Conciseness. Grammarly catches errors and suggests improvements. For everyday writing—emails, posts, quick docs—it helps you sound more professional.
+              Team wikis. Project documentation. Meeting notes. Internal knowledge bases. Notion handles all of that well. The block system is flexible, collaboration works, and the AI features help with basic writing tasks.
             </p>
             <p>
-              They've added AI writing features too. Generate text, rewrite paragraphs, adjust tone. And then, in the same product, they sell you AI detection to make sure your writing doesn't sound like AI wrote it.
+              But Notion wasn't built for high-stakes deliverables. There's no way to trace where information came from. No way to know if your sources have changed. No way for readers to interrogate the document. No way to see if anyone actually read it.
             </p>
             <p className="text-white font-medium">
-              Grammarly is about how you write. It has nothing to say about whether what you're writing is actually correct.
+              For internal docs and team collaboration, Notion is fine. For work that leaves the building—work you have to defend—you need something built for that.
             </p>
           </div>
         </div>
@@ -132,49 +133,49 @@ export default function CompareGrammarlyPage() {
       <section className="border-b border-white/10">
         <div className="max-w-5xl mx-auto px-6 py-16 md:py-20">
           <h2 className="text-2xl md:text-3xl font-semibold mb-12 text-center">
-            Different problems entirely
+            What Raven actually does
           </h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
-              <h3 className="text-xl font-semibold mb-3">Research-backed writing</h3>
+              <h3 className="text-xl font-semibold mb-3">Research that doesn't start from scratch</h3>
               <p className="text-white/60">
-                Start with sources, not a blank page. Every claim in your document traces back to evidence. Not about sounding smart—about being right.
+                Multi-agent analysis across your entire document set. Ask a question, get answers from hundreds of sources with full citations. Not a chatbot—an actual research engine.
               </p>
             </div>
             
             <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
-              <h3 className="text-xl font-semibold mb-3">AI that doesn't hallucinate</h3>
+              <h3 className="text-xl font-semibold mb-3">Writing that doesn't hallucinate</h3>
               <p className="text-white/60">
-                Autocomplete grounded in your actual data. Suggestions you can trace to a source. No generating confident-sounding nonsense.
+                Smart autocomplete grounded in your sources. Every suggestion tied to real data. Consultants, lawyers, and analysts can actually use it without getting fired.
               </p>
             </div>
             
             <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
-              <h3 className="text-xl font-semibold mb-3">Documents that verify themselves</h3>
+              <h3 className="text-xl font-semibold mb-3">Documents people can talk to</h3>
               <p className="text-white/60">
-                Track your sources. When something changes, your document knows. Verification isn't a final step—it's continuous.
+                Share a Raven doc and readers can ask it questions. Scoped AI Q&A on your content—not the entire internet. Your deliverable becomes interactive.
               </p>
             </div>
             
             <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
-              <h3 className="text-xl font-semibold mb-3">Readers can dig in</h3>
+              <h3 className="text-xl font-semibold mb-3">Analytics on who actually read it</h3>
               <p className="text-white/60">
-                Share a Raven doc and readers ask it questions. They check your sources, explore your reasoning. The document defends itself.
+                Reader engagement tracking. Know who opened your doc, what they focused on, what questions they asked. Your work doesn't disappear into a void.
               </p>
             </div>
             
             <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
-              <h3 className="text-xl font-semibold mb-3">See who engaged</h3>
+              <h3 className="text-xl font-semibold mb-3">Monitoring that catches problems</h3>
               <p className="text-white/60">
-                Reader analytics show who opened your doc, what they focused on, what questions they asked. Know what happened after you hit send.
+                Track keywords, phrases, and topics across your sources. Get alerts when something changes. Your documents know when they're going stale.
               </p>
             </div>
             
             <div className="p-8 rounded-lg border border-white/10 bg-white/[0.02]">
-              <h3 className="text-xl font-semibold mb-3">Complete audit trail</h3>
+              <h3 className="text-xl font-semibold mb-3">Search that actually finds things</h3>
               <p className="text-white/60">
-                Every edit, every query, every verification. When someone asks where something came from, you have the receipts.
+                Natural language search across all your data. Not keyword matching—semantic understanding. Find the needle without knowing which haystack it's in.
               </p>
             </div>
           </div>
@@ -197,41 +198,48 @@ export default function CompareGrammarlyPage() {
               <img src="/images/raven-logo-white.png" alt="Raven" className="h-7" />
             </div>
             <div className="flex justify-center">
-              <img src="https://cdn.brandfetch.io/idZAyF9rlg/w/400/h/400/theme/dark/icon.png?c=1bfwsmEH20zzEfSNTed" alt="Grammarly" className="h-7" />
+              <img src="https://cdn.brandfetch.io/notion.so/w/512/h/512" alt="Notion" className="h-7 invert" />
             </div>
           </div>
           
-          {/* Section: Research & Sources */}
+          {/* Section: Research & Analysis */}
           <div className="mt-8 mb-4">
-            <h3 className="text-lg font-semibold text-white px-6">Research & Sources</h3>
+            <h3 className="text-lg font-semibold text-white px-6">Research & Analysis</h3>
           </div>
           
           <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Multi-Document Analysis"
-              description="Research across document sets"
-              raven={<YesBadge>Matrix extraction with citations</YesBadge>}
+              description="Extract insights across entire document sets"
+              raven={<YesBadge>Matrix extraction with citations across unlimited docs</YesBadge>}
               competitor={<NoBadge />}
               highlighted
-            />
-            
-            <FeatureRow
-              feature="Source Citations"
-              description="Know where claims came from"
-              raven={<YesBadge>Automatic with snippets</YesBadge>}
-              competitor={<NoBadge />}
             />
             
             <FeatureRow
               feature="Natural Language Search"
-              description="Find information semantically"
-              raven={<YesBadge>Across all sources</YesBadge>}
+              description="Find information without knowing where it is"
+              raven={<YesBadge>Semantic search across all sources</YesBadge>}
+              competitor={<PartialBadge>Basic search within workspace</PartialBadge>}
+            />
+            
+            <FeatureRow
+              feature="Source Citations"
+              description="Know where every claim came from"
+              raven={<YesBadge>Automatic with page, paragraph, snippet</YesBadge>}
               competitor={<NoBadge />}
               highlighted
             />
+            
+            <FeatureRow
+              feature="Multi-Agent Research"
+              description="AI agents working together on complex queries"
+              raven={<YesBadge>Orchestrated analysis across sources</YesBadge>}
+              competitor={<NoBadge />}
+            />
           </div>
           
-          {/* Section: Writing */}
+          {/* Section: Writing & Editing */}
           <div className="mt-12 mb-4">
             <h3 className="text-lg font-semibold text-white px-6">Writing & Editing</h3>
           </div>
@@ -239,81 +247,29 @@ export default function CompareGrammarlyPage() {
           <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Grounded Autocomplete"
-              description="Suggestions from your sources"
-              raven={<YesBadge>Every suggestion traceable</YesBadge>}
+              description="Suggestions based on your actual sources"
+              raven={<YesBadge>Every suggestion tied to real data</YesBadge>}
               competitor={<NoBadge />}
               highlighted
             />
             
             <FeatureRow
-              feature="AI Writing Assistance"
-              description="Help generating content"
-              raven={<YesBadge>With citations</YesBadge>}
-              competitor={<YesBadge>General generation</YesBadge>}
+              feature="AI Writing Help"
+              description="Assistance drafting content"
+              raven={<YesBadge>With inline citations and confidence</YesBadge>}
+              competitor={<YesBadge>General writing, no source grounding</YesBadge>}
             />
             
-            <FeatureRow
-              feature="Grammar & Spelling"
-              description="Catch errors"
-              raven={<YesBadge />}
-              competitor={<YesBadge>Core strength</YesBadge>}
-              highlighted
-            />
-            
-            <FeatureRow
-              feature="Tone Adjustment"
-              description="Sound more professional"
-              raven={<PartialBadge>Basic</PartialBadge>}
-              competitor={<YesBadge>Extensive controls</YesBadge>}
-            />
-            
-            <FeatureRow
-              feature="Browser Extension"
-              description="Works everywhere you write"
-              raven={<NoBadge />}
-              competitor={<YesBadge>All major browsers</YesBadge>}
-              highlighted
-            />
-          </div>
-          
-          {/* Section: Verification */}
-          <div className="mt-12 mb-4">
-            <h3 className="text-lg font-semibold text-white px-6">Verification & Trust</h3>
-          </div>
-          
-          <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Confidence Scores"
-              description="Know how certain claims are"
-              raven={<YesBadge>With reasoning chain</YesBadge>}
+              description="Know how certain the AI is"
+              raven={<YesBadge>0-100% with reasoning chain</YesBadge>}
               competitor={<NoBadge />}
               highlighted
-            />
-            
-            <FeatureRow
-              feature="Source Monitoring"
-              description="Know when data changes"
-              raven={<YesBadge>Alerts on changes</YesBadge>}
-              competitor={<NoBadge />}
-            />
-            
-            <FeatureRow
-              feature="Plagiarism Detection"
-              description="Check for copied content"
-              raven={<NoBadge />}
-              competitor={<YesBadge>Built-in</YesBadge>}
-              highlighted
-            />
-            
-            <FeatureRow
-              feature="AI Detection"
-              description="Check if content sounds AI-generated"
-              raven={<NoBadge />}
-              competitor={<YesBadge>Recent addition</YesBadge>}
             />
           </div>
           
-          {/* Section: Publishing */}
+          {/* Section: Publishing & Sharing */}
           <div className="mt-12 mb-4">
             <h3 className="text-lg font-semibold text-white px-6">Publishing & Sharing</h3>
           </div>
@@ -321,24 +277,54 @@ export default function CompareGrammarlyPage() {
           <div className="divide-y divide-white/10">
             <FeatureRow
               feature="Interactive Documents"
-              description="Readers can ask questions"
-              raven={<YesBadge>Scoped AI Q&A</YesBadge>}
+              description="Readers can ask questions about your content"
+              raven={<YesBadge>Scoped AI Q&A for every shared doc</YesBadge>}
               competitor={<NoBadge />}
               highlighted
             />
             
             <FeatureRow
               feature="Reader Analytics"
-              description="Track engagement"
-              raven={<YesBadge>Views, focus, questions</YesBadge>}
+              description="Know who read what and how they engaged"
+              raven={<YesBadge>Views, time spent, questions asked</YesBadge>}
               competitor={<NoBadge />}
             />
             
             <FeatureRow
-              feature="Native Document Editor"
-              description="Write full documents in-platform"
-              raven={<YesBadge>Complete editor</YesBadge>}
-              competitor={<PartialBadge>Overlay on other apps</PartialBadge>}
+              feature="Public Sharing"
+              description="Share documents externally"
+              raven={<YesBadge />}
+              competitor={<YesBadge />}
+              highlighted
+            />
+          </div>
+          
+          {/* Section: Monitoring & Verification */}
+          <div className="mt-12 mb-4">
+            <h3 className="text-lg font-semibold text-white px-6">Monitoring & Verification</h3>
+          </div>
+          
+          <div className="divide-y divide-white/10">
+            <FeatureRow
+              feature="Keyword & Topic Tracking"
+              description="Monitor sources for changes that matter"
+              raven={<YesBadge>Alerts when tracked items change</YesBadge>}
+              competitor={<NoBadge />}
+              highlighted
+            />
+            
+            <FeatureRow
+              feature="Continuous Verification"
+              description="Documents that know when they're wrong"
+              raven={<YesBadge>Automatic staleness detection</YesBadge>}
+              competitor={<NoBadge />}
+            />
+            
+            <FeatureRow
+              feature="Audit Trails"
+              description="Complete history of changes and queries"
+              raven={<YesBadge>Every action logged</YesBadge>}
+              competitor={<PartialBadge>Basic version history</PartialBadge>}
               highlighted
             />
           </div>
@@ -351,17 +337,25 @@ export default function CompareGrammarlyPage() {
           <div className="divide-y divide-white/10">
             <FeatureRow
               feature="End-to-End Workflow"
-              description="Research → Write → Publish"
+              description="Research → Write → Publish in one place"
               raven={<YesBadge>Complete platform</YesBadge>}
-              competitor={<PartialBadge>Editing layer only</PartialBadge>}
+              competitor={<PartialBadge>Writing and wiki only</PartialBadge>}
               highlighted
             />
             
             <FeatureRow
               feature="No Model Training"
-              description="Your data stays private"
-              raven={<YesBadge>Guaranteed</YesBadge>}
-              competitor={<PartialBadge>Settings available</PartialBadge>}
+              description="Your data never trains AI"
+              raven={<YesBadge>Guaranteed—not a toggle</YesBadge>}
+              competitor={<PartialBadge>Opt-out available</PartialBadge>}
+            />
+            
+            <FeatureRow
+              feature="Real-time Collaboration"
+              description="Multiple users editing"
+              raven={<YesBadge />}
+              competitor={<YesBadge />}
+              highlighted
             />
           </div>
         </div>
@@ -371,24 +365,28 @@ export default function CompareGrammarlyPage() {
       <section className="border-b border-white/10">
         <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
           <h2 className="text-3xl font-semibold mb-8">
-            Polish vs. substance
+            Different tools for different jobs
           </h2>
           
           <div className="space-y-6 text-lg text-white/60 leading-relaxed">
             <p>
-              Grammarly solves one problem well: making your writing cleaner, clearer, more professional. For emails, blog posts, everyday communication—it's useful.
+              Notion is built for internal collaboration. Team wikis, project tracking, shared knowledge bases. It does those things well, and its AI helps with everyday writing tasks.
             </p>
             
             <p>
-              But for high-stakes documents—the investment memo, the legal brief, the client deliverable—clean prose isn't the challenge. The challenge is: is this actually true? Where did this claim come from? Will it hold up when someone asks questions?
+              Raven is built for external deliverables. The investment memo going to the IC. The legal brief going to court. The client deck going to the steering committee. Work where someone's going to ask "where did this come from?"
             </p>
             
             <p className="text-white font-medium">
-              Grammarly can make a hallucination sound professional. Raven makes sure you're not hallucinating in the first place.
+              The difference isn't features—it's what the tool assumes about your work.
             </p>
             
             <p>
-              If you need to polish everyday writing, use Grammarly. If you need to produce documents where the content matters as much as the prose—where being right is the job—that's what Raven is for.
+              Notion assumes you're organizing information for your team. Raven assumes you're building documents that need to survive scrutiny. That assumption shapes everything: how research works, how writing works, how sharing works.
+            </p>
+            
+            <p>
+              If you need a collaborative wiki, use Notion. If you need documents you can defend—with sources you can trace, readers you can track, and content that stays current—that's what Raven is for.
             </p>
           </div>
         </div>

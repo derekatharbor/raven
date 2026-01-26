@@ -85,7 +85,7 @@ export default function CompareHebbiaPage() {
             />
             <span className="text-white/30 text-3xl font-light">vs</span>
             <img 
-              src="https://cdn.brandfetch.io/idjYOMaBaJ/w/400/h/400/theme/dark/icon.png?c=1bfwsmEH20zzEfSNTed" 
+              src="/images/logos/hebbia.jpeg" 
               alt="Hebbia" 
               className="h-10"
             />
@@ -197,7 +197,7 @@ export default function CompareHebbiaPage() {
               <img src="/images/raven-logo-white.png" alt="Raven" className="h-7" />
             </div>
             <div className="flex justify-center">
-              <img src="https://cdn.brandfetch.io/idjYOMaBaJ/w/400/h/400/theme/dark/icon.png?c=1bfwsmEH20zzEfSNTed" alt="Hebbia" className="h-7" />
+              <img src="/images/logos/hebbia.jpeg" alt="Hebbia" className="h-7" />
             </div>
           </div>
           
