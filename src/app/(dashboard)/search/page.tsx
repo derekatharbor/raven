@@ -11,15 +11,18 @@ import {
 import Sidebar from '@/components/layout/Sidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 
-
-// Document type colors - Consulting palette
+// Document type colors - MUTED enterprise palette
 const docTypeColors: Record<string, { bg: string; text: string }> = {
-  'Interview': { bg: '#EEF2F6', text: '#4B5C6B' },
-  'Industry Report': { bg: '#FDF6E3', text: '#8B7355' },
-  'Client Data': { bg: '#E8F4EF', text: '#5B7B6B' },
-  'Benchmark': { bg: '#F3F0F7', text: '#6B5B7B' },
-  'Internal Analysis': { bg: '#FAECEC', text: '#8B6B6B' },
-  'Survey': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Financials': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Marketing Materials': { bg: '#FDF6E3', text: '#8B7355' },
+  'Product': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Customer': { bg: '#E8F4EF', text: '#5B7B6B' },
+  'Public Report': { bg: '#F3F0F7', text: '#6B5B7B' },
+  // Consulting document types
+  'Industry Report': { bg: '#EEF2F6', text: '#4B5C6B' },
+  'Client Materials': { bg: '#FDF6E3', text: '#8B7355' },
+  'Competitive Intel': { bg: '#FAECEC', text: '#8B6B6B' },
+  'Internal Notes': { bg: '#E8F4EF', text: '#5B7B6B' },
 }
 
 // Cell interface - the core unit of extracted information
@@ -74,252 +77,19 @@ interface Message {
   extractedCells?: Record<string, Cell>  // Cells extracted for this query
 }
 
-// Mock data with full cell structure - CONSULTING VERSION
-const MOCK_COLUMNS: MatrixColumn[] = [
-  { id: 'col-1', question: 'Key Findings' },
-  { id: 'col-2', question: 'Strategic Implications' },
-]
-
-const MOCK_MATRIX_DATA: MatrixRow[] = [
-  {
-    id: 'doc-1',
-    documentName: 'VP Operations Interview - Midwest Region',
-    documentType: 'Interview',
-    date: 'Jan 12, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
-    cells: {
-      'col-1': { 
-        id: 'cell-1-1',
-        value: 'Distribution center consolidation created 23% cost savings but increased delivery times by 1.2 days. Customer complaints up 34% in affected regions since Q3.',
-        status: 'complete',
-        sourceDocId: 'doc-1',
-        sourceLocation: 'Transcript, 14:32-16:45',
-        sourceSnippet: '"The consolidation saved us money, no question—about 23% on logistics costs. But we\'re hearing it from customers now. Delivery times went from 2.1 days to 3.3 days average, and complaints are through the roof."',
-        reasoning: 'Quantifies cost-service tradeoff from consolidation. Customer impact data directly from regional leadership.',
-        confidence: 0.94,
-        verified: true,
-        verifiedBy: 'M. Torres'
-      },
-      'col-2': { 
-        id: 'cell-1-2',
-        value: 'Consolidation savings at risk if customer churn accelerates. Recommend modeling breakeven point where logistics savings are offset by revenue loss.',
-        status: 'complete',
-        sourceDocId: 'doc-1',
-        sourceLocation: 'Transcript, 18:20-19:15',
-        sourceSnippet: '"We\'ve already lost two mid-size accounts who cited delivery times. If this continues through Q1, we\'re looking at real revenue impact."',
-        reasoning: 'VP flagged early churn signals. Financial modeling needed to quantify risk.',
-        confidence: 0.89
-      },
-    }
-  },
-  {
-    id: 'doc-2',
-    documentName: 'McKinsey Logistics Benchmark 2025',
-    documentType: 'Benchmark',
-    date: 'Nov 2025',
-    logoUrl: 'https://cdn.brandfetch.io/mckinsey.com?c=1id1Fyz-h7an5-5KR_y',
-    cells: {
-      'col-1': { 
-        id: 'cell-2-1',
-        value: 'Industry leaders average 2.4-day delivery in comparable markets. Top quartile achieves 1.8 days with hub-and-spoke models retaining regional nodes.',
-        status: 'complete',
-        sourceDocId: 'doc-2',
-        sourceLocation: 'Page 34, Exhibit 12',
-        sourceSnippet: '"Best-in-class operators maintain delivery windows of 1.8-2.4 days through hybrid distribution models that balance consolidation efficiency with regional responsiveness."',
-        reasoning: 'External benchmark establishes competitive context. Client at 3.3 days is significantly below industry standard.',
-        confidence: 0.92,
-        verified: true,
-        verifiedBy: 'M. Torres'
-      },
-      'col-2': { 
-        id: 'cell-2-2',
-        value: 'Client underperforming benchmark by 0.9-1.5 days. Hybrid model (partial reconsolidation) could recover service levels while retaining ~60% of cost savings.',
-        status: 'complete',
-        sourceDocId: 'doc-2',
-        sourceLocation: 'Page 41, Exhibit 17',
-        sourceSnippet: '"Organizations that reversed full consolidation to hybrid models typically retained 55-65% of logistics savings while recovering 80%+ of service level performance."',
-        reasoning: 'Benchmark suggests partial rollback is viable. Provides data point for recommendation.',
-        confidence: 0.88
-      },
-    }
-  },
-  {
-    id: 'doc-3',
-    documentName: 'Customer Satisfaction Survey - Q4 2025',
-    documentType: 'Survey',
-    date: 'Dec 2025',
-    logoUrl: 'https://cdn.brandfetch.io/qualtrics.com?c=1id1Fyz-h7an5-5KR_y',
-    cells: {
-      'col-1': { 
-        id: 'cell-3-1',
-        value: 'NPS dropped from 42 to 28 since consolidation. "Delivery speed" now #1 detractor, cited by 67% of detractors. Previously ranked #4.',
-        status: 'complete',
-        sourceDocId: 'doc-3',
-        sourceLocation: 'Executive Summary, Page 3',
-        sourceSnippet: '"Net Promoter Score declined 14 points from Q2 (42) to Q4 (28). Delivery speed emerged as the primary driver of detractor sentiment, cited by 67% of respondents scoring 0-6."',
-        reasoning: 'Quantifies customer sentiment impact. NPS decline is significant and directly attributable to delivery times.',
-        confidence: 0.95,
-        verified: true,
-        verifiedBy: 'S. Patel'
-      },
-      'col-2': { 
-        id: 'cell-3-2',
-        value: 'NPS trajectory suggests continued erosion without intervention. Each 0.5-day improvement in delivery correlates with ~4 point NPS recovery based on driver analysis.',
-        status: 'complete',
-        sourceDocId: 'doc-3',
-        sourceLocation: 'Driver Analysis, Page 18',
-        sourceSnippet: '"Regression analysis indicates delivery time improvements of 0.5 days correlate with NPS improvements of 3.8-4.2 points, controlling for other factors."',
-        reasoning: 'Survey provides quantified relationship between delivery time and NPS. Useful for modeling intervention impact.',
-        confidence: 0.87
-      },
-    }
-  },
-  {
-    id: 'doc-4',
-    documentName: 'CFO Interview - Cost Structure Deep Dive',
-    documentType: 'Interview',
-    date: 'Jan 8, 2026',
-    logoUrl: 'https://cdn.brandfetch.io/zoom.us?c=1id1Fyz-h7an5-5KR_y',
-    cells: {
-      'col-1': { 
-        id: 'cell-4-1',
-        value: 'Logistics consolidation saves $14M annually. Reopening 2 regional hubs would cost $8M but CFO open to "partial reversal if customer data supports it."',
-        status: 'complete',
-        sourceDocId: 'doc-4',
-        sourceLocation: 'Transcript, 23:10-25:40',
-        sourceSnippet: '"Look, we\'re saving $14 million a year from the consolidation. Reopening two hubs would run us about $8 million annually. But if you can show me the customer impact justifies it, I\'m willing to have that conversation with the board."',
-        reasoning: 'CFO quantified financial tradeoffs and signaled openness to reversal. Key stakeholder buy-in for recommendation.',
-        confidence: 0.93,
-        relatedCells: ['cell-1-1', 'cell-2-2']
-      },
-      'col-2': { 
-        id: 'cell-4-2',
-        value: 'Net cost of hybrid model: ~$8M. But preserves $6M of original savings vs. full reversal. CFO receptive—frame recommendation around "optimizing" not "reversing."',
-        status: 'complete',
-        sourceDocId: 'doc-4',
-        sourceLocation: 'Transcript, 27:15-28:30',
-        sourceSnippet: '"Whatever you recommend, don\'t call it a reversal. The board approved consolidation 18 months ago. Frame it as optimization based on new customer data."',
-        reasoning: 'CFO provided explicit guidance on positioning. Political context important for recommendation acceptance.',
-        confidence: 0.91
-      },
-    }
-  },
-  {
-    id: 'doc-5',
-    documentName: 'Competitor Analysis - Regional Players',
-    documentType: 'Internal Analysis',
-    date: 'Jan 5, 2026',
-    cells: {
-      'col-1': { 
-        id: 'cell-5-1',
-        value: 'Two regional competitors (FastTrack, RegionalPro) gained 4.2% combined market share in affected territories since Q3. Both emphasize "next-day delivery" in marketing.',
-        status: 'complete',
-        sourceDocId: 'doc-5',
-        sourceLocation: 'Market Share Analysis, Slide 8',
-        sourceSnippet: '"FastTrack and RegionalPro have captured 4.2% market share in the Midwest region since Q3 2025. Both competitors have increased marketing spend on delivery speed messaging by 40%+."',
-        reasoning: 'Competitor data validates customer churn risk. Market share loss is measurable and ongoing.',
-        confidence: 0.90
-      },
-      'col-2': { 
-        id: 'cell-5-2',
-        value: 'Competitor gains accelerating—1.8% in Q3, 2.4% in Q4. Without service improvement, projected 6-8% additional share loss by end of 2026.',
-        status: 'complete',
-        sourceDocId: 'doc-5',
-        sourceLocation: 'Projection Model, Slide 14',
-        sourceSnippet: '"At current trajectory, regional competitors are projected to capture an additional 6-8% market share by Q4 2026, representing $22-29M in annual revenue at risk."',
-        reasoning: 'Trajectory analysis quantifies urgency. Revenue-at-risk figure useful for business case.',
-        confidence: 0.85
-      },
-    }
-  },
-  {
-    id: 'doc-6',
-    documentName: 'Gartner Supply Chain Report 2025',
-    documentType: 'Industry Report',
-    date: 'Oct 2025',
-    logoUrl: 'https://cdn.brandfetch.io/gartner.com?c=1id1Fyz-h7an5-5KR_y',
-    cells: {
-      'col-1': { 
-        id: 'cell-6-1',
-        value: 'Post-pandemic, 78% of B2B buyers rank delivery speed in top 3 purchase criteria, up from 45% in 2019. Tolerance for delays has "permanently decreased."',
-        status: 'complete',
-        sourceDocId: 'doc-6',
-        sourceLocation: 'Key Findings, Page 12',
-        sourceSnippet: '"Our survey of 2,400 B2B procurement leaders found that 78% now rank delivery speed among their top 3 vendor selection criteria, compared to 45% pre-pandemic. This shift appears structural rather than temporary."',
-        reasoning: 'Industry trend validates strategic importance of delivery speed. Not just a client-specific issue.',
-        confidence: 0.93,
-        verified: true,
-        verifiedBy: 'M. Torres'
-      },
-      'col-2': { 
-        id: 'cell-6-2',
-        value: 'Industry-wide shift means delivery speed is now table stakes, not differentiator. Client\'s 3.3-day average is strategic liability, not just operational issue.',
-        status: 'complete',
-        sourceDocId: 'doc-6',
-        sourceLocation: 'Strategic Implications, Page 28',
-        sourceSnippet: '"Organizations unable to meet 2.5-day delivery expectations face structural competitive disadvantage. Speed has shifted from differentiator to baseline expectation."',
-        reasoning: 'Gartner framing elevates recommendation from operational fix to strategic imperative.',
-        confidence: 0.89
-      },
-    }
-  },
-]
-
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: 'msg-1',
-    role: 'user',
-    content: 'What\'s the business case for reopening regional distribution hubs? Summarize the key data points for the steering committee.'
-  },
-  {
-    id: 'msg-2',
-    role: 'assistant',
-    content: `Here's the business case summary for the steering committee:
-
-**The Problem**
-Distribution consolidation saved $14M annually but increased delivery times from 2.1 to 3.3 days. [1] This has triggered a 34% increase in customer complaints and a 14-point NPS drop (42 → 28). [2]
-
-**Competitive Impact**
-Regional competitors have captured 4.2% market share since Q3, with delivery speed as their primary message. [3] At current trajectory, we're projecting $22-29M in annual revenue at risk by end of 2026.
-
-**Industry Context**
-This isn't just our problem—78% of B2B buyers now rank delivery speed in their top 3 criteria, up from 45% pre-pandemic. [4] The benchmark for our segment is 2.4 days; we're nearly a full day behind.
-
-**The Recommendation**
-Reopen 2 regional hubs at $8M annual cost. This retains ~$6M of the original $14M savings while recovering service levels. [5] CFO is supportive if framed as "optimization based on new customer data." [6]
-
-**Bottom Line**
-Net $6M in retained savings vs. $22-29M revenue at risk. The math favors action.`,
-    sources: [
-      { cellId: 'cell-1-1', label: '1' },
-      { cellId: 'cell-3-1', label: '2' },
-      { cellId: 'cell-5-1', label: '3' },
-      { cellId: 'cell-6-1', label: '4' },
-      { cellId: 'cell-4-1', label: '5' },
-      { cellId: 'cell-4-2', label: '6' },
-    ],
-    stepsCompleted: 14,
-    query: 'What\'s the business case for reopening regional distribution hubs? Summarize the key data points for the steering committee.'
-  },
-]
-
-const MOCK_USER_DOCS = [
-  { id: 'doc-1', name: 'Steering Committee Deck Draft' },
-  { id: 'doc-2', name: 'Interview Synthesis' },
-  { id: 'doc-3', name: 'Financial Model - Hub Scenarios' },
-]
+// Mock data removed - will be populated from API/database
 
 export default function SearchPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   
-  const [columns, setColumns] = useState<MatrixColumn[]>(MOCK_COLUMNS)
-  const [matrixData, setMatrixData] = useState<MatrixRow[]>(MOCK_MATRIX_DATA)
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES)
+  const [columns, setColumns] = useState<MatrixColumn[]>([])  // Start with no columns
+  const [matrixData, setMatrixData] = useState<MatrixRow[]>([])  // Start empty
+  const [messages, setMessages] = useState<Message[]>([])  // Start empty
   const [query, setQuery] = useState('')
   const [showEditorPane, setShowEditorPane] = useState(false)
   const [editorWidth, setEditorWidth] = useState(400)
-  const [selectedDocForEditor, setSelectedDocForEditor] = useState(MOCK_USER_DOCS[0].id)
+  const [selectedDocForEditor, setSelectedDocForEditor] = useState('')
   const [editorContent, setEditorContent] = useState('')
   const [showAddColumnModal, setShowAddColumnModal] = useState(false)
   const [newColumnQuestion, setNewColumnQuestion] = useState('')
@@ -834,7 +604,7 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-900">Distribution Network Study</span>
+            <span className="text-sm font-semibold text-gray-900">Q1 Strategy Research</span>
             <span className="text-xs text-gray-400">Saved at 2:34pm</span>
           </div>
           <div className="flex items-center gap-2">
@@ -1351,9 +1121,7 @@ export default function SearchPage() {
               <div onMouseDown={() => setIsResizing(true)} className="w-1 bg-gray-200 hover:bg-blue-300 cursor-col-resize" />
               <div className="flex flex-col bg-white" style={{ width: editorWidth }}>
                 <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
-                  <select value={selectedDocForEditor} onChange={(e) => setSelectedDocForEditor(e.target.value)} className="text-sm font-medium text-gray-900 bg-transparent outline-none cursor-pointer">
-                    {MOCK_USER_DOCS.map(doc => <option key={doc.id} value={doc.id}>{doc.name}</option>)}
-                  </select>
+                  <span className="text-sm font-medium text-gray-900">New Document</span>
                   <div className="flex items-center gap-1">
                     <button className="p-1.5 rounded hover:bg-gray-100 cursor-pointer text-gray-400"><Copy className="w-4 h-4" /></button>
                     <button className="p-1.5 rounded hover:bg-gray-100 cursor-pointer text-gray-400"><MoreHorizontal className="w-4 h-4" /></button>
