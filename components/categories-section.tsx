@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -135,79 +135,47 @@ function CategoryCard({
     span: string
   }
 }) {
-  const [isActive, setIsActive] = useState(false)
   const Icon = category.icon
 
   return (
     <article
       className={cn(
-        "group relative border border-border/40 p-5 flex flex-col justify-between transition-all duration-500 overflow-hidden cursor-pointer",
+        "group relative border border-border/40 p-5 flex flex-col transition-all duration-300 overflow-hidden",
         category.span,
-        "hover:border-accent/60",
-        isActive && "border-accent/60 bg-card"
+        "hover:border-accent/60 active:border-accent/60"
       )}
-      onClick={() => setIsActive(!isActive)}
-      onMouseEnter={() => setIsActive(true)}
-      onMouseLeave={() => setIsActive(false)}
-      onTouchStart={() => setIsActive(true)}
-      onTouchEnd={() => setTimeout(() => setIsActive(false), 2000)}
     >
-      {/* Corner accent */}
-      <div className={cn(
-        "absolute top-0 right-0 w-12 h-12 transition-all duration-500",
-        isActive ? "opacity-100" : "opacity-0"
-      )}>
+      {/* Corner accent - shows on hover/touch */}
+      <div className="absolute top-0 right-0 w-12 h-12 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-300">
         <div className="absolute top-0 right-0 w-full h-[2px] bg-accent" />
         <div className="absolute top-0 right-0 w-[2px] h-full bg-accent" />
       </div>
 
       {/* Top row: icon + title */}
       <div className="flex items-start gap-4 mb-4">
-        <div className={cn(
-          "p-2 border transition-all duration-300",
-          isActive ? "border-accent bg-accent/10" : "border-border/40"
-        )}>
-          <Icon className={cn(
-            "w-5 h-5 transition-colors duration-300",
-            isActive ? "text-accent" : "text-muted-foreground"
-          )} />
+        <div className="p-2 border border-border/40 group-hover:border-accent group-hover:bg-accent/10 group-active:border-accent group-active:bg-accent/10 transition-all duration-300">
+          <Icon className="w-5 h-5 text-muted-foreground group-hover:text-accent group-active:text-accent transition-colors duration-300" />
         </div>
-        <h3 className={cn(
-          "font-[var(--font-bebas)] text-2xl md:text-3xl tracking-tight transition-colors duration-300 pt-1",
-          isActive && "text-accent"
-        )}>
+        <h3 className="font-[var(--font-bebas)] text-2xl md:text-3xl tracking-tight group-hover:text-accent group-active:text-accent transition-colors duration-300 pt-1">
           {category.title}
         </h3>
       </div>
 
-      {/* Description - revealed on hover/tap */}
-      <div className={cn(
-        "transition-all duration-500 overflow-hidden",
-        isActive ? "max-h-48 opacity-100" : "max-h-0 opacity-0 md:max-h-0 md:opacity-0"
-      )}>
-        <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-4">
-          {category.description}
-        </p>
+      {/* Description - always visible */}
+      <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-4">
+        {category.description}
+      </p>
 
-        {/* Example tags */}
-        <div className="flex flex-wrap gap-2">
-          {category.examples.map((example, i) => (
-            <span
-              key={i}
-              className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 bg-accent/10 text-accent border border-accent/20"
-            >
-              {example}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Tap hint on mobile */}
-      <div className={cn(
-        "md:hidden font-mono text-[10px] text-muted-foreground/50 uppercase tracking-wider mt-2 transition-opacity duration-300",
-        isActive ? "opacity-0" : "opacity-100"
-      )}>
-        Tap for details
+      {/* Example tags */}
+      <div className="flex flex-wrap gap-2 mt-auto">
+        {category.examples.map((example, i) => (
+          <span
+            key={i}
+            className="font-mono text-[10px] uppercase tracking-wider px-2 py-1 bg-accent/10 text-accent border border-accent/20"
+          >
+            {example}
+          </span>
+        ))}
       </div>
     </article>
   )

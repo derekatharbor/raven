@@ -24,7 +24,7 @@ const pipelineSteps = [
   {
     step: "02",
     title: "FILTER",
-    description: "Our analysts verify, deduplicate, and contextualize every item before it reaches you.",
+    description: "Every item is verified, deduplicated, and geolocated before it reaches you. No rumors, no duplicates.",
     sources: [
       { icon: Filter, label: "Deduplication" },
       { icon: FileText, label: "Verification" },
@@ -181,29 +181,55 @@ export function IntelPipelineSection() {
         ))}
       </div>
 
-      {/* Example output */}
-      <div ref={exampleRef} className="max-w-2xl">
+      {/* Example outputs */}
+      <div ref={exampleRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+        {/* Crime alert */}
         <div className="relative bg-card border border-accent/30 p-6">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-accent" />
           
           <div className="flex items-center gap-2 mb-4">
             <Bell className="w-4 h-4 text-accent" />
             <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
-              Sample Output
+              Crime Alert
             </span>
           </div>
 
           <h4 className="font-[var(--font-bebas)] text-2xl tracking-tight mb-2">
-            New Commercial Development in Your 1-Mile Radius
+            Vehicle Break-in Pattern Identified
           </h4>
 
           <p className="font-mono text-xs text-muted-foreground leading-relaxed">
-            Crystal Lake Planning Commission approved a 45,000 sq ft retail development at 123 Main St. 
-            Construction begins March 2026. Traffic impact study available. Property tax implications pending assessment.
+            7 vehicle break-ins reported in Crystal Lake between Jan 20-26, clustered around Main St corridor between 11pm-3am. 
+            Unlocked vehicles targeted. CLPD increasing overnight patrols. 2 suspects arrested Jan 25.
           </p>
 
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/30">
-            <span className="font-mono text-[10px] text-muted-foreground/60">Source: McHenry County GIS + Planning Board Minutes</span>
+            <span className="font-mono text-[10px] text-muted-foreground/60">Source: CLPD Press Release + Scanner Reports</span>
+          </div>
+        </div>
+
+        {/* Property tax alert */}
+        <div className="relative bg-card border border-border/30 p-6">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-border/50" />
+          
+          <div className="flex items-center gap-2 mb-4">
+            <Bell className="w-4 h-4 text-muted-foreground" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Zoning Alert
+            </span>
+          </div>
+
+          <h4 className="font-[var(--font-bebas)] text-2xl tracking-tight mb-2">
+            Rezoning May Affect Property Taxes
+          </h4>
+
+          <p className="font-mono text-xs text-muted-foreground leading-relaxed">
+            12 acres rezoned from R-1 to B-2 at Route 14 & Main. 
+            Properties within 500ft may see reassessment. Appeal window closes March 15.
+          </p>
+
+          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/30">
+            <span className="font-mono text-[10px] text-muted-foreground/60">Source: County Assessor + Planning Board</span>
           </div>
         </div>
       </div>
