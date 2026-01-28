@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type React from "react"
 import type { Metadata } from "next"
 import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue } from "next/font/google"
@@ -40,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark bg-background">
+    <html lang="en" className="bg-background">
       <body
         className={`${ibmPlexSans.variable} ${bebasNeue.variable} ${ibmPlexMono.variable} font-sans antialiased overflow-x-hidden`}
       >
