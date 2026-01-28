@@ -4,7 +4,7 @@ import { HeroSection } from "@/components/hero-section"
 import { CategoriesSection } from "@/components/categories-section"
 import { HowItWorksSection } from "@/components/how-it-works-section"
 import { CoverageSection } from "@/components/coverage-section"
-import { SampleIntelSection } from "@/components/sample-intel-section"
+import { IntelPipelineSection } from "@/components/intel-pipeline-section"
 import { FooterSection } from "@/components/footer-section"
 import { SideNav } from "@/components/side-nav"
 
@@ -19,7 +19,7 @@ export default function Page() {
         <CategoriesSection />
         <HowItWorksSection />
         <CoverageSection />
-        <SampleIntelSection />
+        <IntelPipelineSection />
         <FooterSection />
       </div>
     </main>
