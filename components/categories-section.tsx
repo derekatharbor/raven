@@ -16,42 +16,42 @@ const categories = [
     title: "Crime & Safety",
     description: "Arrests, incidents, court outcomes, and emerging patterns in your area.",
     examples: ["DUI checkpoints", "Vehicle break-ins", "Court dispositions"],
-    span: "col-span-2 row-span-2",
+    size: "large",
   },
   {
     icon: Building2,
     title: "Development",
     description: "Construction permits, zoning changes, and planning board decisions.",
     examples: ["New construction", "Rezoning requests", "Variance approvals"],
-    span: "col-span-1 row-span-1",
+    size: "small",
   },
   {
     icon: Vote,
     title: "Elections",
     description: "Candidates, ballot measures, polling locations, and results.",
     examples: ["Candidate filings", "Ballot measures", "Election results"],
-    span: "col-span-1 row-span-1",
+    size: "small",
   },
   {
     icon: AlertTriangle,
     title: "Sex Offenders",
     description: "Registry updates, relocations, and proximity alerts.",
     examples: ["New registrations", "Address changes", "School proximity"],
-    span: "col-span-1 row-span-1",
+    size: "small",
   },
   {
     icon: FileText,
     title: "Public Records",
     description: "Business licenses, property transfers, and government filings.",
     examples: ["Liquor licenses", "Property sales", "FOIAs"],
-    span: "col-span-1 row-span-1",
+    size: "small",
   },
   {
     icon: TrendingUp,
     title: "Trends",
     description: "Patterns and changes over time that matter to residents.",
     examples: ["Crime trends", "Property values", "Population shifts"],
-    span: "col-span-2 row-span-1",
+    size: "wide",
   },
 ]
 
@@ -114,10 +114,10 @@ export function CategoriesSection() {
         <h2 className="mt-4 font-[var(--font-bebas)] text-4xl md:text-7xl tracking-tight">WHAT WE TRACK</h2>
       </div>
 
-      {/* Category grid */}
+      {/* Category grid - single column mobile, complex grid on desktop */}
       <div
         ref={gridRef}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[200px]"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 md:auto-rows-[200px]"
       >
         {categories.map((category, index) => (
           <CategoryCard key={index} category={category} index={index} />
@@ -136,18 +136,25 @@ function CategoryCard({
     title: string
     description: string
     examples: string[]
-    span: string
+    size: "large" | "small" | "wide"
   }
   index: number
 }) {
   const [isActive, setIsActive] = useState(false)
   const Icon = category.icon
 
+  // Desktop span classes based on size
+  const sizeClasses = {
+    large: "md:col-span-2 md:row-span-2",
+    small: "md:col-span-1 md:row-span-1",
+    wide: "sm:col-span-2 md:col-span-2 md:row-span-1",
+  }
+
   return (
     <article
       className={cn(
-        "group relative border border-border/40 p-5 flex flex-col justify-between transition-all duration-500 cursor-pointer overflow-hidden",
-        category.span,
+        "group relative border border-border/40 p-4 md:p-5 flex flex-col transition-all duration-500 cursor-pointer overflow-hidden",
+        sizeClasses[category.size],
         isActive && "border-accent/60"
       )}
       onMouseEnter={() => setIsActive(true)}
@@ -165,33 +172,34 @@ function CategoryCard({
       />
 
       {/* Content */}
-      <div className="relative z-10">
-        <div className="flex items-center gap-3">
-          <Icon className={cn(
-            "w-5 h-5 transition-colors duration-300",
-            isActive ? "text-accent" : "text-muted-foreground"
-          )} />
-          <h3 className={cn(
-            "font-[var(--font-bebas)] text-2xl md:text-3xl tracking-tight transition-colors duration-300",
-            isActive ? "text-accent" : "text-foreground"
-          )}>
-            {category.title}
-          </h3>
-        </div>
+      <div className="relative z-10 flex items-center gap-3">
+        <Icon className={cn(
+          "w-5 h-5 flex-shrink-0 transition-colors duration-300",
+          isActive ? "text-accent" : "text-muted-foreground"
+        )} />
+        <h3 className={cn(
+          "font-[var(--font-bebas)] text-xl sm:text-2xl md:text-3xl tracking-tight transition-colors duration-300",
+          isActive ? "text-accent" : "text-foreground"
+        )}>
+          {category.title}
+        </h3>
       </div>
 
-      {/* Description - always visible */}
-      <div className="relative z-10 mt-auto">
-        <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-3">
+      {/* Description - hidden on mobile for small cards, always visible for large/wide */}
+      <div className={cn(
+        "relative z-10 mt-3 md:mt-auto",
+        category.size === "small" ? "hidden sm:block" : ""
+      )}>
+        <p className="font-mono text-[11px] md:text-xs text-muted-foreground leading-relaxed mb-2 md:mb-3 line-clamp-2 md:line-clamp-none">
           {category.description}
         </p>
 
-        {/* Example tags */}
-        <div className="flex flex-wrap gap-1">
-          {category.examples.map((example, i) => (
+        {/* Example tags - hidden on mobile, visible on tablet+ */}
+        <div className="hidden sm:flex flex-wrap gap-1">
+          {category.examples.slice(0, category.size === "small" ? 2 : 3).map((example, i) => (
             <span
               key={i}
-              className="font-mono text-[9px] uppercase tracking-wider px-2 py-1 bg-accent/10 text-accent border border-accent/20"
+              className="font-mono text-[8px] md:text-[9px] uppercase tracking-wider px-1.5 md:px-2 py-0.5 md:py-1 bg-accent/10 text-accent border border-accent/20"
             >
               {example}
             </span>
@@ -199,9 +207,19 @@ function CategoryCard({
         </div>
       </div>
 
+      {/* Mobile-only: show subtle indicator that there's more content */}
+      <div className={cn(
+        "relative z-10 mt-2 sm:hidden",
+        category.size !== "small" && "hidden"
+      )}>
+        <span className="font-mono text-[9px] text-muted-foreground/60">
+          {category.examples.length} categories
+        </span>
+      </div>
+
       {/* Index marker */}
       <span className={cn(
-        "absolute bottom-4 right-4 font-mono text-[10px] transition-colors duration-300",
+        "absolute bottom-3 md:bottom-4 right-3 md:right-4 font-mono text-[10px] transition-colors duration-300",
         isActive ? "text-accent" : "text-muted-foreground/40"
       )}>
         {String(index + 1).padStart(2, "0")}
@@ -209,7 +227,7 @@ function CategoryCard({
 
       {/* Corner line */}
       <div className={cn(
-        "absolute top-0 right-0 w-12 h-12 transition-all duration-500",
+        "absolute top-0 right-0 w-8 md:w-12 h-8 md:h-12 transition-all duration-500",
         isActive ? "opacity-100" : "opacity-0"
       )}>
         <div className="absolute top-0 right-0 w-full h-[2px] bg-accent" />
