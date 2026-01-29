@@ -185,36 +185,24 @@ function CategoryCard({
         </h3>
       </div>
 
-      {/* Description - hidden on mobile for small cards, always visible for large/wide */}
-      <div className={cn(
-        "relative z-10 mt-3 md:mt-auto",
+      {/* Description - hidden on mobile for small cards */}
+      <p className={cn(
+        "relative z-10 mt-3 font-mono text-[11px] md:text-xs text-muted-foreground leading-relaxed line-clamp-2 md:line-clamp-none",
         category.size === "small" ? "hidden sm:block" : ""
       )}>
-        <p className="font-mono text-[11px] md:text-xs text-muted-foreground leading-relaxed mb-2 md:mb-3 line-clamp-2 md:line-clamp-none">
-          {category.description}
-        </p>
+        {category.description}
+      </p>
 
-        {/* Example tags - hidden on mobile, visible on tablet+ */}
-        <div className="hidden sm:flex flex-wrap gap-1">
-          {category.examples.slice(0, category.size === "small" ? 2 : 3).map((example, i) => (
-            <span
-              key={i}
-              className="font-mono text-[8px] md:text-[9px] uppercase tracking-wider px-1.5 md:px-2 py-0.5 md:py-1 bg-accent/10 text-accent border border-accent/20"
-            >
-              {example}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Mobile-only: show subtle indicator that there's more content */}
-      <div className={cn(
-        "relative z-10 mt-2 sm:hidden",
-        category.size !== "small" && "hidden"
-      )}>
-        <span className="font-mono text-[9px] text-muted-foreground/60">
-          {category.examples.length} categories
-        </span>
+      {/* Example tags - always visible, fewer on mobile for small cards */}
+      <div className="relative z-10 mt-2 md:mt-3 flex flex-wrap gap-1">
+        {category.examples.slice(0, category.size === "small" ? 2 : 3).map((example, i) => (
+          <span
+            key={i}
+            className="font-mono text-[8px] md:text-[9px] uppercase tracking-wider px-1.5 md:px-2 py-0.5 md:py-1 bg-accent/10 text-accent border border-accent/20 whitespace-nowrap"
+          >
+            {example}
+          </span>
+        ))}
       </div>
 
       {/* Index marker */}
