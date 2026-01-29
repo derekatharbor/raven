@@ -96,7 +96,7 @@ export function IntelPipelineSection() {
     <section id="intel-pipeline" ref={sectionRef} className="relative py-16 md:py-32 pl-6 md:pl-28 pr-6 md:pr-12">
       {/* Section header */}
       <div ref={headerRef} className="mb-12 md:mb-16">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">04 / The Pipeline</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">03 / The Pipeline</span>
         <h2 className="mt-4 font-[var(--font-bebas)] text-4xl md:text-7xl tracking-tight">HOW WE GET IT</h2>
         <p className="mt-4 font-mono text-sm text-muted-foreground max-w-lg">
           Verified public records from authoritative sources, contextualized for your neighborhood.

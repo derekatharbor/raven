@@ -104,7 +104,7 @@ export function CoverageSection() {
     <section ref={sectionRef} id="coverage" className="relative py-16 md:py-32 pl-6 md:pl-28 pr-6 md:pr-12">
       {/* Section header */}
       <div ref={headerRef} className="mb-10 md:mb-16">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">03 / Launch Markets</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">04 / Launch Markets</span>
         <h2 className="mt-4 font-[var(--font-bebas)] text-4xl md:text-7xl tracking-tight">WHERE WE'RE STARTING</h2>
         <p className="mt-4 font-mono text-sm text-muted-foreground max-w-lg">
           Over 10 million residents across four major metro areas. 

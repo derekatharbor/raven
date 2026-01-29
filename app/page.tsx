@@ -18,8 +18,8 @@ export default function Page() {
         <HeroSection />
         <CategoriesSection />
         <HowItWorksSection />
-        <CoverageSection />
         <IntelPipelineSection />
+        <CoverageSection />
         <FooterSection />
       </div>
     </main>

@@ -10,8 +10,8 @@ const navItems = [
   { id: "hero", label: "Home" },
   { id: "categories", label: "Coverage" },
   { id: "how-it-works", label: "Process" },
-  { id: "coverage", label: "Area" },
   { id: "intel-pipeline", label: "Pipeline" },
+  { id: "coverage", label: "Markets" },
   { id: "footer", label: "Contact" },
 ]
 
