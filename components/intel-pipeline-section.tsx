@@ -6,7 +6,7 @@ import { useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { Radio, Map, FileText, Filter, ChevronRight } from "lucide-react"
+import { Radio, Map, FileText, Filter, Bell, ChevronRight } from "lucide-react"
 
 gsap.registerPlugin(ScrollTrigger)
 
