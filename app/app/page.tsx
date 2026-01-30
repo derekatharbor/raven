@@ -3,17 +3,18 @@
 
 import { useState } from "react"
 import { LeftNav } from "@/components/app/left-nav"
+import { HomeView } from "@/components/app/home-view"
 import { FeedView } from "@/components/app/feed-view"
 import { MapPageView } from "@/components/app/map-page-view"
 import { RightRail } from "@/components/app/right-rail"
 import { MOCK_INCIDENTS, type Incident, type ViewType } from "@/lib/mock-data"
 
 export default function AppPage() {
-  const [currentView, setCurrentView] = useState<ViewType>("feed")
+  const [currentView, setCurrentView] = useState<ViewType>("home")
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
 
   return (
-    <div className="h-screen bg-white overflow-hidden">
+    <div className="h-screen bg-gray-50 overflow-hidden">
       <div className="mx-auto max-w-[1400px] flex h-full">
         {/* Left Navigation */}
         <LeftNav 
@@ -23,7 +24,11 @@ export default function AppPage() {
 
         {/* Main Content Area */}
         <main className="flex-1 flex h-full overflow-hidden">
-          {currentView === "feed" && (
+          {currentView === "home" && (
+            <HomeView />
+          )}
+
+          {currentView === "pulse" && (
             <>
               <FeedView 
                 incidents={MOCK_INCIDENTS}
@@ -42,22 +47,29 @@ export default function AppPage() {
             />
           )}
 
+          {currentView === "forecast" && (
+            <div className="flex-1 border-x border-gray-200 bg-white p-8">
+              <h1 className="text-xl font-bold">Forecast</h1>
+              <p className="text-gray-500 mt-2">Trajectory modeling coming soon</p>
+            </div>
+          )}
+
           {currentView === "alerts" && (
-            <div className="flex-1 border-x border-gray-200 p-8">
+            <div className="flex-1 border-x border-gray-200 bg-white p-8">
               <h1 className="text-xl font-bold">Alerts</h1>
               <p className="text-gray-500 mt-2">Coming soon</p>
             </div>
           )}
 
           {currentView === "watchlist" && (
-            <div className="flex-1 border-x border-gray-200 p-8">
+            <div className="flex-1 border-x border-gray-200 bg-white p-8">
               <h1 className="text-xl font-bold">Watchlist</h1>
               <p className="text-gray-500 mt-2">Coming soon</p>
             </div>
           )}
 
           {currentView === "profile" && (
-            <div className="flex-1 border-x border-gray-200 p-8">
+            <div className="flex-1 border-x border-gray-200 bg-white p-8">
               <h1 className="text-xl font-bold">Profile</h1>
               <p className="text-gray-500 mt-2">Coming soon</p>
             </div>

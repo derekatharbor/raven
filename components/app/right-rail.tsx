@@ -36,7 +36,7 @@ const trending = [
 
 export function RightRail() {
   return (
-    <div className="w-[350px] h-screen flex flex-col border-l border-gray-100 hidden lg:flex">
+    <div className="w-[350px] h-screen flex flex-col border-l border-gray-100 hidden lg:flex bg-white">
       {/* Fixed search area */}
       <div className="flex-shrink-0 p-4 bg-white">
         {/* Search */}
@@ -44,14 +44,14 @@ export function RightRail() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search Ranger"
-            className="w-full bg-gray-100 rounded-full py-3 pl-12 pr-4 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+            placeholder="Search Raven"
+            className="w-full bg-gray-100 rounded-lg py-2.5 pl-12 pr-4 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
           />
         </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      {/* Scrollable content - hide scrollbar */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-hide">
 
       {/* Today's News */}
       <div className="bg-gray-50 rounded-2xl overflow-hidden mt-3">
@@ -135,7 +135,7 @@ export function RightRail() {
           <a href="#" className="hover:underline">Cookie Policy</a>
           <a href="#" className="hover:underline">Accessibility</a>
           <a href="#" className="hover:underline">More</a>
-          <span>© 2026 Ranger</span>
+          <span>© 2026 Raven</span>
         </div>
       </div>
       </div>

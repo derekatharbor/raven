@@ -7,12 +7,15 @@ import {
   Shield, 
   Building2, 
   Construction, 
-  Clock, 
+  MapPin,
   CheckCircle2,
   MessageCircle,
-  Share,
+  Share2,
   Bookmark,
-  MoreHorizontal
+  ThumbsUp,
+  MoreHorizontal,
+  Sparkles,
+  ChevronDown
 } from "lucide-react"
 import type { Incident } from "@/lib/mock-data"
 
@@ -33,18 +36,21 @@ const typeConfig = {
   crime: {
     color: "text-red-600",
     bgColor: "bg-red-50",
+    borderColor: "border-red-100",
     icon: Shield,
     label: "Safety",
   },
   civic: {
     color: "text-blue-600",
     bgColor: "bg-blue-50",
+    borderColor: "border-blue-100",
     icon: Building2,
     label: "Civic",
   },
   infrastructure: {
     color: "text-gray-600",
-    bgColor: "bg-gray-100",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
     icon: Construction,
     label: "Infrastructure",
   },
@@ -80,12 +86,20 @@ export function FeedView({ incidents, onIncidentSelect, selectedIncident }: Feed
       })
 
   return (
-    <div className="w-[600px] border-x border-gray-200 min-h-screen">
-      {/* Header with tabs */}
-      <div className="sticky top-0 bg-white/80 backdrop-blur-md z-10 border-b border-gray-200">
-        {/* Title bar */}
-        <div className="px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-900">Feed</h1>
+    <div className="w-[600px] border-x border-gray-200 flex flex-col h-screen">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
+        {/* Title bar with location */}
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold text-gray-900">Pulse</span>
+            <span className="text-gray-400">—</span>
+            <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm font-medium">Crystal Lake, IL</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -95,7 +109,7 @@ export function FeedView({ incidents, onIncidentSelect, selectedIncident }: Feed
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex-1 py-4 text-sm font-medium transition-colors relative hover:bg-gray-50",
+                "flex-1 py-3.5 text-sm font-bold transition-colors relative hover:bg-gray-50",
                 activeTab === tab.id ? "text-gray-900" : "text-gray-500"
               )}
             >
@@ -108,16 +122,38 @@ export function FeedView({ incidents, onIncidentSelect, selectedIncident }: Feed
         </div>
       </div>
 
-      {/* Feed items */}
-      <div>
-        {filteredIncidents.map((incident) => (
-          <IncidentCard 
-            key={incident.id} 
-            incident={incident}
-            onSelect={() => onIncidentSelect(incident)}
-            isSelected={selectedIncident?.id === incident.id}
-          />
-        ))}
+      {/* Scrollable Feed */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* The Pulse - AI Summary */}
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-amber-50">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-gray-900">The Pulse</span>
+                <span className="text-xs text-gray-500">• Updated 8:00 AM</span>
+              </div>
+              <p className="text-gray-700 mt-1 text-[15px] leading-relaxed">
+                Crystal Lake is calm this morning. 2 minor incidents overnight, down from last week's average. 
+                Note: Route 14 eastbound remains closed for utility work through Friday — use 176 as alternate.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Feed items as cards */}
+        <div className="p-4 space-y-4">
+          {filteredIncidents.map((incident) => (
+            <IncidentCard 
+              key={incident.id} 
+              incident={incident}
+              onSelect={() => onIncidentSelect(incident)}
+              isSelected={selectedIncident?.id === incident.id}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -134,90 +170,130 @@ function IncidentCard({
 }) {
   const config = typeConfig[incident.type]
   const Icon = config.icon
+  const [confirmed, setConfirmed] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   return (
     <article 
       onClick={onSelect}
       className={cn(
-        "px-4 py-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors",
-        isSelected && "bg-orange-50 hover:bg-orange-50"
+        "bg-white border rounded-xl p-4 cursor-pointer transition-all hover:shadow-md",
+        isSelected 
+          ? "border-orange-300 shadow-md ring-1 ring-orange-200" 
+          : "border-gray-200 hover:border-gray-300"
       )}
     >
-      <div className="flex gap-3">
-        {/* Icon */}
-        <div className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
-          config.bgColor
-        )}>
-          <Icon className={cn("w-5 h-5", config.color)} />
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {/* Type badge */}
+          <div className={cn(
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold",
+            config.bgColor,
+            config.color
+          )}>
+            <Icon className="w-3.5 h-3.5" />
+            {config.label}
+          </div>
+
+          {/* Verified badge */}
+          {incident.verified && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-orange-50 text-orange-600 text-xs font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Verified
+            </div>
+          )}
+
+          {/* High priority */}
+          {incident.urgency >= 7 && (
+            <div className="px-2 py-1 rounded-md bg-red-100 text-red-600 text-xs font-semibold">
+              High Priority
+            </div>
+          )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Header row */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className={cn("font-bold", config.color)}>{config.label}</span>
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{incident.municipality}</span>
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{formatTimeAgo(incident.timestamp)}</span>
-            {incident.verified && (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-orange-500 fill-orange-500" />
-              </>
-            )}
-            <button className="ml-auto p-1 hover:bg-gray-200 rounded-full transition-colors">
-              <MoreHorizontal className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
+        <button 
+          onClick={(e) => { e.stopPropagation() }}
+          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <MoreHorizontal className="w-4 h-4 text-gray-400" />
+        </button>
+      </div>
 
-          {/* Title */}
-          <h3 className="font-bold text-gray-900 mt-0.5 leading-snug">
-            {incident.title}
-          </h3>
+      {/* Title */}
+      <h3 className="font-bold text-gray-900 text-[16px] leading-snug">
+        {incident.title}
+      </h3>
 
-          {/* Summary */}
-          <p className="text-gray-700 mt-1 text-[15px] leading-normal">
-            {incident.summary}
-          </p>
+      {/* Summary */}
+      <p className="text-gray-600 mt-2 text-[15px] leading-relaxed">
+        {incident.summary}
+      </p>
 
-          {/* Location badge */}
-          <div className="mt-2">
-            <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-              {incident.location}
-            </span>
-          </div>
+      {/* Location + Time row */}
+      <div className="flex items-center gap-3 mt-3 text-sm text-gray-500">
+        <span className="flex items-center gap-1">
+          <MapPin className="w-3.5 h-3.5" />
+          {incident.location}
+        </span>
+        <span>•</span>
+        <span>{incident.municipality}</span>
+        <span>•</span>
+        <span>{formatTimeAgo(incident.timestamp)}</span>
+      </div>
 
-          {/* Engagement row */}
-          <div className="flex items-center justify-between mt-3 max-w-[400px]">
-            <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 group transition-colors">
-              <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors">
-                <MessageCircle className="w-4 h-4" />
-              </div>
-              <span className="text-sm">{incident.engagement.comments}</span>
-            </button>
+      {/* Source */}
+      <div className="mt-2 text-xs text-gray-400">
+        Source: {incident.source}
+      </div>
 
-            <button className="flex items-center gap-2 text-gray-500 hover:text-green-500 group transition-colors">
-              <div className="p-2 rounded-full group-hover:bg-green-50 transition-colors">
-                <Share className="w-4 h-4" />
-              </div>
-              <span className="text-sm">{incident.engagement.shares}</span>
-            </button>
+      {/* Engagement row */}
+      <div className="flex items-center gap-1 mt-4 pt-3 border-t border-gray-100">
+        {/* Confirm button */}
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation()
+            setConfirmed(!confirmed)
+          }}
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+            confirmed 
+              ? "bg-green-50 text-green-600" 
+              : "text-gray-500 hover:bg-gray-50 hover:text-green-600"
+          )}
+        >
+          <ThumbsUp className={cn("w-4 h-4", confirmed && "fill-current")} />
+          <span>Confirm</span>
+          <span className="text-gray-400">
+            {incident.engagement.comments + (confirmed ? 1 : 0)}
+          </span>
+        </button>
 
-            <button className="flex items-center gap-2 text-gray-500 hover:text-orange-500 group transition-colors">
-              <div className="p-2 rounded-full group-hover:bg-orange-50 transition-colors">
-                <Bookmark className="w-4 h-4" />
-              </div>
-            </button>
+        {/* Share button */}
+        <button 
+          onClick={(e) => { e.stopPropagation() }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-blue-600 transition-all"
+        >
+          <Share2 className="w-4 h-4" />
+          <span>Share</span>
+        </button>
 
-            <button className="flex items-center gap-2 text-gray-500 hover:text-orange-500 group transition-colors">
-              <div className="p-2 rounded-full group-hover:bg-orange-50 transition-colors">
-                <Share className="w-4 h-4" />
-              </div>
-            </button>
-          </div>
-        </div>
+        {/* Save button */}
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation()
+            setSaved(!saved)
+          }}
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ml-auto",
+            saved 
+              ? "bg-orange-50 text-orange-600" 
+              : "text-gray-500 hover:bg-gray-50 hover:text-orange-600"
+          )}
+        >
+          <Bookmark className={cn("w-4 h-4", saved && "fill-current")} />
+          <span>Save</span>
+        </button>
       </div>
     </article>
   )

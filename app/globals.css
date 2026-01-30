@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Ranger design tokens - Light mode default */
+/* Raven design tokens - Light mode default */
 :root {
   --background: oklch(0.97 0 0);
   --foreground: oklch(0.15 0 0);
@@ -179,4 +179,13 @@ a,
 input[type="submit"],
 input[type="button"] {
   cursor: pointer;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
