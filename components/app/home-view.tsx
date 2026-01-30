@@ -1,21 +1,16 @@
 // components/app/home-view.tsx
 "use client"
 
-import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { 
-  Shield,
   Home,
   Building2,
   Baby,
   ChevronRight,
   TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertTriangle,
-  CheckCircle2,
   Clock,
-  MapPin
+  MapPin,
+  Plus
 } from "lucide-react"
 
 // Mock data for pinned locations
@@ -24,25 +19,25 @@ const pinnedLocations = [
     id: "home", 
     name: "Home", 
     icon: Home, 
-    status: "stable", 
-    statusText: "Stable",
-    detail: null 
+    score: 92,
+    status: "Stable",
+    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop&auto=format",
   },
   { 
     id: "work", 
     name: "Work", 
     icon: Building2, 
-    status: "minor", 
-    statusText: "Minor Traffic Disruption Tomorrow",
-    detail: "Route 14 construction continues" 
+    score: 78,
+    status: "Minor Disruption",
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop&auto=format",
   },
   { 
     id: "daycare", 
-    name: "Little Billy's Daycare", 
+    name: "Daycare", 
     icon: Baby, 
-    status: "stable", 
-    statusText: "Normal",
-    detail: null 
+    score: 95,
+    status: "Normal",
+    image: "https://images.unsplash.com/photo-1576495199011-eb94736d05d6?w=400&h=300&fit=crop&auto=format",
   },
 ]
 
@@ -53,148 +48,172 @@ const briefingItems = [
   "No infrastructure instability detected.",
 ]
 
-const statusConfig = {
-  stable: {
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
-    icon: CheckCircle2,
-  },
-  minor: {
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-    icon: AlertTriangle,
-  },
-  elevated: {
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
-    icon: AlertTriangle,
-  },
-}
-
 export function HomeView() {
+  const stabilityScore = 87
+  const stabilityLevel = "HIGH"
+
   return (
-    <div className="flex-1 border-x border-gray-200 h-screen overflow-y-auto bg-gray-50 scrollbar-hide">
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="flex-1 h-screen overflow-y-auto bg-white scrollbar-hide">
+      <div className="max-w-6xl mx-auto p-6">
         
-        {/* Environmental Status - The Anchor */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-                  Environment
-                </span>
-                <span className="text-3xl font-bold text-gray-900">
-                  STABLE
-                </span>
-                <span className="text-2xl font-semibold text-green-600">
-                  82<span className="text-lg text-gray-400">/100</span>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Good morning</h1>
+          <p className="text-sm text-gray-500 mt-1">Crystal Lake, IL — Thursday, January 30</p>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          
+          {/* Left Column - Brief */}
+          <div className="space-y-6">
+            {/* Today's Brief */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-gray-900">Today's Brief</h2>
+                <span className="text-xs text-gray-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  8:00 AM
                 </span>
               </div>
-              <p className="text-sm text-gray-500 mt-1">
-                No emerging risks detected across your pinned locations.
-              </p>
+              <ul className="space-y-3">
+                {briefingItems.map((item, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-2 flex-shrink-0" />
+                    <span className="text-[15px] text-gray-600 leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="w-16 h-16 rounded-full bg-green-50 border-4 border-green-200 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+
+            {/* 7-Day Outlook */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900">7-Day Outlook</h2>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+              <div className="flex items-center gap-3 mt-4">
+                <span className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
+                  Stable
+                </span>
+                <TrendingUp className="w-4 h-4 text-gray-300" />
+                <span className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-sm font-medium">
+                  Stable
+                </span>
+                <TrendingUp className="w-4 h-4 text-gray-300" />
+                <span className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium">
+                  Watchful
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-3">
+                Minor traffic disruptions expected mid-week.
+              </p>
             </div>
           </div>
 
-          {/* Location Status Pills */}
-          <div className="space-y-2 pt-4 border-t border-gray-100">
-            {pinnedLocations.map((location) => {
-              const config = statusConfig[location.status as keyof typeof statusConfig]
-              const Icon = location.icon
-              const StatusIcon = config.icon
+          {/* Right Column - Hero Image with Glass Card */}
+          <div className="relative rounded-xl overflow-hidden min-h-[400px]">
+            {/* Background Image */}
+            <img 
+              src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop&auto=format"
+              alt="Crystal Lake area"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {/* Subtle overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+            
+            {/* Glass Morphism Card */}
+            <div className="absolute bottom-6 left-6 right-6">
+              <div 
+                className="backdrop-blur-xl bg-white/70 border border-white/50 rounded-xl p-6 shadow-lg"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                      Stability
+                    </div>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-bold text-gray-900">{stabilityLevel}</span>
+                      <span className="text-2xl font-semibold text-green-600">{stabilityScore}<span className="text-base text-gray-400">/100</span></span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      No emerging disruptions across your pinned locations.
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* Pinned Locations */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">Your Locations</h2>
+            <button className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors">
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {pinnedLocations.map((location) => {
+              const Icon = location.icon
+              const isStable = location.score >= 80
+              
               return (
                 <button
                   key={location.id}
-                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                  className="relative rounded-xl overflow-hidden h-48 group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <span className="font-medium text-gray-900">{location.name}</span>
-                    <span className="text-gray-400">—</span>
-                    <div className={cn(
-                      "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
-                      config.bgColor,
-                      config.color
-                    )}>
-                      <StatusIcon className="w-3 h-3" />
-                      {location.statusText}
+                  {/* Background Image */}
+                  <img 
+                    src={location.image}
+                    alt={location.name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  
+                  {/* Glass Card Overlay */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <div className="backdrop-blur-md bg-white/60 border border-white/40 rounded-lg px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4 text-gray-700" />
+                          <span className="font-medium text-gray-900">{location.name}</span>
+                        </div>
+                        <div className={cn(
+                          "text-sm font-semibold",
+                          isStable ? "text-green-700" : "text-amber-700"
+                        )}>
+                          {location.score}
+                        </div>
+                      </div>
+                      <div className={cn(
+                        "text-xs mt-1",
+                        isStable ? "text-green-600" : "text-amber-600"
+                      )}>
+                        {location.status}
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Intelligence Brief */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-lg font-bold text-gray-900">Today's Brief</h2>
-            <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Updated 8:00 AM
-            </span>
-          </div>
-
-          <ul className="space-y-3">
-            {briefingItems.map((item, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 flex-shrink-0" />
-                <span className="text-[15px] text-gray-700 leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Forecast Strip */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <button className="w-full flex items-center justify-between group">
-            <div className="flex items-center gap-4">
-              <h2 className="text-lg font-bold text-gray-900">7-Day Outlook</h2>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-medium">
-                  Stable
-                </span>
-                <TrendingUp className="w-4 h-4 text-gray-400" />
-                <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-sm font-medium">
-                  Watchful
-                </span>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+        {/* Quick Actions - Minimal */}
+        <div className="flex gap-3">
+          <button className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all">
+            View Full Report
           </button>
-          <p className="text-sm text-gray-500 mt-2">
-            Minor uptick in traffic disruptions expected mid-week due to scheduled roadwork.
-          </p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-3 gap-4">
-          <button className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all text-left">
-            <MapPin className="w-5 h-5 text-orange-500 mb-2" />
-            <div className="font-medium text-gray-900 text-sm">Add Location</div>
-            <div className="text-xs text-gray-500 mt-0.5">Pin a new place</div>
-          </button>
-          <button className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all text-left">
-            <Shield className="w-5 h-5 text-orange-500 mb-2" />
-            <div className="font-medium text-gray-900 text-sm">View Alerts</div>
-            <div className="text-xs text-gray-500 mt-0.5">3 this week</div>
-          </button>
-          <button className="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all text-left">
-            <TrendingUp className="w-5 h-5 text-orange-500 mb-2" />
-            <div className="font-medium text-gray-900 text-sm">Trend Report</div>
-            <div className="text-xs text-gray-500 mt-0.5">Monthly summary</div>
+          <button className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all">
+            Manage Alerts
           </button>
         </div>
 
