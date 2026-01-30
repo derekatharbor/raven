@@ -3,15 +3,13 @@
 
 import { cn } from "@/lib/utils"
 import { 
-  Home,
+  Radio,
   Map, 
-  Activity,
   TrendingUp,
   Bell, 
   Eye, 
   User,
-  MoreHorizontal,
-  Plus
+  MoreHorizontal
 } from "lucide-react"
 import type { ViewType } from "@/lib/mock-data"
 
@@ -21,9 +19,8 @@ interface LeftNavProps {
 }
 
 const navItems = [
-  { id: "home" as ViewType, icon: Home, label: "Home" },
+  { id: "pulse" as ViewType, icon: Radio, label: "Pulse" },
   { id: "map" as ViewType, icon: Map, label: "Map" },
-  { id: "pulse" as ViewType, icon: Activity, label: "Pulse" },
   { id: "forecast" as ViewType, icon: TrendingUp, label: "Forecast" },
   { id: "alerts" as ViewType, icon: Bell, label: "Alerts" },
   { id: "watchlist" as ViewType, icon: Eye, label: "Watchlist" },
@@ -39,7 +36,7 @@ export function LeftNav({ currentView, onViewChange }: LeftNavProps) {
           <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center">
             <span className="text-white font-bold text-sm">R</span>
           </div>
-          <span className="text-xl font-bold text-gray-900 group-hover:text-orange-500 transition-colors">
+          <span className="text-xl font-bold text-gray-900 group-hover:text-gray-600 transition-colors">
             Raven
           </span>
         </a>
@@ -77,14 +74,6 @@ export function LeftNav({ currentView, onViewChange }: LeftNavProps) {
         <button className="w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-colors text-left text-gray-600 hover:bg-gray-50 hover:text-gray-900">
           <MoreHorizontal className="w-5 h-5 stroke-[1.5px]" />
           <span className="text-[15px]">More</span>
-        </button>
-      </div>
-
-      {/* Send Signal Button */}
-      <div className="mt-5 px-3">
-        <button className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-5 rounded-lg transition-colors text-sm">
-          <Plus className="w-4 h-4" />
-          <span>Send Signal</span>
         </button>
       </div>
 

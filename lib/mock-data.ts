@@ -89,4 +89,4 @@ export const MOCK_INCIDENTS = [
 
 export type Incident = typeof MOCK_INCIDENTS[0]
 
-export type ViewType = "home" | "map" | "pulse" | "forecast" | "alerts" | "watchlist" | "profile"
+export type ViewType = "pulse" | "map" | "forecast" | "alerts" | "watchlist" | "profile"
