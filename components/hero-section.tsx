@@ -88,7 +88,7 @@ export function HeroSection() {
 
         {/* Main headline with split-flap */}
         <div className="mb-8">
-          <SplitFlapText text="RANGER" className="tracking-tight" speed={45} />
+          <SplitFlapText text="RAVEN" className="tracking-tight" speed={45} />
         </div>
 
         {/* Tagline */}
