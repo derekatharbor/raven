@@ -196,8 +196,8 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
   }, [mapLoaded, selectedIncident])
 
   return (
-    <div className="flex-1 flex min-h-screen">
-      {/* Map Area */}
+    <div className="flex-1 flex h-screen overflow-hidden">
+      {/* Map Area - static */}
       <div className="flex-1 relative">
         {/* Search and Filters */}
         <div className="absolute top-4 left-4 right-4 z-[1000] flex items-center gap-3">
@@ -249,21 +249,21 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
         )}
       </div>
 
-      {/* Cards Sidebar */}
-      <div className="w-[420px] border-l border-gray-200 bg-white overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200">
+      {/* Cards Sidebar - only this scrolls */}
+      <div className="w-[420px] border-l border-gray-200 bg-white flex flex-col h-screen">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 px-5 py-4 border-b border-gray-200 bg-white">
           <h2 className="text-lg font-bold text-gray-900">
-            Crystal Lake, IL Incidents
+            Crystal Lake, IL
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            {filteredIncidents.length} results
+            {filteredIncidents.length} incidents nearby
           </p>
         </div>
 
         {/* Scrollable cards */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-3 grid gap-3">
+          <div className="p-3 space-y-3">
             {filteredIncidents.map((incident) => (
               <IncidentCard 
                 key={incident.id}

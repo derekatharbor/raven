@@ -13,8 +13,8 @@ export default function AppPage() {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-[1400px] flex">
+    <div className="h-screen bg-white overflow-hidden">
+      <div className="mx-auto max-w-[1400px] flex h-full">
         {/* Left Navigation */}
         <LeftNav 
           currentView={currentView} 
@@ -22,7 +22,7 @@ export default function AppPage() {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 flex min-h-screen">
+        <main className="flex-1 flex h-full overflow-hidden">
           {currentView === "feed" && (
             <>
               <FeedView 

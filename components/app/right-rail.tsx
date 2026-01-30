@@ -36,8 +36,9 @@ const trending = [
 
 export function RightRail() {
   return (
-    <div className="w-[350px] pl-6 pr-4 py-2 hidden lg:block">
-      <div className="sticky top-0 pt-1 pb-3 bg-white">
+    <div className="w-[350px] h-screen flex flex-col border-l border-gray-100 hidden lg:flex">
+      {/* Fixed search area */}
+      <div className="flex-shrink-0 p-4 bg-white">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -48,6 +49,9 @@ export function RightRail() {
           />
         </div>
       </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
 
       {/* Today's News */}
       <div className="bg-gray-50 rounded-2xl overflow-hidden mt-3">
@@ -124,7 +128,7 @@ export function RightRail() {
       </div>
 
       {/* Footer links */}
-      <div className="mt-4 px-4">
+      <div className="mt-4">
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-gray-500">
           <a href="#" className="hover:underline">Terms of Service</a>
           <a href="#" className="hover:underline">Privacy Policy</a>
@@ -133,6 +137,7 @@ export function RightRail() {
           <a href="#" className="hover:underline">More</a>
           <span>© 2026 Ranger</span>
         </div>
+      </div>
       </div>
     </div>
   )
