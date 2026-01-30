@@ -41,7 +41,10 @@ export function RightRail() {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 scrollbar-light">
+      <div 
+        className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 scrollbar-light"
+        data-lenis-prevent
+      >
 
       {/* Stability Overview Card */}
       <div className="bg-gray-50 rounded-xl p-5 mb-4">
