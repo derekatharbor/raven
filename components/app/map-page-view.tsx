@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   SlidersHorizontal
 } from "lucide-react"
-import type { Incident } from "@/app/app/page"
+import type { Incident } from "@/lib/mock-data"
 
 interface MapPageViewProps {
   incidents: Incident[]

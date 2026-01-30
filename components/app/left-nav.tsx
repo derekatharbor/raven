@@ -11,7 +11,7 @@ import {
   MoreHorizontal,
   Settings
 } from "lucide-react"
-import type { ViewType } from "@/app/app/page"
+import type { ViewType } from "@/lib/mock-data"
 
 interface LeftNavProps {
   currentView: ViewType

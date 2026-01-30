@@ -14,7 +14,7 @@ import {
   Bookmark,
   MoreHorizontal
 } from "lucide-react"
-import type { Incident } from "@/app/app/page"
+import type { Incident } from "@/lib/mock-data"
 
 interface FeedViewProps {
   incidents: Incident[]
