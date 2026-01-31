@@ -30,7 +30,7 @@ export default function AppPage() {
   const [currentView, setCurrentView] = useState<ViewType>("brief")
   const [selectedLocationId, setSelectedLocationId] = useState("crystal-lake")
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [orbitDropdownOpen, setOrbitDropdownOpen] = useState(true)
 
