@@ -284,7 +284,8 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
         {/* Mobile: Floating button to open incident list */}
         <button
           onClick={() => setMobileSheetOpen(true)}
-          className="md:hidden absolute bottom-4 left-4 right-4 z-[1000] bg-background border border-border shadow-lg p-4 flex items-center justify-between"
+          className="lg:hidden absolute bottom-4 left-4 right-4 z-[1000] bg-background border border-border shadow-lg p-4 flex items-center justify-between rounded-xl"
+          style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
         >
           <div>
             <p className="font-mono text-xs uppercase tracking-wider text-accent">Activity Feed</p>
@@ -327,50 +328,59 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
         </div>
       </div>
 
-      {/* Mobile: Bottom Sheet */}
-      {mobileSheetOpen && (
-        <div className="md:hidden fixed inset-0 z-[1001]">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setMobileSheetOpen(false)}
-          />
+      {/* Mobile: Bottom Sheet - always rendered, animated */}
+      <div 
+        className={cn(
+          "lg:hidden fixed inset-0 z-[1001] transition-opacity duration-300",
+          mobileSheetOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+      >
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/50"
+          onClick={() => setMobileSheetOpen(false)}
+        />
+        
+        {/* Sheet */}
+        <div 
+          className={cn(
+            "absolute bottom-0 left-0 right-0 bg-background border-t border-border rounded-t-2xl max-h-[70vh] flex flex-col transition-transform duration-300 ease-out",
+            mobileSheetOpen ? "translate-y-0" : "translate-y-full"
+          )}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          {/* Handle */}
+          <div className="flex justify-center py-3">
+            <div className="w-10 h-1 bg-border rounded-full" />
+          </div>
           
-          {/* Sheet */}
-          <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-border rounded-t-2xl max-h-[70vh] flex flex-col">
-            {/* Handle */}
-            <div className="flex justify-center py-3">
-              <div className="w-10 h-1 bg-border rounded-full" />
+          {/* Header */}
+          <div className="flex-shrink-0 px-4 pb-3 border-b border-border flex items-center justify-between">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Activity Feed</p>
+              <p className="font-mono text-sm text-foreground">{filteredIncidents.length} incidents</p>
             </div>
-            
-            {/* Header */}
-            <div className="flex-shrink-0 px-4 pb-3 border-b border-border flex items-center justify-between">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Activity Feed</p>
-                <p className="font-mono text-sm text-foreground">{filteredIncidents.length} incidents</p>
-              </div>
-              <button 
-                onClick={() => setMobileSheetOpen(false)}
-                className="p-2 text-muted-foreground"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <button 
+              onClick={() => setMobileSheetOpen(false)}
+              className="p-2 text-muted-foreground"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            {/* Cards */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {filteredIncidents.map((incident) => (
-                <IncidentCard 
-                  key={incident.id}
-                  incident={incident}
-                  isSelected={selectedIncident?.id === incident.id}
-                  onSelect={() => onIncidentSelect(incident)}
-                />
-              ))}
-            </div>
+          {/* Cards */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {filteredIncidents.map((incident) => (
+              <IncidentCard 
+                key={incident.id}
+                incident={incident}
+                isSelected={selectedIncident?.id === incident.id}
+                onSelect={() => onIncidentSelect(incident)}
+              />
+            ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

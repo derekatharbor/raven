@@ -2,6 +2,7 @@
 "use client"
 
 import { useState } from "react"
+import { cn } from "@/lib/utils"
 import { 
   CURRENT_LOCATION, 
   ORBIT_LOCATIONS,
@@ -20,7 +21,8 @@ import {
   ChevronRight,
   ExternalLink,
   Zap,
-  Map
+  Map,
+  X
 } from "lucide-react"
 
 // ============================================
@@ -353,11 +355,14 @@ function TemporalPatternsCard({ onOpenModal }: { onOpenModal: () => void }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      {/* Stack on mobile, row on desktop */}
+      <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
         {windows.map((window, i) => (
-          <div key={i} className="text-center">
-            <p className={`font-mono text-lg font-medium ${window.color}`}>{window.time}</p>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-1">{window.label}</p>
+          <div key={i} className="flex sm:flex-col items-center sm:items-center justify-between sm:justify-start sm:text-center py-2 sm:py-0 border-b sm:border-b-0 border-border/30 last:border-b-0">
+            <div className="sm:mb-1">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{window.label}</p>
+            </div>
+            <p className={`font-mono text-base sm:text-lg font-medium ${window.color}`}>{window.time}</p>
           </div>
         ))}
       </div>
@@ -415,7 +420,7 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
 }
 
 // ============================================
-// DETAIL MODAL (placeholder)
+// DETAIL MODAL (Bottom sheet on mobile)
 // ============================================
 function DetailModal({ 
   isOpen, 
@@ -426,23 +431,60 @@ function DetailModal({
   onClose: () => void
   title: string
 }) {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-card border border-border max-w-2xl w-full max-h-[80vh] overflow-auto p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-[family-name:var(--font-bebas)] text-2xl">{title}</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            ✕
-          </button>
+    <>
+      {/* Backdrop */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-50 bg-black/50 transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+      />
+      
+      {/* Modal - centered on desktop, bottom sheet on mobile */}
+      <div 
+        className={cn(
+          "fixed z-50 transition-all duration-300 ease-out",
+          // Mobile: bottom sheet
+          "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
+          // Desktop: centered
+          "sm:-translate-x-1/2 sm:-translate-y-1/2",
+          isOpen 
+            ? "translate-y-0 opacity-100 sm:scale-100" 
+            : "translate-y-full opacity-0 sm:translate-y-0 sm:scale-95 pointer-events-none"
+        )}
+        style={{ 
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}
+      >
+        <div className="bg-background border border-border sm:rounded-none rounded-t-2xl max-h-[80vh] sm:max-h-[70vh] w-full sm:w-[90vw] sm:max-w-2xl overflow-hidden flex flex-col">
+          {/* Handle - mobile only */}
+          <div className="sm:hidden flex justify-center py-3">
+            <div className="w-10 h-1 bg-border rounded-full" />
+          </div>
+          
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <h2 className="font-[family-name:var(--font-bebas)] text-xl sm:text-2xl">{title}</h2>
+            <button 
+              onClick={onClose} 
+              className="p-2 -mr-2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-5">
+            <p className="font-mono text-sm text-muted-foreground">
+              Full details and source information would appear here. This modal will contain 
+              the complete incident report, source links, and any additional context available.
+            </p>
+          </div>
         </div>
-        <p className="font-mono text-sm text-muted-foreground">
-          Full details and source information would appear here...
-        </p>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -467,8 +509,11 @@ export function BriefingView({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto" data-lenis-prevent>
-      <div className="p-4 md:p-8 lg:p-12">
+    <div className="flex-1 overflow-y-auto h-full" data-lenis-prevent>
+      <div 
+        className="p-4 md:p-8 lg:p-12"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+      >
         {/* Score and narrative */}
         <ScoreHero location={selectedLocation} />
 

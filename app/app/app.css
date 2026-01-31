@@ -22,7 +22,6 @@
   
   background-color: oklch(0.98 0 0);
   color: oklch(0.15 0 0);
-  min-height: 100vh;
 }
 
 /* Remove noise overlay for app */
@@ -33,7 +32,8 @@
 
 /* Light scrollbar for app */
 .app-light-mode ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .app-light-mode ::-webkit-scrollbar-track {
@@ -42,9 +42,31 @@
 
 .app-light-mode ::-webkit-scrollbar-thumb {
   background: oklch(0.85 0 0);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .app-light-mode ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.75 0 0);
+}
+
+/* Hide scrollbar on mobile for cleaner look */
+@media (max-width: 768px) {
+  .app-light-mode ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .app-light-mode {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Smooth page transitions */
+.app-light-mode * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fix for iOS momentum scrolling */
+.app-light-mode [data-lenis-prevent] {
+  -webkit-overflow-scrolling: touch;
 }
