@@ -10,9 +10,10 @@ import {
   Construction,
   Clock,
   CheckCircle2,
-  SlidersHorizontal,
   X,
-  MapPin
+  MapPin,
+  Layers,
+  ChevronRight
 } from "lucide-react"
 import type { Incident } from "@/lib/mock-data"
 
@@ -24,35 +25,35 @@ interface MapPageViewProps {
 
 const typeConfig = {
   crime: {
-    color: "#be123c",      // rose-700 (muted)
-    bgColor: "bg-rose-50",
-    textColor: "text-rose-700",
-    borderColor: "border-rose-200",
+    color: "#be123c",
+    bgColor: "bg-rose-500/10",
+    textColor: "text-rose-600",
+    borderColor: "border-rose-500/20",
     icon: Shield,
     label: "Safety",
   },
   civic: {
-    color: "#0369a1",      // sky-700 (muted)
-    bgColor: "bg-sky-50",
-    textColor: "text-sky-700",
-    borderColor: "border-sky-200",
+    color: "#0369a1",
+    bgColor: "bg-sky-500/10",
+    textColor: "text-sky-600",
+    borderColor: "border-sky-500/20",
     icon: Building2,
     label: "Civic",
   },
   infrastructure: {
-    color: "#475569",      // slate-600 (muted)
-    bgColor: "bg-slate-50",
-    textColor: "text-slate-600",
-    borderColor: "border-slate-200",
+    color: "#d97706",
+    bgColor: "bg-amber-500/10",
+    textColor: "text-amber-600",
+    borderColor: "border-amber-500/20",
     icon: Construction,
     label: "Infrastructure",
   },
 }
 
 const filterOptions = [
-  { id: "crime", label: "Safety", icon: Shield },
-  { id: "civic", label: "Civic", icon: Building2 },
-  { id: "infrastructure", label: "Infrastructure", icon: Construction },
+  { id: "crime", label: "Safety", icon: Shield, color: "rose" },
+  { id: "civic", label: "Civic", icon: Building2, color: "sky" },
+  { id: "infrastructure", label: "Infrastructure", icon: Construction, color: "amber" },
 ]
 
 function formatTimeAgo(timestamp: string): string {
@@ -78,6 +79,7 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
   const markersRef = useRef<any[]>([])
   const [mapLoaded, setMapLoaded] = useState(false)
   const [activeFilters, setActiveFilters] = useState<string[]>(["crime", "civic", "infrastructure"])
+  const [showHeatmap, setShowHeatmap] = useState(false)
 
   const toggleFilter = (filterId: string) => {
     setActiveFilters(prev => 
@@ -97,30 +99,26 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
       // @ts-ignore
       const L = await import("leaflet")
       
-      // Load CSS if not already loaded
       if (!document.querySelector('link[href*="leaflet.css"]')) {
         const link = document.createElement("link")
         link.rel = "stylesheet"
         link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         document.head.appendChild(link)
-        // Wait for CSS to load
         await new Promise(resolve => setTimeout(resolve, 100))
       }
 
       if (!mapRef.current || mapInstanceRef.current) return
 
-      // Initialize map
       const map = L.map(mapRef.current, {
         zoomControl: false,
-      }).setView([42.2411, -88.3162], 12)
+      }).setView([42.2411, -88.3162], 13)
 
-      // Light style map tiles (similar to Zillow)
+      // Light, minimal style tiles
       L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
         maxZoom: 19,
       }).addTo(map)
 
-      // Add zoom control to bottom right
       L.control.zoom({ position: "bottomright" }).addTo(map)
 
       mapInstanceRef.current = map
@@ -146,11 +144,9 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
       const L = await import("leaflet")
       const map = mapInstanceRef.current
 
-      // Clear existing markers
       markersRef.current.forEach(marker => marker.remove())
       markersRef.current = []
 
-      // Add new markers
       filteredIncidents.forEach((incident) => {
         const config = typeConfig[incident.type]
         const isSelected = selectedIncident?.id === incident.id
@@ -159,22 +155,19 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
           className: "custom-marker",
           html: `
             <div style="
-              width: ${isSelected ? "32px" : "24px"};
-              height: ${isSelected ? "32px" : "24px"};
+              width: ${isSelected ? "28px" : "20px"};
+              height: ${isSelected ? "28px" : "20px"};
               background: ${config.color};
-              border: 3px solid white;
+              border: 2px solid white;
               border-radius: 50%;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
               transition: all 0.2s ease;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              ${isSelected ? "transform: scale(1.1);" : ""}
+              ${isSelected ? "transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.25);" : ""}
             ">
             </div>
           `,
-          iconSize: [isSelected ? 32 : 24, isSelected ? 32 : 24],
-          iconAnchor: [isSelected ? 16 : 12, isSelected ? 16 : 12],
+          iconSize: [isSelected ? 28 : 20, isSelected ? 28 : 20],
+          iconAnchor: [isSelected ? 14 : 10, isSelected ? 14 : 10],
         })
 
         const marker = L.marker([incident.coordinates.lat, incident.coordinates.lng], { icon })
@@ -188,7 +181,7 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
     loadMarkers()
   }, [mapLoaded, filteredIncidents, selectedIncident, onIncidentSelect])
 
-  // Pan to selected incident
+  // Pan to selected
   useEffect(() => {
     if (!mapLoaded || !mapInstanceRef.current || !selectedIncident) return
     
@@ -200,71 +193,110 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
 
   return (
     <div className="flex-1 flex h-full">
-      {/* Map Area - static */}
+      {/* Map Area */}
       <div className="flex-1 relative">
-        {/* Search and Filters */}
-        <div className="absolute top-4 left-4 right-4 z-[1000] flex items-center gap-2 flex-wrap">
+        {/* Top Controls */}
+        <div className="absolute top-4 left-4 right-4 z-[1000] flex items-center gap-3">
           {/* Search */}
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className="relative flex-shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Crystal Lake, IL"
+              placeholder="Search location..."
               defaultValue="Crystal Lake, IL"
-              className="w-full bg-white shadow-md rounded-xl py-2.5 pl-10 pr-4 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              className="w-64 bg-background/95 backdrop-blur-sm border border-border shadow-sm py-2.5 pl-10 pr-4 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
-          {/* Filter chips - multi-select */}
-          {filterOptions.map((filter) => {
-            const isActive = activeFilters.includes(filter.id)
-            const Icon = filter.icon
-            return (
-              <button
-                key={filter.id}
-                onClick={() => toggleFilter(filter.id)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium shadow-md border transition-all",
-                  isActive
-                    ? "bg-gray-900 text-white border-gray-900"
-                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                {filter.label}
-                {isActive && (
-                  <X className="w-3.5 h-3.5 ml-1" />
-                )}
-              </button>
-            )
-          })}
+          {/* Filter chips */}
+          <div className="flex items-center gap-2">
+            {filterOptions.map((filter) => {
+              const isActive = activeFilters.includes(filter.id)
+              const Icon = filter.icon
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => toggleFilter(filter.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 font-mono text-xs uppercase tracking-wider border transition-all",
+                    isActive
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background/95 backdrop-blur-sm text-muted-foreground border-border hover:border-foreground/50"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {filter.label}
+                  {isActive && <X className="w-3 h-3 ml-1" />}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Layer toggle */}
+          <button
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 font-mono text-xs uppercase tracking-wider border transition-all ml-auto",
+              showHeatmap
+                ? "bg-accent text-accent-foreground border-accent"
+                : "bg-background/95 backdrop-blur-sm text-muted-foreground border-border hover:border-accent/50"
+            )}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Heatmap
+          </button>
         </div>
 
         {/* Map */}
         <div ref={mapRef} className="absolute inset-0" />
 
-        {/* Loading overlay */}
+        {/* Loading */}
         {!mapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <span className="text-sm text-gray-500">Loading map...</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+            <span className="font-mono text-sm text-muted-foreground">Loading map...</span>
           </div>
         )}
+
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 z-[1000] bg-background/95 backdrop-blur-sm border border-border p-3">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Legend</p>
+          <div className="space-y-1.5">
+            {filterOptions.map(filter => {
+              const config = typeConfig[filter.id as keyof typeof typeConfig]
+              return (
+                <div key={filter.id} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: config.color }}
+                  />
+                  <span className="font-mono text-xs text-foreground/70">{filter.label}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Cards Sidebar - only this scrolls */}
-      <div className="w-[400px] border-l border-gray-200 bg-white flex flex-col h-full">
-        {/* Fixed Header */}
-        <div className="flex-shrink-0 px-5 py-4 border-b border-gray-200 bg-white">
-          <h2 className="font-semibold text-gray-900">
-            Crystal Lake, IL
+      {/* Incident Panel */}
+      <div className="w-[380px] border-l border-border bg-background flex flex-col h-full">
+        {/* Header */}
+        <div className="flex-shrink-0 px-5 py-4 border-b border-border">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Activity Feed</span>
+          </div>
+          <h2 className="font-[family-name:var(--font-bebas)] text-2xl tracking-tight text-foreground">
+            Crystal Lake
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {filteredIncidents.length} incidents nearby
+          <p className="font-mono text-xs text-muted-foreground mt-1">
+            {filteredIncidents.length} incidents in view
           </p>
         </div>
 
-        {/* Scrollable cards */}
-        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-light">
+        {/* Incident cards */}
+        <div 
+          className="flex-1 overflow-y-auto scrollbar-light"
+          data-lenis-prevent
+        >
           <div className="p-4 space-y-3">
             {filteredIncidents.map((incident) => (
               <IncidentCard 
@@ -292,61 +324,89 @@ function IncidentCard({
 }) {
   const config = typeConfig[incident.type]
   const Icon = config.icon
+  const [isHovered, setIsHovered] = useState(false)
 
   return (
     <button
       onClick={onSelect}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "w-full text-left rounded-xl border p-4 transition-all hover:shadow-sm",
+        "w-full text-left border p-4 transition-all relative overflow-hidden",
         isSelected 
-          ? "border-gray-300 shadow-sm bg-gray-50" 
-          : "border-gray-200 hover:border-gray-300 bg-white"
+          ? "border-accent/50 bg-accent/5" 
+          : "border-border hover:border-accent/30"
       )}
     >
-      {/* Badge row */}
-      <div className="flex items-center justify-between mb-2">
-        <div className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium",
-          config.bgColor,
-          config.textColor
-        )}>
-          <Icon className="w-3.5 h-3.5" />
-          {config.label}
-        </div>
-        {incident.urgency >= 7 && (
-          <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded-lg">
-            Priority
-          </span>
+      {/* Hover background */}
+      <div 
+        className={cn(
+          "absolute inset-0 bg-accent/5 transition-opacity",
+          isHovered && !isSelected ? "opacity-100" : "opacity-0"
         )}
+      />
+
+      {/* Corner accent on hover/select */}
+      <div className={cn(
+        "absolute top-0 right-0 w-8 h-8 transition-opacity",
+        isHovered || isSelected ? "opacity-100" : "opacity-0"
+      )}>
+        <div className="absolute top-0 right-0 w-full h-[2px] bg-accent" />
+        <div className="absolute top-0 right-0 w-[2px] h-full bg-accent" />
       </div>
 
-      {/* Title */}
-      <h3 className="font-semibold text-gray-900 leading-snug">
-        {incident.title}
-      </h3>
-
-      {/* Summary - truncated */}
-      <p className="text-sm text-gray-600 mt-1.5 line-clamp-2">
-        {incident.summary}
-      </p>
-
-      {/* Meta row */}
-      <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
-        <MapPin className="w-3 h-3" />
-        <span>{incident.location}</span>
-        <span>•</span>
-        <Clock className="w-3 h-3" />
-        <span>{formatTimeAgo(incident.timestamp)}</span>
-        {incident.verified && (
-          <>
-            <span>•</span>
-            <span className="flex items-center gap-1 text-emerald-600">
-              <CheckCircle2 className="w-3 h-3" />
-              Verified
+      <div className="relative">
+        {/* Badge row */}
+        <div className="flex items-center justify-between mb-2">
+          <div className={cn(
+            "inline-flex items-center gap-1.5 px-2 py-1 font-mono text-[10px] uppercase tracking-wider",
+            config.bgColor,
+            config.textColor
+          )}>
+            <Icon className="w-3 h-3" />
+            {config.label}
+          </div>
+          {incident.urgency >= 7 && (
+            <span className="font-mono text-[10px] uppercase tracking-wider text-rose-600 bg-rose-500/10 px-2 py-1">
+              Priority
             </span>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* Title */}
+        <h3 className="font-semibold text-foreground leading-snug">
+          {incident.title}
+        </h3>
+
+        {/* Summary */}
+        <p className="font-mono text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+          {incident.summary}
+        </p>
+
+        {/* Meta */}
+        <div className="flex items-center gap-2 mt-3 font-mono text-[10px] text-muted-foreground">
+          <MapPin className="w-3 h-3" />
+          <span>{incident.location}</span>
+          <span className="text-border">•</span>
+          <Clock className="w-3 h-3" />
+          <span>{formatTimeAgo(incident.timestamp)}</span>
+          {incident.verified && (
+            <>
+              <span className="text-border">•</span>
+              <span className="flex items-center gap-1 text-emerald-600">
+                <CheckCircle2 className="w-3 h-3" />
+                Verified
+              </span>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Chevron on hover */}
+      <ChevronRight className={cn(
+        "absolute bottom-4 right-4 w-4 h-4 transition-all",
+        isHovered || isSelected ? "text-accent translate-x-0 opacity-100" : "text-transparent -translate-x-2 opacity-0"
+      )} />
     </button>
   )
 }

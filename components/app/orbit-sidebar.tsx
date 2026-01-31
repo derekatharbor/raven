@@ -102,9 +102,14 @@ function LocationCard({
                 )}
               </p>
             </div>
-            <span className="text-4xl font-light text-white">
-              {location.stabilityScore}
-            </span>
+            <div className="text-right">
+              <span className="text-4xl font-light text-white">
+                {location.stabilityScore}
+              </span>
+              <p className="text-white/40 text-[9px] uppercase tracking-wider mt-0.5">
+                Stability
+              </p>
+            </div>
           </div>
           
           {/* Bottom row: Status and Trend */}
@@ -147,7 +152,7 @@ export function OrbitSidebar({
       <div className="p-4 border-b border-border/40">
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {/* Logo and brand */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={onToggle}
               onMouseEnter={() => setLogoHovered(true)}
@@ -172,8 +177,8 @@ export function OrbitSidebar({
               )}
             </button>
             {!collapsed && (
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground font-medium">
-                Raven
+              <span className="font-[family-name:var(--font-bebas)] text-xl tracking-wide text-foreground">
+                RAVEN
               </span>
             )}
           </div>
