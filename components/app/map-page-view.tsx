@@ -176,7 +176,10 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
           .addTo(map)
           .on("click", () => {
             onIncidentSelect(incident)
-            setMobileSheetOpen(true)
+            // Only open sheet on mobile
+            if (window.innerWidth < 1024) {
+              setMobileSheetOpen(true)
+            }
           })
 
         markersRef.current.push(marker)
@@ -197,7 +200,7 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
   }, [mapLoaded, selectedIncident])
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row h-full relative">
+    <div className="h-full flex flex-col lg:flex-row relative">
       {/* Map Area */}
       <div className="flex-1 relative">
         {/* Top Controls */}
@@ -237,11 +240,11 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
             })}
           </div>
 
-          {/* Layer toggle - hidden on mobile */}
+          {/* Layer toggle - hidden on mobile/tablet */}
           <button
             onClick={() => setShowHeatmap(!showHeatmap)}
             className={cn(
-              "hidden md:flex items-center gap-2 px-3 py-2 font-mono text-xs uppercase tracking-wider border transition-all ml-auto",
+              "hidden lg:flex items-center gap-2 px-3 py-2 font-mono text-xs uppercase tracking-wider border transition-all ml-auto",
               showHeatmap
                 ? "bg-accent text-accent-foreground border-accent"
                 : "bg-background/95 backdrop-blur-sm text-muted-foreground border-border hover:border-accent/50"
@@ -262,8 +265,8 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
           </div>
         )}
 
-        {/* Legend - hidden on mobile */}
-        <div className="hidden md:block absolute bottom-4 left-4 z-[1000] bg-background/95 backdrop-blur-sm border border-border p-3">
+        {/* Legend - hidden on mobile/tablet */}
+        <div className="hidden lg:block absolute bottom-4 left-4 z-[1000] bg-background/95 backdrop-blur-sm border border-border p-3">
           <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Legend</p>
           <div className="space-y-1.5">
             {filterOptions.map(filter => {
@@ -296,7 +299,7 @@ export function MapPageView({ incidents, onIncidentSelect, selectedIncident }: M
       </div>
 
       {/* Desktop: Incident Panel */}
-      <div className="hidden md:flex w-[380px] border-l border-border bg-background flex-col h-full">
+      <div className="hidden lg:flex w-[380px] border-l border-border bg-background flex-col h-full">
         {/* Header */}
         <div className="flex-shrink-0 px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2 mb-1">

@@ -388,12 +388,12 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
         </span>
       </div>
 
-      {/* Mini map visualization */}
-      <div className="relative h-32 bg-muted/30 rounded overflow-hidden">
-        <svg viewBox="0 0 300 120" className="w-full h-full">
+      {/* Mini map visualization - taller for mobile */}
+      <div className="relative aspect-[4/3] sm:aspect-[16/9] lg:aspect-[2/1] min-h-[200px] bg-muted/30 rounded overflow-hidden">
+        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="w-full h-full">
           <defs>
-            <pattern id="mapGrid" width="30" height="30" patternUnits="userSpaceOnUse">
-              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-border"/>
+            <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-border"/>
             </pattern>
             <radialGradient id="hotspot1" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="rgb(244, 63, 94)" stopOpacity="0.6"/>
@@ -403,17 +403,66 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
               <stop offset="0%" stopColor="rgb(245, 158, 11)" stopOpacity="0.5"/>
               <stop offset="100%" stopColor="rgb(245, 158, 11)" stopOpacity="0"/>
             </radialGradient>
+            <radialGradient id="hotspot3" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgb(14, 165, 233)" stopOpacity="0.4"/>
+              <stop offset="100%" stopColor="rgb(14, 165, 233)" stopOpacity="0"/>
+            </radialGradient>
           </defs>
-          <rect width="300" height="120" fill="url(#mapGrid)"/>
-          <circle cx="150" cy="50" r="40" fill="url(#hotspot1)"/>
-          <circle cx="80" cy="80" r="25" fill="url(#hotspot2)"/>
-          {/* Location marker */}
-          <circle cx="150" cy="60" r="4" className="fill-foreground"/>
-          <circle cx="150" cy="60" r="8" fill="none" className="stroke-foreground" strokeWidth="1" opacity="0.3"/>
+          <rect width="400" height="200" fill="url(#mapGrid)"/>
+          {/* Activity hotspots */}
+          <circle cx="200" cy="80" r="60" fill="url(#hotspot1)"/>
+          <circle cx="100" cy="140" r="40" fill="url(#hotspot2)"/>
+          <circle cx="320" cy="100" r="35" fill="url(#hotspot3)"/>
+          {/* Roads */}
+          <path d="M 0 100 L 400 100" stroke="currentColor" strokeWidth="2" className="text-border" opacity="0.5"/>
+          <path d="M 200 0 L 200 200" stroke="currentColor" strokeWidth="2" className="text-border" opacity="0.5"/>
+          {/* Location markers */}
+          <circle cx="200" cy="80" r="5" className="fill-rose-500"/>
+          <circle cx="200" cy="80" r="10" fill="none" className="stroke-rose-500" strokeWidth="1.5" opacity="0.5"/>
+          <circle cx="100" cy="140" r="4" className="fill-amber-500"/>
+          <circle cx="320" cy="100" r="4" className="fill-sky-500"/>
         </svg>
-        <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm rounded px-2 py-1 font-mono text-[10px] text-muted-foreground">
-          2 active zones
+        <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm rounded px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
+          3 active zones • 12 incidents this week
         </div>
+      </div>
+    </IntelCard>
+  )
+}
+
+// ============================================
+// SOURCES CARD
+// ============================================
+function SourcesCard({ onOpenModal }: { onOpenModal: () => void }) {
+  const sources = [
+    { name: "Crystal Lake PD", status: "live", lastUpdate: "5 min ago" },
+    { name: "McHenry County 311", status: "live", lastUpdate: "12 min ago" },
+    { name: "IDOT Traffic", status: "live", lastUpdate: "3 min ago" },
+    { name: "County Permits", status: "delayed", lastUpdate: "2 days ago" },
+  ]
+
+  return (
+    <IntelCard onClick={onOpenModal}>
+      <div className="flex items-center gap-3 mb-4">
+        <ExternalLink className="w-4 h-4 text-muted-foreground" />
+        <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
+          Data Sources
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {sources.map((source, i) => (
+          <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-b-0">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                source.status === "live" ? "bg-emerald-500" : "bg-amber-500"
+              )} />
+              <span className="font-mono text-sm text-foreground">{source.name}</span>
+            </div>
+            <span className="font-mono text-[10px] text-muted-foreground">{source.lastUpdate}</span>
+          </div>
+        ))}
       </div>
     </IntelCard>
   )
@@ -433,10 +482,10 @@ function DetailModal({
 }) {
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - higher z-index to cover sidebar */}
       <div 
         className={cn(
-          "fixed inset-0 z-50 bg-black/50 transition-opacity duration-300",
+          "fixed inset-0 z-[200] bg-black/50 transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -445,7 +494,7 @@ function DetailModal({
       {/* Modal - centered on desktop, bottom sheet on mobile */}
       <div 
         className={cn(
-          "fixed z-50 transition-all duration-300 ease-out",
+          "fixed z-[201] transition-all duration-300 ease-out",
           // Mobile: bottom sheet
           "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
           // Desktop: centered
@@ -512,7 +561,7 @@ export function BriefingView({
     <div className="flex-1 overflow-y-auto h-full" data-lenis-prevent>
       <div 
         className="p-4 md:p-8 lg:p-12"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 2rem)' }}
       >
         {/* Score and narrative */}
         <ScoreHero location={selectedLocation} />
@@ -532,10 +581,9 @@ export function BriefingView({
           <WhatsQuietCard onOpenModal={() => openModal("What's Quiet")} />
           <TemporalPatternsCard onOpenModal={() => openModal("Temporal Patterns")} />
 
-          {/* Map preview - full width */}
-          <div className="lg:col-span-2">
-            <MapPreviewCard onNavigateToMap={onNavigateToMap} />
-          </div>
+          {/* Map preview and Sources - 50/50 on desktop, stacked on mobile */}
+          <MapPreviewCard onNavigateToMap={onNavigateToMap} />
+          <SourcesCard onOpenModal={() => openModal("Data Sources")} />
         </div>
 
         {/* Footer */}
@@ -544,7 +592,7 @@ export function BriefingView({
             Last updated 5 minutes ago
           </span>
           <span className="font-mono text-[10px] text-muted-foreground">
-            Sources: Crystal Lake PD • McHenry County • 311 Reports
+            Tap any card for details and sources
           </span>
         </footer>
       </div>

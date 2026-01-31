@@ -144,7 +144,7 @@ export function OrbitSidebar({
   return (
     <div 
       className={`
-        bg-background border-r border-border/40 flex flex-col h-full transition-all duration-300 ease-in-out
+        bg-background border-r border-border/40 flex flex-col h-full transition-all duration-300 ease-in-out flex-shrink-0
         ${collapsed ? "w-16" : "w-72"}
       `}
     >
@@ -153,20 +153,30 @@ export function OrbitSidebar({
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           {/* Logo and brand */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={onToggle}
-              onMouseEnter={() => setLogoHovered(true)}
-              onMouseLeave={() => setLogoHovered(false)}
-              className="relative w-8 h-8 flex items-center justify-center transition-all duration-200"
-              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {logoHovered ? (
-                collapsed ? (
+            {collapsed ? (
+              // Collapsed: Logo with hover-to-reveal expand icon
+              <button
+                onClick={onToggle}
+                onMouseEnter={() => setLogoHovered(true)}
+                onMouseLeave={() => setLogoHovered(false)}
+                className="relative w-8 h-8 flex items-center justify-center transition-all duration-200"
+                title="Expand sidebar"
+              >
+                {logoHovered ? (
                   <PanelLeft className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
                 ) : (
-                  <PanelLeftClose className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-                )
-              ) : (
+                  <Image 
+                    src="/images/raven-logo.png" 
+                    alt="Raven" 
+                    width={28} 
+                    height={28}
+                    className="object-contain"
+                  />
+                )}
+              </button>
+            ) : (
+              // Expanded: Logo + RAVEN text (not clickable)
+              <>
                 <Image 
                   src="/images/raven-logo.png" 
                   alt="Raven" 
@@ -174,14 +184,23 @@ export function OrbitSidebar({
                   height={28}
                   className="object-contain"
                 />
-              )}
-            </button>
-            {!collapsed && (
-              <span className="font-[family-name:var(--font-bebas)] text-xl tracking-wide text-foreground">
-                RAVEN
-              </span>
+                <span className="font-[family-name:var(--font-bebas)] text-xl tracking-wide text-foreground">
+                  RAVEN
+                </span>
+              </>
             )}
           </div>
+          
+          {/* Collapse button - only when expanded, on right side */}
+          {!collapsed && (
+            <button
+              onClick={onToggle}
+              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
       
