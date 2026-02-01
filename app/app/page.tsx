@@ -30,7 +30,7 @@ export default function AppPage() {
   const [currentView, setCurrentView] = useState<ViewType>("brief")
   const [selectedLocationId, setSelectedLocationId] = useState("crystal-lake")
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [orbitDropdownOpen, setOrbitDropdownOpen] = useState(true)
 
@@ -255,36 +255,38 @@ export default function AppPage() {
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Header */}
         <header 
-          className="flex-shrink-0 border-b border-border/40 px-4 lg:px-6 flex items-center justify-between gap-4 bg-background"
+          className="flex-shrink-0 border-b border-border/40 px-4 lg:px-6 flex items-center bg-background"
           style={{ 
             paddingTop: 'max(env(safe-area-inset-top), 0.75rem)',
             paddingBottom: '0.75rem'
           }}
         >
-          {/* Mobile menu button */}
+          {/* Mobile: Centered logo with hamburger on right */}
+          <div className="lg:hidden flex items-center justify-center flex-1">
+            <div className="flex items-center gap-2">
+              <Image 
+                src="/images/raven-logo.png" 
+                alt="Raven" 
+                width={24} 
+                height={24}
+                className="object-contain"
+              />
+              <span className="font-[family-name:var(--font-bebas)] text-xl tracking-wide text-foreground">
+                RAVEN
+              </span>
+            </div>
+          </div>
+
+          {/* Mobile menu button - right side */}
           <button 
             onClick={() => setMobileMenuOpen(true)}
-            className="lg:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
+            className="lg:hidden p-2 -mr-2 text-muted-foreground hover:text-foreground"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Mobile brand */}
-          <div className="lg:hidden flex items-center gap-2">
-            <Image 
-              src="/images/raven-logo.png" 
-              alt="Raven" 
-              width={20} 
-              height={20}
-              className="object-contain"
-            />
-            <span className="font-[family-name:var(--font-bebas)] text-lg tracking-wide text-foreground">
-              RAVEN
-            </span>
-          </div>
-
-          {/* View toggle */}
-          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+          {/* Desktop: View toggle */}
+          <div className="hidden lg:flex items-center gap-1 bg-muted/50 rounded-lg p-1">
             <button
               onClick={() => setCurrentView("brief")}
               className={cn(
@@ -309,7 +311,8 @@ export default function AppPage() {
             </button>
           </div>
           
-          <span className="font-mono text-[10px] text-muted-foreground hidden sm:block">
+          {/* Desktop: Date */}
+          <span className="font-mono text-[10px] text-muted-foreground hidden lg:block ml-auto">
             {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
         </header>
