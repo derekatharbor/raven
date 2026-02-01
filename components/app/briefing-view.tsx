@@ -42,22 +42,71 @@ function getGreeting(): string {
 // ============================================
 // SCORE HERO - Prominent, not hidden
 // ============================================
+interface StabilityData {
+  overall: number
+  confidence: 'high' | 'medium' | 'low'
+  categories: {
+    safety: {
+      score: number
+      trend: 'improving' | 'stable' | 'declining'
+      trendPercent: number
+      incidents: number
+      dataAvailable: boolean
+    }
+    infrastructure: { score: number; dataAvailable: boolean }
+    civic: { score: number; dataAvailable: boolean }
+  }
+  metadata: {
+    sourcesActive: number
+    sourcesTotal: number
+  }
+}
+
 function ScoreHero({ location }: { location: LocationData }) {
-  const TrendIcon = location.trend === "improving" 
+  const [stabilityData, setStabilityData] = useState<StabilityData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchStability() {
+      try {
+        const res = await fetch(`/api/stability-score?municipality=${encodeURIComponent(location.name)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setStabilityData(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch stability score:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStability()
+  }, [location.name])
+
+  // Use real data if available, fallback to location data
+  const score = stabilityData?.overall ?? location.stabilityScore
+  const trend = stabilityData?.categories.safety.trend ?? location.trend
+  const trendPercent = stabilityData?.categories.safety.trendPercent ?? location.trendPercent
+  const confidence = stabilityData?.confidence ?? 'low'
+  const incidentCount = stabilityData?.categories.safety.incidents ?? 0
+
+  const TrendIcon = trend === "improving" 
     ? TrendingUp 
-    : location.trend === "declining"
+    : trend === "declining"
     ? TrendingDown
     : Minus
     
-  const trendColor = location.trend === "improving" 
+  const trendColor = trend === "improving" 
     ? "text-emerald-600"
-    : location.trend === "declining"
+    : trend === "declining"
     ? "text-rose-600"
     : "text-muted-foreground"
 
   const greeting = getGreeting()
-  // TODO: Replace with actual user name from auth
   const userName = "Derek"
+
+  // Generate narrative from real data
+  const narrative = generateNarrative(location.name, trend, incidentCount, stabilityData)
 
   return (
     <div className="mb-6 md:mb-8">
@@ -86,34 +135,79 @@ function ScoreHero({ location }: { location: LocationData }) {
         {/* Score - prominent with gradient */}
         <div className="flex-shrink-0 flex md:block items-center gap-4">
           <div className="flex items-baseline gap-1">
-            <span className="text-5xl md:text-7xl font-light tracking-tight bg-gradient-to-br from-accent via-orange-500 to-amber-500 bg-clip-text text-transparent">
-              {location.stabilityScore}
-            </span>
+            {loading ? (
+              <span className="text-5xl md:text-7xl font-light tracking-tight text-muted-foreground/30">
+                --
+              </span>
+            ) : (
+              <span className="text-5xl md:text-7xl font-light tracking-tight bg-gradient-to-br from-accent via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                {score}
+              </span>
+            )}
           </div>
           <div className="md:mt-1">
-            <div className={`flex items-center gap-1.5 ${trendColor}`}>
-              <TrendIcon className="w-4 h-4" />
-              <span className="font-mono text-xs">
-                {location.trendPercent > 0 ? "+" : ""}{location.trendPercent}% vs last week
-              </span>
+            {!loading && (
+              <div className={`flex items-center gap-1.5 ${trendColor}`}>
+                <TrendIcon className="w-4 h-4" />
+                <span className="font-mono text-xs">
+                  {trendPercent > 0 ? "+" : ""}{trendPercent}% vs last week
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 mt-1 md:mt-2">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                Stability Index
+              </p>
+              {!loading && confidence !== 'high' && (
+                <span className={cn(
+                  "font-mono text-[9px] uppercase px-1.5 py-0.5 rounded",
+                  confidence === 'medium' 
+                    ? "bg-amber-500/10 text-amber-600" 
+                    : "bg-slate-500/10 text-slate-500"
+                )}>
+                  {confidence === 'medium' ? 'Partial Data' : 'Limited Data'}
+                </span>
+              )}
             </div>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-1 md:mt-2">
-              Stability Index
-            </p>
           </div>
         </div>
 
         {/* Narrative */}
         <div className="flex-1">
           <p className="font-mono text-sm md:text-base text-foreground/80 leading-relaxed">
-            Activity in {location.name} remains <span className="text-foreground font-medium">{location.trend}</span> this week. 
-            Property incidents are concentrated overnight in the downtown corridor — a pattern now in its third week. 
-            Infrastructure disruptions on Route 14 continue through Friday. No significant civic changes pending.
+            {narrative}
           </p>
+          {!loading && stabilityData && (
+            <p className="font-mono text-[10px] text-muted-foreground mt-2">
+              Based on {incidentCount} incidents this week • {stabilityData.metadata.sourcesActive} of {stabilityData.metadata.sourcesTotal} data sources active
+            </p>
+          )}
         </div>
       </div>
     </div>
   )
+}
+
+// Generate a simple narrative from the data
+function generateNarrative(
+  locationName: string, 
+  trend: string, 
+  incidentCount: number,
+  data: StabilityData | null
+): string {
+  const trendWord = trend === 'improving' ? 'improving' : trend === 'declining' ? 'elevated' : 'typical'
+  
+  if (!data || incidentCount === 0) {
+    return `Activity in ${locationName} appears ${trendWord} this week. Limited incident data available — check back as more sources come online.`
+  }
+  
+  const safetyScore = data.categories.safety.score
+  let safetyDesc = 'moderate'
+  if (safetyScore >= 90) safetyDesc = 'very low'
+  else if (safetyScore >= 75) safetyDesc = 'low'
+  else if (safetyScore < 50) safetyDesc = 'elevated'
+  
+  return `Activity in ${locationName} is ${trendWord} this week with ${incidentCount} reported incidents. Safety concerns are ${safetyDesc}. Infrastructure and civic data sources coming soon.`
 }
 
 // ============================================
