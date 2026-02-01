@@ -2,7 +2,21 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import type { RecentIncident } from '@/lib/raven-data'
+
+// Define locally instead of importing
+interface RecentIncident {
+  id: string
+  type: 'crime' | 'civic' | 'infrastructure' | 'safety'
+  title: string
+  summary: string
+  location: string | null
+  municipality: string
+  timestamp: string
+  urgency: number
+  coordinates: { lat: number; lng: number }
+  source: string
+  sourceUrl?: string
+}
 
 interface IncidentFromAPI {
   id: string
