@@ -26,7 +26,10 @@ import {
   Loader2,
   Flame,
   Car,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Copy,
+  Check
 } from "lucide-react"
 
 // ============================================
@@ -640,7 +643,7 @@ function DetailModal({
 }
 
 // ============================================
-// RECENT INCIDENTS (LIVE DATA)
+// INCIDENT TYPES
 // ============================================
 interface DisplayIncident {
   id: string
@@ -655,6 +658,223 @@ interface DisplayIncident {
   sourceUrl?: string
 }
 
+// ============================================
+// INCIDENT DETAIL MODAL
+// ============================================
+function IncidentDetailModal({
+  incident,
+  isOpen,
+  onClose
+}: {
+  incident: DisplayIncident | null
+  isOpen: boolean
+  onClose: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+
+  if (!incident) return null
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'crime': return Shield
+      case 'safety': return Flame
+      case 'infrastructure': return Car
+      default: return AlertCircle
+    }
+  }
+
+  const getIconColor = (type: string) => {
+    switch (type) {
+      case 'crime': return 'text-rose-500 bg-rose-500/10'
+      case 'safety': return 'text-amber-500 bg-amber-500/10'
+      case 'infrastructure': return 'text-sky-500 bg-sky-500/10'
+      default: return 'text-muted-foreground bg-muted'
+    }
+  }
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'crime': return 'Public Safety'
+      case 'safety': return 'Safety'
+      case 'infrastructure': return 'Infrastructure'
+      default: return 'Civic'
+    }
+  }
+
+  const Icon = getIcon(incident.type)
+  const iconColor = getIconColor(incident.type)
+  const typeLabel = getTypeLabel(incident.type)
+  
+  const formattedDate = new Date(incident.timestamp).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
+  
+  const formattedTime = new Date(incident.timestamp).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+
+  const handleCopyLink = async () => {
+    const url = incident.sourceUrl || window.location.href
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: incident.title,
+          text: incident.summary || incident.title,
+          url: incident.sourceUrl || window.location.href
+        })
+      } catch (err) {
+        // User cancelled or share failed, fall back to copy
+        handleCopyLink()
+      }
+    } else {
+      handleCopyLink()
+    }
+  }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-[200] bg-black/50 transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+      />
+      
+      {/* Modal - bottom sheet on mobile, centered on desktop */}
+      <div 
+        className={cn(
+          "fixed z-[201] transition-all duration-300 ease-out",
+          "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
+          "sm:-translate-x-1/2 sm:-translate-y-1/2",
+          isOpen 
+            ? "translate-y-0 opacity-100 sm:scale-100" 
+            : "translate-y-full opacity-0 sm:translate-y-0 sm:scale-95 pointer-events-none"
+        )}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="bg-background border border-border sm:rounded-lg rounded-t-2xl max-h-[85vh] sm:max-h-[70vh] w-full sm:w-[90vw] sm:max-w-lg overflow-hidden flex flex-col">
+          {/* Handle - mobile only */}
+          <div className="sm:hidden flex justify-center py-3">
+            <div className="w-10 h-1 bg-border rounded-full" />
+          </div>
+          
+          {/* Header */}
+          <div className="flex items-start justify-between px-5 pb-4 sm:pt-5">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className={cn("p-2 rounded-lg flex-shrink-0", iconColor)}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {typeLabel}
+                </span>
+                <h2 className="font-semibold text-foreground text-lg leading-tight mt-1">
+                  {incident.title}
+                </h2>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-5 pb-5">
+            {/* Meta info */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mb-4">
+              <span>{incident.municipality}</span>
+              {incident.location && (
+                <>
+                  <span className="text-border">•</span>
+                  <span>{incident.location}</span>
+                </>
+              )}
+              <span className="text-border">•</span>
+              <span>{formattedDate}</span>
+              <span className="text-border">•</span>
+              <span>{formattedTime}</span>
+            </div>
+            
+            {/* Summary */}
+            {incident.summary && (
+              <p className="text-foreground/80 leading-relaxed mb-6">
+                {incident.summary}
+              </p>
+            )}
+            
+            {/* Source attribution */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+              <span>Source:</span>
+              <span className="font-medium text-foreground">{incident.source}</span>
+            </div>
+            
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleShare}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-500" />
+                    <span className="font-mono text-sm text-emerald-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4" />
+                    <span className="font-mono text-sm">Share</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/30 rounded-lg opacity-50 cursor-not-allowed"
+              >
+                <Zap className="w-4 h-4" />
+                <span className="font-mono text-sm">View in Feed</span>
+                <span className="font-mono text-[9px] uppercase bg-muted px-1.5 py-0.5 rounded">Soon</span>
+              </button>
+              
+              {incident.sourceUrl && (
+                <a
+                  href={incident.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border hover:bg-muted/50 rounded-lg transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span className="font-mono text-sm">View Source</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ============================================
+// RECENT INCIDENTS (LIVE DATA)
+// ============================================
+
 function RecentIncidentsCard({ 
   onOpenModal,
   municipality 
@@ -665,6 +885,7 @@ function RecentIncidentsCard({
   const [incidents, setIncidents] = useState<DisplayIncident[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null)
 
   useEffect(() => {
     async function fetchIncidents() {
@@ -723,82 +944,88 @@ function RecentIncidentsCard({
   }
 
   return (
-    <IntelCard>
-      <div className="flex items-center gap-3 mb-4">
-        <Zap className="w-4 h-4 text-accent" />
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-accent font-semibold">
-          Recent Activity
-        </span>
-        <span className="ml-auto flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-mono text-[10px] text-emerald-600">Live</span>
-        </span>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : error ? (
-        <div className="text-center py-8">
-          <p className="font-mono text-xs text-muted-foreground">{error}</p>
-        </div>
-      ) : incidents.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="font-mono text-xs text-muted-foreground">No recent incidents</p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {incidents.slice(0, 4).map((incident, i) => {
-            const Icon = getIcon(incident.type)
-            const iconColor = getIconColor(incident.type)
-            const timeAgo = formatTimeAgo(incident.timestamp)
-            
-            return (
-              <a 
-                key={incident.id}
-                href={incident.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  "flex items-start gap-3 p-2 -mx-2 rounded-lg transition-colors",
-                  "hover:bg-muted/50 cursor-pointer",
-                  i > 0 && "mt-2 pt-3 border-t border-border/30"
-                )}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", iconColor)} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-mono text-sm font-medium text-foreground line-clamp-2">
-                      {incident.title}
-                    </h4>
-                    <ExternalLink className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100" />
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {incident.municipality}
-                    </span>
-                    <span className="text-border">•</span>
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {timeAgo}
-                    </span>
-                  </div>
-                </div>
-              </a>
-            )
-          })}
-        </div>
-      )}
-      
-      {incidents.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-border/30">
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {incidents.length} incidents this week from Lake McHenry Scanner
+    <>
+      <IntelCard>
+        <div className="flex items-center gap-3 mb-4">
+          <Zap className="w-4 h-4 text-accent" />
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-accent font-semibold">
+            Recent Activity
+          </span>
+          <span className="ml-auto flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono text-[10px] text-emerald-600">Live</span>
           </span>
         </div>
-      )}
-    </IntelCard>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="font-mono text-xs text-muted-foreground">{error}</p>
+          </div>
+        ) : incidents.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="font-mono text-xs text-muted-foreground">No recent incidents</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {incidents.slice(0, 4).map((incident, i) => {
+              const Icon = getIcon(incident.type)
+              const iconColor = getIconColor(incident.type)
+              const timeAgo = formatTimeAgo(incident.timestamp)
+              
+              return (
+                <button 
+                  key={incident.id}
+                  onClick={() => setSelectedIncident(incident)}
+                  className={cn(
+                    "flex items-start gap-3 p-2 -mx-2 rounded-lg transition-colors w-full text-left",
+                    "hover:bg-muted/50 cursor-pointer",
+                    i > 0 && "mt-2 pt-3 border-t border-border/30"
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", iconColor)} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-mono text-sm font-medium text-foreground line-clamp-2 text-left">
+                        {incident.title}
+                      </h4>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {incident.municipality}
+                      </span>
+                      <span className="text-border">•</span>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {timeAgo}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+        
+        {incidents.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-border/30">
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {incidents.length} incidents this week from Lake McHenry Scanner
+            </span>
+          </div>
+        )}
+      </IntelCard>
+
+      {/* Incident Detail Modal */}
+      <IncidentDetailModal
+        incident={selectedIncident}
+        isOpen={selectedIncident !== null}
+        onClose={() => setSelectedIncident(null)}
+      />
+    </>
   )
 }
 
