@@ -55,10 +55,10 @@ const INCIDENT_PATTERNS: [RegExp, string, string][] = [
   [/\btheft\b|\bstolen\b/i, 'theft', 'property_crime'],
   [/\bvandalism\b/i, 'vandalism', 'property_crime'],
   
-  // Other
-  [/\bmissing\b/i, 'missing_person', 'missing'],
-  [/\boverdose\b/i, 'overdose', 'medical'],
-  [/\barrested\b|\bcharged\b/i, 'arrest', 'police'],
+// Other
+[/\bmissing\b/i, 'missing_person', 'missing_person'],
+[/\boverdose\b/i, 'overdose', 'medical'],
+[/\barrested\b|\bcharged\b/i, 'arrest', 'other'],
 ];
 
 interface ParsedIncident {
