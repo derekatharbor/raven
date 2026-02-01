@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     
     let query = supabase
       .from('incidents')
-      .select('id, category, severity, title, description, location_text, latitude, longitude, municipality, occurred_at, verification_status, created_at', { count: 'exact' })
+      .select('id, category, severity, title, description, location_text, latitude, longitude, municipality, occurred_at, verification_status, created_at, raw_data', { count: 'exact' })
       .gte('occurred_at', dateThreshold.toISOString())
       .order('occurred_at', { ascending: false })
       .range(offset, offset + limit - 1);

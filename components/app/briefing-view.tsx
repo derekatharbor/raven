@@ -1,12 +1,13 @@
 // components/app/briefing-view.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { 
   CURRENT_LOCATION, 
   ORBIT_LOCATIONS,
-  type LocationData
+  type LocationData,
+  type RecentIncident
 } from "@/lib/raven-data"
 import { 
   TrendingUp, 
@@ -22,7 +23,11 @@ import {
   ExternalLink,
   Zap,
   Map,
-  X
+  X,
+  Loader2,
+  Flame,
+  Car,
+  AlertCircle
 } from "lucide-react"
 
 // ============================================
@@ -435,10 +440,10 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
 // ============================================
 function SourcesCard({ onOpenModal }: { onOpenModal: () => void }) {
   const sources = [
-    { name: "Crystal Lake PD", status: "live", lastUpdate: "5 min ago" },
-    { name: "McHenry County 311", status: "live", lastUpdate: "12 min ago" },
-    { name: "IDOT Traffic", status: "live", lastUpdate: "3 min ago" },
-    { name: "County Permits", status: "delayed", lastUpdate: "2 days ago" },
+    { name: "Lake McHenry Scanner", status: "live", lastUpdate: "Hourly" },
+    { name: "IDOT Traffic", status: "coming", lastUpdate: "Soon" },
+    { name: "County Permits", status: "coming", lastUpdate: "Soon" },
+    { name: "City Council", status: "coming", lastUpdate: "Soon" },
   ]
 
   return (
@@ -456,9 +461,13 @@ function SourcesCard({ onOpenModal }: { onOpenModal: () => void }) {
             <div className="flex items-center gap-2">
               <div className={cn(
                 "w-1.5 h-1.5 rounded-full",
-                source.status === "live" ? "bg-emerald-500" : "bg-amber-500"
+                source.status === "live" ? "bg-emerald-500" : 
+                source.status === "coming" ? "bg-slate-400" : "bg-amber-500"
               )} />
-              <span className="font-mono text-sm text-foreground">{source.name}</span>
+              <span className={cn(
+                "font-mono text-sm",
+                source.status === "coming" ? "text-muted-foreground" : "text-foreground"
+              )}>{source.name}</span>
             </div>
             <span className="font-mono text-[10px] text-muted-foreground">{source.lastUpdate}</span>
           </div>
@@ -538,6 +547,195 @@ function DetailModal({
 }
 
 // ============================================
+// RECENT INCIDENTS (LIVE DATA)
+// ============================================
+function RecentIncidentsCard({ 
+  onOpenModal,
+  municipality 
+}: { 
+  onOpenModal: () => void
+  municipality?: string
+}) {
+  const [incidents, setIncidents] = useState<RecentIncident[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchIncidents() {
+      try {
+        const params = new URLSearchParams({ days: '7', limit: '5' })
+        if (municipality) {
+          params.set('municipality', municipality)
+        }
+        
+        const res = await fetch(`/api/incidents?${params}`)
+        if (!res.ok) throw new Error('Failed to fetch')
+        
+        const data = await res.json()
+        
+        // Transform to display format
+        const transformed = data.items.map((item: any) => ({
+          id: item.id,
+          type: mapCategory(item.category),
+          title: item.title,
+          summary: item.description || '',
+          location: item.location_text,
+          municipality: item.municipality || 'McHenry County',
+          timestamp: item.occurred_at || item.created_at,
+          urgency: mapSeverity(item.severity),
+          source: item.raw_data?.source || 'Lake McHenry Scanner',
+          sourceUrl: item.raw_data?.url,
+        }))
+        
+        setIncidents(transformed)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchIncidents()
+  }, [municipality])
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'crime': return Shield
+      case 'safety': return Flame
+      case 'infrastructure': return Car
+      default: return AlertCircle
+    }
+  }
+
+  const getIconColor = (type: string) => {
+    switch (type) {
+      case 'crime': return 'text-rose-500'
+      case 'safety': return 'text-amber-500'
+      case 'infrastructure': return 'text-sky-500'
+      default: return 'text-muted-foreground'
+    }
+  }
+
+  return (
+    <IntelCard onClick={onOpenModal}>
+      <div className="flex items-center gap-3 mb-4">
+        <Zap className="w-4 h-4 text-accent" />
+        <span className="font-mono text-xs uppercase tracking-[0.2em] text-accent font-semibold">
+          Recent Activity
+        </span>
+        <span className="ml-auto flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-mono text-[10px] text-emerald-600">Live</span>
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="font-mono text-xs text-muted-foreground">{error}</p>
+        </div>
+      ) : incidents.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="font-mono text-xs text-muted-foreground">No recent incidents</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {incidents.slice(0, 4).map((incident, i) => {
+            const Icon = getIcon(incident.type)
+            const iconColor = getIconColor(incident.type)
+            const timeAgo = formatTimeAgo(incident.timestamp)
+            
+            return (
+              <div 
+                key={incident.id} 
+                className={cn(
+                  "flex items-start gap-3",
+                  i > 0 && "pt-3 border-t border-border/30"
+                )}
+              >
+                <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", iconColor)} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-mono text-sm font-medium text-foreground line-clamp-2">
+                      {incident.title}
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {incident.municipality}
+                    </span>
+                    <span className="text-border">•</span>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {timeAgo}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      
+      {incidents.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-border/30">
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {incidents.length} incidents this week from Lake McHenry Scanner
+          </span>
+        </div>
+      )}
+    </IntelCard>
+  )
+}
+
+// Helper functions for RecentIncidentsCard
+function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
+  switch (category) {
+    case 'shots_fired':
+    case 'robbery':
+    case 'assault':
+    case 'burglary':
+    case 'theft':
+    case 'vehicle_breakin':
+    case 'drugs':
+      return 'crime'
+    case 'traffic':
+      return 'infrastructure'
+    case 'fire':
+    case 'missing':
+      return 'safety'
+    default:
+      return 'civic'
+  }
+}
+
+function mapSeverity(severity: string | null): number {
+  switch (severity) {
+    case 'critical': return 9
+    case 'high': return 7
+    case 'medium': return 5
+    default: return 3
+  }
+}
+
+function formatTimeAgo(timestamp: string): string {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// ============================================
 // MAIN BRIEFING VIEW
 // ============================================
 export function BriefingView({ 
@@ -568,7 +766,15 @@ export function BriefingView({
 
         {/* Cards grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
-          {/* Primary - full width */}
+          {/* Recent Activity - LIVE DATA - full width on top */}
+          <div className="lg:col-span-2">
+            <RecentIncidentsCard 
+              onOpenModal={() => openModal("Recent Activity")} 
+              municipality={selectedLocation.name}
+            />
+          </div>
+
+          {/* Primary analysis */}
           <div className="lg:col-span-2">
             <RavenAnalysisCard onOpenModal={() => openModal("Vehicle Break-ins Pattern")} />
           </div>

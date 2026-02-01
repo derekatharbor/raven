@@ -141,6 +141,11 @@ export function OrbitSidebar({
 }) {
   const [logoHovered, setLogoHovered] = useState(false)
 
+  const handleToggle = () => {
+    setLogoHovered(false)
+    onToggle()
+  }
+
   return (
     <div 
       className={`
@@ -156,7 +161,7 @@ export function OrbitSidebar({
             {collapsed ? (
               // Collapsed: Logo with hover-to-reveal expand icon
               <button
-                onClick={onToggle}
+                onClick={handleToggle}
                 onMouseEnter={() => setLogoHovered(true)}
                 onMouseLeave={() => setLogoHovered(false)}
                 className="relative w-8 h-8 flex items-center justify-center transition-all duration-200"
@@ -194,7 +199,7 @@ export function OrbitSidebar({
           {/* Collapse button - only when expanded, on right side */}
           {!collapsed && (
             <button
-              onClick={onToggle}
+              onClick={handleToggle}
               className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
               title="Collapse sidebar"
             >
