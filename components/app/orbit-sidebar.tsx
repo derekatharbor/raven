@@ -73,8 +73,8 @@ function LocationCard({
       className={`
         w-full text-left rounded-2xl overflow-hidden transition-all duration-300
         ${isSelected 
-          ? "ring-2 ring-white/30 shadow-xl scale-[1.02]" 
-          : "hover:scale-[1.01] hover:shadow-lg"
+          ? "ring-2 ring-white/30 shadow-xl" 
+          : "hover:shadow-lg hover:shadow-black/20"
         }
       `}
     >

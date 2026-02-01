@@ -130,7 +130,7 @@ function IntelCard({
 }) {
   const [isHovered, setIsHovered] = useState(false)
 
-  const baseStyles = "relative border transition-all duration-300 cursor-pointer overflow-hidden"
+  const baseStyles = `relative border transition-all duration-300 overflow-hidden ${onClick ? "cursor-pointer" : ""}`
   
   const variantStyles = {
     default: `border-border/40 ${isHovered ? "border-accent/50" : ""}`,
@@ -629,7 +629,7 @@ function RecentIncidentsCard({
   }
 
   return (
-    <IntelCard onClick={onOpenModal}>
+    <IntelCard>
       <div className="flex items-center gap-3 mb-4">
         <Zap className="w-4 h-4 text-accent" />
         <span className="font-mono text-xs uppercase tracking-[0.2em] text-accent font-semibold">
@@ -654,19 +654,24 @@ function RecentIncidentsCard({
           <p className="font-mono text-xs text-muted-foreground">No recent incidents</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-1">
           {incidents.slice(0, 4).map((incident, i) => {
             const Icon = getIcon(incident.type)
             const iconColor = getIconColor(incident.type)
             const timeAgo = formatTimeAgo(incident.timestamp)
             
             return (
-              <div 
-                key={incident.id} 
+              <a 
+                key={incident.id}
+                href={incident.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={cn(
-                  "flex items-start gap-3",
-                  i > 0 && "pt-3 border-t border-border/30"
+                  "flex items-start gap-3 p-2 -mx-2 rounded-lg transition-colors",
+                  "hover:bg-muted/50 cursor-pointer",
+                  i > 0 && "mt-2 pt-3 border-t border-border/30"
                 )}
+                onClick={(e) => e.stopPropagation()}
               >
                 <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", iconColor)} />
                 <div className="flex-1 min-w-0">
@@ -674,6 +679,7 @@ function RecentIncidentsCard({
                     <h4 className="font-mono text-sm font-medium text-foreground line-clamp-2">
                       {incident.title}
                     </h4>
+                    <ExternalLink className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100" />
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="font-mono text-[10px] text-muted-foreground">
@@ -685,7 +691,7 @@ function RecentIncidentsCard({
                     </span>
                   </div>
                 </div>
-              </div>
+              </a>
             )
           })}
         </div>
@@ -778,17 +784,17 @@ export function BriefingView({
 
         {/* Cards grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
-          {/* Recent Activity - LIVE DATA - full width on top */}
+          {/* Primary analysis - Emerging Pattern */}
+          <div className="lg:col-span-2">
+            <RavenAnalysisCard onOpenModal={() => openModal("Vehicle Break-ins Pattern")} />
+          </div>
+
+          {/* Recent Activity - LIVE DATA - full width */}
           <div className="lg:col-span-2">
             <RecentIncidentsCard 
               onOpenModal={() => openModal("Recent Activity")} 
               municipality={selectedLocation.name}
             />
-          </div>
-
-          {/* Primary analysis */}
-          <div className="lg:col-span-2">
-            <RavenAnalysisCard onOpenModal={() => openModal("Vehicle Break-ins Pattern")} />
           </div>
 
           {/* Two column layout */}
