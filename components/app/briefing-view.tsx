@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils"
 import { 
   CURRENT_LOCATION, 
   ORBIT_LOCATIONS,
-  type LocationData,
-  type RecentIncident
+  type LocationData
 } from "@/lib/raven-data"
 import { 
   TrendingUp, 
@@ -549,6 +548,19 @@ function DetailModal({
 // ============================================
 // RECENT INCIDENTS (LIVE DATA)
 // ============================================
+interface DisplayIncident {
+  id: string
+  type: 'crime' | 'civic' | 'infrastructure' | 'safety'
+  title: string
+  summary: string
+  location: string | null
+  municipality: string
+  timestamp: string
+  urgency: number
+  source: string
+  sourceUrl?: string
+}
+
 function RecentIncidentsCard({ 
   onOpenModal,
   municipality 
@@ -556,7 +568,7 @@ function RecentIncidentsCard({
   onOpenModal: () => void
   municipality?: string
 }) {
-  const [incidents, setIncidents] = useState<RecentIncident[]>([])
+  const [incidents, setIncidents] = useState<DisplayIncident[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -574,7 +586,7 @@ function RecentIncidentsCard({
         const data = await res.json()
         
         // Transform to display format
-        const transformed = data.items.map((item: any) => ({
+        const transformed: DisplayIncident[] = data.items.map((item: any) => ({
           id: item.id,
           type: mapCategory(item.category),
           title: item.title,
