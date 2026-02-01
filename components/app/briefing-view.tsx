@@ -742,12 +742,21 @@ function IncidentDetailModal({
     }
   }
 
+  // Format source name nicely
+  const formatSourceName = (source: string) => {
+    // Convert snake_case to Title Case
+    return source
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - high z-index with blur */}
       <div 
         className={cn(
-          "fixed inset-0 z-[200] bg-black/50 transition-opacity duration-300",
+          "fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -756,7 +765,7 @@ function IncidentDetailModal({
       {/* Modal - bottom sheet on mobile, centered on desktop */}
       <div 
         className={cn(
-          "fixed z-[201] transition-all duration-300 ease-out",
+          "fixed z-[301] transition-all duration-300 ease-out",
           "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
           "sm:-translate-x-1/2 sm:-translate-y-1/2",
           isOpen 
@@ -794,12 +803,12 @@ function IncidentDetailModal({
             </button>
           </div>
           
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto px-5 pb-5">
-            {/* Meta info */}
+          {/* Content - hide scrollbar */}
+          <div className="flex-1 overflow-y-auto px-5 pb-5 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {/* Meta info - only show location if different from municipality */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mb-4">
               <span>{incident.municipality}</span>
-              {incident.location && (
+              {incident.location && incident.location.toLowerCase() !== incident.municipality.toLowerCase() && (
                 <>
                   <span className="text-border">•</span>
                   <span>{incident.location}</span>
@@ -813,31 +822,38 @@ function IncidentDetailModal({
             
             {/* Summary */}
             {incident.summary && (
-              <p className="text-foreground/80 leading-relaxed mb-6">
-                {incident.summary}
-              </p>
+              <div className="mb-6">
+                <p className="text-foreground/80 leading-relaxed">
+                  {incident.summary.replace(/\[\.\.\.\]$/, '...').replace(/\[…\]$/, '...')}
+                </p>
+                {(incident.summary.includes('[...]') || incident.summary.includes('[…]') || incident.summary.endsWith('...')) && (
+                  <p className="text-xs text-muted-foreground mt-2 italic">
+                    This is a preview. View source for the full article.
+                  </p>
+                )}
+              </div>
             )}
             
-            {/* Source attribution */}
+            {/* Source attribution - formatted nicely */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
               <span>Source:</span>
-              <span className="font-medium text-foreground">{incident.source}</span>
+              <span className="font-medium text-foreground">{formatSourceName(incident.source)}</span>
             </div>
             
-            {/* Actions */}
+            {/* Actions - no text wrap */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleShare}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors whitespace-nowrap"
               >
                 {copied ? (
                   <>
-                    <Check className="w-4 h-4 text-emerald-500" />
+                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     <span className="font-mono text-sm text-emerald-600">Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Share2 className="w-4 h-4" />
+                    <Share2 className="w-4 h-4 flex-shrink-0" />
                     <span className="font-mono text-sm">Share</span>
                   </>
                 )}
@@ -845,11 +861,11 @@ function IncidentDetailModal({
               
               <button
                 disabled
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/30 rounded-lg opacity-50 cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/30 rounded-lg opacity-50 cursor-not-allowed whitespace-nowrap"
               >
-                <Zap className="w-4 h-4" />
+                <Zap className="w-4 h-4 flex-shrink-0" />
                 <span className="font-mono text-sm">View in Feed</span>
-                <span className="font-mono text-[9px] uppercase bg-muted px-1.5 py-0.5 rounded">Soon</span>
+                <span className="font-mono text-[9px] uppercase bg-muted px-1.5 py-0.5 rounded flex-shrink-0">Soon</span>
               </button>
               
               {incident.sourceUrl && (
@@ -857,9 +873,9 @@ function IncidentDetailModal({
                   href={incident.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border hover:bg-muted/50 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border hover:bg-muted/50 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4 flex-shrink-0" />
                   <span className="font-mono text-sm">View Source</span>
                 </a>
               )}

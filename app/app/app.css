@@ -49,6 +49,16 @@
   background: oklch(0.75 0 0);
 }
 
+/* Utility to hide scrollbar completely */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hide scrollbar on mobile for cleaner look */
 @media (max-width: 768px) {
   .app-light-mode ::-webkit-scrollbar {
