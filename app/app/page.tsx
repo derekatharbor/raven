@@ -250,12 +250,14 @@ export default function AppPage() {
           onLocationSelect={setSelectedLocationId}
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          currentView={currentView}
+          onViewChange={(view) => setCurrentView(view as ViewType)}
         />
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Header */}
+        {/* Header - mobile only shows logo + hamburger, desktop just shows date */}
         <header 
           className="flex-shrink-0 border-b border-border/40 px-4 lg:px-6 flex items-center bg-background"
           style={{ 
@@ -287,46 +289,9 @@ export default function AppPage() {
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Desktop: View toggle */}
-          <div className="hidden lg:flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-            <button
-              onClick={() => setCurrentView("brief")}
-              className={cn(
-                "px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider rounded transition-all duration-200",
-                currentView === "brief" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Brief
-            </button>
-            <button
-              onClick={() => setCurrentView("feed")}
-              className={cn(
-                "px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider rounded transition-all duration-200",
-                currentView === "feed" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Intel
-            </button>
-            <button
-              onClick={() => setCurrentView("map")}
-              className={cn(
-                "px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider rounded transition-all duration-200",
-                currentView === "map" 
-                  ? "bg-background text-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Map
-            </button>
-          </div>
-          
-          {/* Desktop: Date */}
+          {/* Desktop: Just the date */}
           <span className="font-mono text-[10px] text-muted-foreground hidden lg:block ml-auto">
-            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </span>
         </header>
 
