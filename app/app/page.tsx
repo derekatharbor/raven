@@ -6,7 +6,6 @@ import { BriefingView } from "@/components/app/briefing-view"
 import { OrbitSidebar } from "@/components/app/orbit-sidebar"
 import { MapPageView } from "@/components/app/map-page-view"
 import { FeedView } from "@/components/app/feed-view"
-import { MOCK_INCIDENTS, type Incident } from "@/lib/mock-data"
 import { ORBIT_LOCATIONS, getScoreColor } from "@/lib/raven-data"
 import { Menu, X, ChevronDown, Bell, User, MapPin, Compass, Clock, Settings, HelpCircle, Plus, Newspaper } from "lucide-react"
 import Image from "next/image"
@@ -31,7 +30,6 @@ const secondaryNavItems = [
 export default function AppPage() {
   const [currentView, setCurrentView] = useState<ViewType>("brief")
   const [selectedLocationId, setSelectedLocationId] = useState("crystal-lake")
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [orbitDropdownOpen, setOrbitDropdownOpen] = useState(true)
@@ -330,11 +328,7 @@ export default function AppPage() {
                 : "opacity-0 translate-x-4 pointer-events-none z-0"
             )}
           >
-            <MapPageView 
-              incidents={MOCK_INCIDENTS}
-              onIncidentSelect={setSelectedIncident}
-              selectedIncident={selectedIncident}
-            />
+            <MapPageView />
           </div>
         </div>
       </div>
