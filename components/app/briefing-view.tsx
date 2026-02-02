@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { 
   CURRENT_LOCATION, 
@@ -751,12 +752,20 @@ function IncidentDetailModal({
       .join(' ')
   }
 
-  return (
+  // Only render on client (for portal)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
+  return createPortal(
     <>
       {/* Backdrop - high z-index with blur */}
       <div 
         className={cn(
-          "fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm transition-opacity duration-300",
+          "fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -765,7 +774,7 @@ function IncidentDetailModal({
       {/* Modal - bottom sheet on mobile, centered on desktop */}
       <div 
         className={cn(
-          "fixed z-[301] transition-all duration-300 ease-out",
+          "fixed z-[9999] transition-all duration-300 ease-out",
           "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
           "sm:-translate-x-1/2 sm:-translate-y-1/2",
           isOpen 
@@ -883,7 +892,8 @@ function IncidentDetailModal({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
