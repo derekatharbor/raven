@@ -1,7 +1,7 @@
 // components/app/briefing-view.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { 
@@ -473,9 +473,171 @@ function TemporalPatternsCard({ onOpenModal }: { onOpenModal: () => void }) {
 }
 
 // ============================================
-// MAP PREVIEW CARD
+// MAP PREVIEW CARD (Real Leaflet mini-map)
 // ============================================
 function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const [incidents, setIncidents] = useState<any[]>([])
+  const [mapReady, setMapReady] = useState(false)
+
+  // City coordinates for McHenry County
+  const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+    'crystal lake': { lat: 42.2411, lng: -88.3162 },
+    'mchenry': { lat: 42.3334, lng: -88.2667 },
+    'woodstock': { lat: 42.3147, lng: -88.4487 },
+    'cary': { lat: 42.2120, lng: -88.2378 },
+    'algonquin': { lat: 42.1656, lng: -88.2945 },
+    'lake in the hills': { lat: 42.1817, lng: -88.3306 },
+    'huntley': { lat: 42.1681, lng: -88.4281 },
+    'harvard': { lat: 42.4225, lng: -88.6145 },
+    'marengo': { lat: 42.2495, lng: -88.6081 },
+    'fox river grove': { lat: 42.2009, lng: -88.2145 },
+    'island lake': { lat: 42.2767, lng: -88.1920 },
+    'johnsburg': { lat: 42.3800, lng: -88.2412 },
+  }
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'violent_crime':
+      case 'property_crime':
+      case 'police':
+        return '#be123c'
+      case 'fire':
+      case 'medical':
+        return '#d97706'
+      case 'traffic':
+        return '#0284c7'
+      default:
+        return '#64748b'
+    }
+  }
+
+  // Fetch incidents
+  useEffect(() => {
+    async function fetchIncidents() {
+      try {
+        const res = await fetch('/api/incidents?days=7&limit=50')
+        if (res.ok) {
+          const data = await res.json()
+          setIncidents(data.items || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch incidents for mini-map:', err)
+      }
+    }
+    fetchIncidents()
+  }, [])
+
+  // Initialize map
+  useEffect(() => {
+    if (typeof window === 'undefined' || !mapRef.current || mapInstanceRef.current) return
+
+    const initMap = async () => {
+      // @ts-ignore
+      const L = await import('leaflet')
+
+      if (!document.querySelector('link[href*="leaflet.css"]')) {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        document.head.appendChild(link)
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
+      if (!mapRef.current) return
+
+      const map = L.map(mapRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+      }).setView([42.28, -88.32], 10)
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+      }).addTo(map)
+
+      mapInstanceRef.current = map
+      setMapReady(true)
+    }
+
+    initMap()
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+    }
+  }, [])
+
+  // Add markers when map and incidents are ready
+  useEffect(() => {
+    if (!mapReady || !mapInstanceRef.current || incidents.length === 0) return
+
+    const addMarkers = async () => {
+      // @ts-ignore
+      const L = await import('leaflet')
+      const map = mapInstanceRef.current
+
+      incidents.forEach((incident) => {
+        let coords = incident.latitude && incident.longitude
+          ? { lat: incident.latitude, lng: incident.longitude }
+          : incident.municipality 
+            ? CITY_COORDS[incident.municipality.toLowerCase()]
+            : null
+
+        if (!coords) return
+
+        // Add small offset so pins don't stack
+        coords = {
+          lat: coords.lat + (Math.random() - 0.5) * 0.015,
+          lng: coords.lng + (Math.random() - 0.5) * 0.015,
+        }
+
+        const color = getCategoryColor(incident.category)
+
+        const icon = L.divIcon({
+          className: 'mini-map-marker',
+          html: `<div style="
+            width: 8px;
+            height: 8px;
+            background: ${color};
+            border: 1px solid white;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          "></div>`,
+          iconSize: [8, 8],
+          iconAnchor: [4, 4],
+        })
+
+        L.marker([coords.lat, coords.lng], { icon, interactive: false }).addTo(map)
+      })
+    }
+
+    addMarkers()
+  }, [mapReady, incidents])
+
+  // Count by category
+  const categoryCounts = incidents.reduce((acc, inc) => {
+    const cat = inc.category
+    if (['violent_crime', 'property_crime', 'police'].includes(cat)) {
+      acc.safety = (acc.safety || 0) + 1
+    } else if (['fire', 'medical', 'missing'].includes(cat)) {
+      acc.emergency = (acc.emergency || 0) + 1
+    } else if (cat === 'traffic') {
+      acc.traffic = (acc.traffic || 0) + 1
+    } else {
+      acc.other = (acc.other || 0) + 1
+    }
+    return acc
+  }, {} as Record<string, number>)
+
+  const activeCategories = Object.keys(categoryCounts).length
+
   return (
     <IntelCard onClick={onNavigateToMap}>
       <div className="flex items-center justify-between mb-4">
@@ -490,43 +652,17 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
         </span>
       </div>
 
-      {/* Mini map visualization - taller for mobile */}
+      {/* Real mini map */}
       <div className="relative aspect-[4/3] sm:aspect-[16/9] lg:aspect-[2/1] min-h-[200px] bg-muted/30 rounded overflow-hidden">
-        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" className="w-full h-full">
-          <defs>
-            <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-border"/>
-            </pattern>
-            <radialGradient id="hotspot1" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgb(244, 63, 94)" stopOpacity="0.6"/>
-              <stop offset="100%" stopColor="rgb(244, 63, 94)" stopOpacity="0"/>
-            </radialGradient>
-            <radialGradient id="hotspot2" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgb(245, 158, 11)" stopOpacity="0.5"/>
-              <stop offset="100%" stopColor="rgb(245, 158, 11)" stopOpacity="0"/>
-            </radialGradient>
-            <radialGradient id="hotspot3" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgb(14, 165, 233)" stopOpacity="0.4"/>
-              <stop offset="100%" stopColor="rgb(14, 165, 233)" stopOpacity="0"/>
-            </radialGradient>
-          </defs>
-          <rect width="400" height="200" fill="url(#mapGrid)"/>
-          {/* Activity hotspots */}
-          <circle cx="200" cy="80" r="60" fill="url(#hotspot1)"/>
-          <circle cx="100" cy="140" r="40" fill="url(#hotspot2)"/>
-          <circle cx="320" cy="100" r="35" fill="url(#hotspot3)"/>
-          {/* Roads */}
-          <path d="M 0 100 L 400 100" stroke="currentColor" strokeWidth="2" className="text-border" opacity="0.5"/>
-          <path d="M 200 0 L 200 200" stroke="currentColor" strokeWidth="2" className="text-border" opacity="0.5"/>
-          {/* Location markers */}
-          <circle cx="200" cy="80" r="5" className="fill-rose-500"/>
-          <circle cx="200" cy="80" r="10" fill="none" className="stroke-rose-500" strokeWidth="1.5" opacity="0.5"/>
-          <circle cx="100" cy="140" r="4" className="fill-amber-500"/>
-          <circle cx="320" cy="100" r="4" className="fill-sky-500"/>
-        </svg>
+        <div ref={mapRef} className="absolute inset-0" />
+        
+        {/* Overlay stats */}
         <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm rounded px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
-          3 active zones • 12 incidents this week
+          {activeCategories} active categories • {incidents.length} incidents this week
         </div>
+
+        {/* Click overlay */}
+        <div className="absolute inset-0 cursor-pointer" />
       </div>
     </IntelCard>
   )
