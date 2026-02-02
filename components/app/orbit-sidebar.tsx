@@ -162,7 +162,7 @@ function CompactLocationCard({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-xl overflow-hidden transition-all",
+        "w-full text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg",
         isSelected && "ring-2 ring-white/30"
       )}
     >
@@ -218,7 +218,7 @@ export function OrbitSidebar({
     <div 
       className={cn(
         "bg-background border-r border-border/40 flex flex-col h-full transition-all duration-300 ease-in-out flex-shrink-0",
-        collapsed ? "w-16" : "w-72"
+        collapsed ? "w-[72px]" : "w-80"
       )}
     >
       {/* Header with logo/toggle */}
@@ -231,11 +231,11 @@ export function OrbitSidebar({
                 onClick={handleToggle}
                 onMouseEnter={() => setLogoHovered(true)}
                 onMouseLeave={() => setLogoHovered(false)}
-                className="relative w-8 h-8 flex items-center justify-center transition-all duration-200"
+                className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-muted/50 transition-all"
                 title="Expand sidebar"
               >
                 {logoHovered ? (
-                  <PanelLeft className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                  <PanelLeft className="w-5 h-5 text-foreground transition-colors" />
                 ) : (
                   <Image 
                     src="/images/raven-logo.png" 
@@ -265,7 +265,7 @@ export function OrbitSidebar({
           {!collapsed && (
             <button
               onClick={handleToggle}
-              className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
               title="Collapse sidebar"
             >
               <PanelLeftClose className="w-4 h-4" />
@@ -276,7 +276,7 @@ export function OrbitSidebar({
       
       {/* Collapsed: Icon-only nav */}
       {collapsed && (
-        <nav className="p-2 space-y-1">
+        <nav className="p-3 space-y-2">
           {navItems.filter(item => !item.comingSoon).map((item) => {
             const Icon = item.icon
             const isActive = item.id === currentView
@@ -285,14 +285,14 @@ export function OrbitSidebar({
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
                 className={cn(
-                  "w-full flex items-center justify-center p-2.5 rounded-lg transition-colors",
+                  "w-full flex items-center justify-center p-3 rounded-lg transition-all",
                   isActive 
                     ? "bg-accent/10 text-accent" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
                 title={item.label}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-6 h-6" />
               </button>
             )
           })}
@@ -303,16 +303,16 @@ export function OrbitSidebar({
       {!collapsed && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Your Orbit - First, prominent */}
-          <div className="px-4 pt-4">
+          <div className="px-5 pt-5">
             <button 
               onClick={() => setOrbitExpanded(!orbitExpanded)}
-              className="w-full flex items-center justify-between mb-3"
+              className="w-full flex items-center justify-between mb-3 group"
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
                 Your Orbit
               </span>
               <ChevronDown className={cn(
-                "w-4 h-4 text-muted-foreground transition-transform",
+                "w-4 h-4 text-muted-foreground group-hover:text-foreground transition-all",
                 orbitExpanded && "rotate-180"
               )} />
             </button>
@@ -320,7 +320,7 @@ export function OrbitSidebar({
           
           {orbitExpanded && (
             <div 
-              className="px-4 pb-4 space-y-2 overflow-y-auto scrollbar-light"
+              className="px-5 pb-5 space-y-2 overflow-y-auto scrollbar-light"
               data-lenis-prevent
             >
               {ORBIT_LOCATIONS.map((location) => (
@@ -332,7 +332,7 @@ export function OrbitSidebar({
                 />
               ))}
               
-              <button className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-accent/50 transition-colors">
+              <button className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-accent/50 hover:bg-accent/5 transition-all">
                 <Plus className="w-4 h-4" />
                 <span className="text-sm">Add Location</span>
               </button>
@@ -340,7 +340,7 @@ export function OrbitSidebar({
           )}
           
           {/* Main Navigation - Big Bebas font like mobile */}
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-5 py-6 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = item.id === currentView
@@ -350,19 +350,19 @@ export function OrbitSidebar({
                   onClick={() => !item.comingSoon && onViewChange(item.id)}
                   disabled={item.comingSoon}
                   className={cn(
-                    "group flex items-center gap-4 w-full text-left py-3 transition-colors",
+                    "group flex items-center gap-4 w-full text-left py-3 px-2 -mx-2 rounded-lg transition-all",
                     item.comingSoon 
                       ? "opacity-50 cursor-not-allowed" 
-                      : "cursor-pointer"
+                      : "cursor-pointer hover:bg-muted/50"
                   )}
                 >
                   <Icon className={cn(
-                    "w-5 h-5",
-                    isActive ? "text-accent" : "text-muted-foreground"
+                    "w-6 h-6 transition-colors",
+                    isActive ? "text-accent" : "text-muted-foreground group-hover:text-foreground"
                   )} />
                   <span
                     className={cn(
-                      "font-[family-name:var(--font-bebas)] text-2xl tracking-tight transition-colors",
+                      "font-[family-name:var(--font-bebas)] text-3xl tracking-tight transition-colors",
                       isActive ? "text-accent" : "text-foreground"
                     )}
                   >
@@ -379,13 +379,13 @@ export function OrbitSidebar({
           </nav>
           
           {/* Footer - Settings & Help */}
-          <div className="mt-auto p-4 border-t border-border/40 space-y-1">
-            <button className="flex items-center gap-3 w-full py-2 text-muted-foreground hover:text-foreground transition-colors">
-              <Settings className="w-4 h-4" />
+          <div className="mt-auto px-5 py-4 border-t border-border/40 space-y-1">
+            <button className="flex items-center gap-3 w-full py-2.5 px-2 -mx-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
+              <Settings className="w-5 h-5" />
               <span className="font-mono text-sm">Settings</span>
             </button>
-            <button className="flex items-center gap-3 w-full py-2 text-muted-foreground hover:text-foreground transition-colors">
-              <HelpCircle className="w-4 h-4" />
+            <button className="flex items-center gap-3 w-full py-2.5 px-2 -mx-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
+              <HelpCircle className="w-5 h-5" />
               <span className="font-mono text-sm">Help & Feedback</span>
             </button>
           </div>
