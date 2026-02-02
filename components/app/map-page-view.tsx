@@ -436,7 +436,7 @@ export function MapPageView() {
         </div>
 
         <div 
-          className="flex-1 overflow-y-auto scrollbar-light"
+          className="flex-1 overflow-y-auto scrollbar-hide"
           data-lenis-prevent
         >
           <div className="p-4 space-y-3">
@@ -526,9 +526,18 @@ function IncidentCard({
   const config = typeConfig[incident.type]
   const Icon = config.icon
   const [isHovered, setIsHovered] = useState(false)
+  const cardRef = useRef<HTMLButtonElement>(null)
+
+  // Scroll into view when selected
+  useEffect(() => {
+    if (isSelected && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [isSelected])
 
   return (
     <button
+      ref={cardRef}
       onClick={onSelect}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

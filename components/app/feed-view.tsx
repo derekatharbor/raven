@@ -628,7 +628,7 @@ export function FeedView() {
         </div>
 
         {/* Feed Content */}
-        <div className="flex-1 overflow-y-auto" data-lenis-prevent>
+        <div className="flex-1 overflow-y-auto scrollbar-hide" data-lenis-prevent>
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -658,7 +658,7 @@ export function FeedView() {
       </div>
 
       {/* Sidebar - Desktop only */}
-      <div className="hidden lg:block w-80 flex-shrink-0 overflow-y-auto p-4 space-y-4" data-lenis-prevent>
+      <div className="hidden lg:block w-80 flex-shrink-0 overflow-y-auto scrollbar-hide p-4 space-y-4" data-lenis-prevent>
         <CategoryBreakdown incidents={incidents} />
         <ThisWeekHighlights incidents={incidents} />
         
