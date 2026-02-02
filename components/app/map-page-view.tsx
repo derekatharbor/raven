@@ -290,9 +290,37 @@ export function MapPageView() {
       markersRef.current.forEach(marker => marker.remove())
       markersRef.current = []
 
+      // Add custom tooltip styles if not already added
+      if (!document.getElementById('map-tooltip-styles')) {
+        const style = document.createElement('style')
+        style.id = 'map-tooltip-styles'
+        style.textContent = `
+          .incident-tooltip {
+            background: hsl(var(--background)) !important;
+            border: 1px solid hsl(var(--border)) !important;
+            border-radius: 8px !important;
+            padding: 0 !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+            min-width: 220px;
+            max-width: 280px;
+          }
+          .incident-tooltip::before {
+            display: none !important;
+          }
+          .leaflet-tooltip-left.incident-tooltip::before,
+          .leaflet-tooltip-right.incident-tooltip::before,
+          .leaflet-tooltip-top.incident-tooltip::before,
+          .leaflet-tooltip-bottom.incident-tooltip::before {
+            display: none !important;
+          }
+        `
+        document.head.appendChild(style)
+      }
+
       filteredIncidents.forEach((incident) => {
         const config = typeConfig[incident.type]
         const isSelected = selectedIncident?.id === incident.id
+        const timeAgo = formatTimeAgo(incident.timestamp)
 
         const icon = L.divIcon({
           className: "custom-marker",
@@ -314,8 +342,57 @@ export function MapPageView() {
           iconAnchor: [isSelected ? 14 : 10, isSelected ? 14 : 10],
         })
 
+        // Tooltip HTML content
+        const tooltipContent = `
+          <div style="padding: 12px;">
+            <div style="
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 4px 8px;
+              background: ${config.color}15;
+              color: ${config.color};
+              font-family: ui-monospace, monospace;
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin-bottom: 8px;
+              border-radius: 4px;
+            ">
+              ${config.label}
+            </div>
+            <div style="
+              font-weight: 600;
+              font-size: 14px;
+              line-height: 1.3;
+              color: hsl(var(--foreground));
+              margin-bottom: 8px;
+            ">
+              ${incident.title.length > 60 ? incident.title.slice(0, 60) + '...' : incident.title}
+            </div>
+            <div style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-family: ui-monospace, monospace;
+              font-size: 11px;
+              color: hsl(var(--muted-foreground));
+            ">
+              <span>${incident.municipality}</span>
+              <span style="opacity: 0.4;">•</span>
+              <span>${timeAgo}</span>
+            </div>
+          </div>
+        `
+
         const marker = L.marker([incident.coordinates.lat, incident.coordinates.lng], { icon })
           .addTo(map)
+          .bindTooltip(tooltipContent, {
+            className: 'incident-tooltip',
+            direction: 'top',
+            offset: [0, -12],
+            opacity: 1,
+          })
           .on("click", () => {
             setSelectedIncident(incident)
             if (window.innerWidth < 1024) {
