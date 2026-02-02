@@ -296,22 +296,22 @@ export function MapPageView() {
         style.id = 'map-tooltip-styles'
         style.textContent = `
           .incident-tooltip {
-            background: hsl(var(--background)) !important;
-            border: 1px solid hsl(var(--border)) !important;
+            background: white !important;
+            border: 1px solid #e5e5e5 !important;
             border-radius: 8px !important;
             padding: 0 !important;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
-            min-width: 220px;
-            max-width: 280px;
+            width: 260px !important;
+            white-space: normal !important;
           }
-          .incident-tooltip::before {
-            display: none !important;
+          .incident-tooltip .leaflet-tooltip-content {
+            margin: 0 !important;
           }
           .leaflet-tooltip-left.incident-tooltip::before,
           .leaflet-tooltip-right.incident-tooltip::before,
           .leaflet-tooltip-top.incident-tooltip::before,
           .leaflet-tooltip-bottom.incident-tooltip::before {
-            display: none !important;
+            border: none !important;
           }
         `
         document.head.appendChild(style)
@@ -344,13 +344,11 @@ export function MapPageView() {
 
         // Tooltip HTML content
         const tooltipContent = `
-          <div style="padding: 12px;">
+          <div style="padding: 12px; background: white; border-radius: 8px;">
             <div style="
-              display: inline-flex;
-              align-items: center;
-              gap: 6px;
+              display: inline-block;
               padding: 4px 8px;
-              background: ${config.color}15;
+              background: ${config.color}20;
               color: ${config.color};
               font-family: ui-monospace, monospace;
               font-size: 10px;
@@ -358,28 +356,31 @@ export function MapPageView() {
               letter-spacing: 0.05em;
               margin-bottom: 8px;
               border-radius: 4px;
+              font-weight: 500;
             ">
               ${config.label}
             </div>
             <div style="
               font-weight: 600;
-              font-size: 14px;
-              line-height: 1.3;
-              color: hsl(var(--foreground));
+              font-size: 13px;
+              line-height: 1.4;
+              color: #1a1a1a;
               margin-bottom: 8px;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             ">
-              ${incident.title.length > 60 ? incident.title.slice(0, 60) + '...' : incident.title}
+              ${incident.title.length > 55 ? incident.title.slice(0, 55) + '...' : incident.title}
             </div>
             <div style="
               display: flex;
               align-items: center;
-              gap: 8px;
+              gap: 6px;
               font-family: ui-monospace, monospace;
-              font-size: 11px;
-              color: hsl(var(--muted-foreground));
+              font-size: 10px;
+              color: #737373;
             ">
               <span>${incident.municipality}</span>
-              <span style="opacity: 0.4;">•</span>
+              <span style="opacity: 0.5;">•</span>
               <span>${timeAgo}</span>
             </div>
           </div>
