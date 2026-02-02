@@ -14,7 +14,9 @@ import {
   ChevronUp,
   Flame,
   AlertCircle,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Share2
 } from "lucide-react"
 
 // City centroid coordinates for McHenry County
@@ -177,6 +179,8 @@ export function MapPageView() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [incidents, setIncidents] = useState<MappedIncident[]>([])
   const [selectedIncident, setSelectedIncident] = useState<MappedIncident | null>(null)
+  const [popupIncident, setPopupIncident] = useState<MappedIncident | null>(null)
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Fetch real incidents
@@ -263,6 +267,11 @@ export function MapPageView() {
       }).addTo(map)
 
       L.control.zoom({ position: "bottomright" }).addTo(map)
+
+      // Close popup when map moves
+      map.on('movestart', () => {
+        setPopupIncident(null)
+      })
 
       mapInstanceRef.current = map
       setMapLoaded(true)
@@ -394,10 +403,16 @@ export function MapPageView() {
             offset: [0, -12],
             opacity: 1,
           })
-          .on("click", () => {
+          .on("click", (e: any) => {
+            // Get screen position of marker
+            const point = map.latLngToContainerPoint(e.latlng)
+            setPopupPosition({ x: point.x, y: point.y })
+            setPopupIncident(incident)
             setSelectedIncident(incident)
+            
             if (window.innerWidth < 1024) {
               setMobileSheetOpen(true)
+              setPopupIncident(null) // Don't show popup on mobile
             }
           })
 
@@ -497,6 +512,20 @@ export function MapPageView() {
           </div>
           <ChevronUp className="w-5 h-5 text-muted-foreground" />
         </button>
+
+        {/* Popup Card - appears on pin click */}
+        {popupIncident && popupPosition && (
+          <MapPopupCard
+            incident={popupIncident}
+            position={popupPosition}
+            onClose={() => setPopupIncident(null)}
+            onViewSource={() => {
+              if (popupIncident.sourceUrl) {
+                window.open(popupIncident.sourceUrl, '_blank')
+              }
+            }}
+          />
+        )}
       </div>
 
       {/* Desktop: Incident Panel */}
@@ -682,5 +711,129 @@ function IncidentCard({
         isHovered || isSelected ? "text-accent translate-x-0 opacity-100" : "text-transparent -translate-x-2 opacity-0"
       )} />
     </button>
+  )
+}
+
+// Popup card that appears when clicking a map pin
+function MapPopupCard({
+  incident,
+  position,
+  onClose,
+  onViewSource,
+}: {
+  incident: MappedIncident
+  position: { x: number; y: number }
+  onClose: () => void
+  onViewSource: () => void
+}) {
+  const config = typeConfig[incident.type]
+  const Icon = config.icon
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // Close when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    
+    // Delay adding listener to avoid immediate close
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 100)
+    
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [onClose])
+
+  // Calculate position - try to keep card in view
+  const cardWidth = 320
+  const cardHeight = 280
+  let left = position.x - cardWidth / 2
+  let top = position.y - cardHeight - 20 // Above the pin
+  
+  // Adjust if too far left/right
+  if (left < 16) left = 16
+  if (left + cardWidth > window.innerWidth - 400) { // Account for sidebar
+    left = window.innerWidth - 400 - cardWidth - 16
+  }
+  
+  // If would go above viewport, show below pin instead
+  if (top < 80) {
+    top = position.y + 30
+  }
+
+  return (
+    <div
+      ref={cardRef}
+      className="absolute z-[1001] w-80 bg-background border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      style={{ left, top }}
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-border/50">
+        <div className="flex items-start justify-between gap-3">
+          <div className={cn(
+            "inline-flex items-center gap-1.5 px-2 py-1 font-mono text-[10px] uppercase tracking-wider rounded",
+            config.bgColor,
+            config.textColor
+          )}>
+            <Icon className="w-3 h-3" />
+            {config.label}
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-muted-foreground hover:text-accent transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <h3 className="font-semibold text-foreground leading-snug mt-3">
+          {incident.title}
+        </h3>
+        
+        <div className="flex items-center gap-2 mt-2 font-mono text-[10px] text-muted-foreground">
+          <MapPin className="w-3 h-3" />
+          <span>{incident.municipality}</span>
+          <span className="text-border">•</span>
+          <Clock className="w-3 h-3" />
+          <span>{formatTimeAgo(incident.timestamp)}</span>
+        </div>
+      </div>
+      
+      {/* Body */}
+      {incident.summary && (
+        <div className="p-4 border-b border-border/50">
+          <p className="font-mono text-xs text-muted-foreground leading-relaxed">
+            {incident.summary.replace(/\[\.\.\.\]$/, '...').replace(/\[…\]$/, '...')}
+          </p>
+        </div>
+      )}
+      
+      {/* Actions */}
+      <div className="p-3 flex items-center gap-2">
+        {incident.sourceUrl && (
+          <button
+            onClick={onViewSource}
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-accent/10 text-accent font-mono text-xs rounded-lg hover:bg-accent/20 transition-colors"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            View Source
+          </button>
+        )}
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(incident.sourceUrl || window.location.href)
+          }}
+          className="flex items-center justify-center gap-2 px-3 py-2 border border-border text-muted-foreground font-mono text-xs rounded-lg hover:text-foreground hover:border-accent/50 transition-colors"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          Share
+        </button>
+      </div>
+    </div>
   )
 }
