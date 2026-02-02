@@ -162,8 +162,10 @@ function CompactLocationCard({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-lg",
-        isSelected && "ring-2 ring-white/30"
+        "w-full text-left rounded-xl overflow-hidden transition-all",
+        isSelected 
+          ? "ring-2 ring-white/30" 
+          : "hover:ring-2 hover:ring-accent/50"
       )}
     >
       <div className={`relative bg-gradient-to-br ${scheme.bg} p-3`}>
@@ -231,11 +233,11 @@ export function OrbitSidebar({
                 onClick={handleToggle}
                 onMouseEnter={() => setLogoHovered(true)}
                 onMouseLeave={() => setLogoHovered(false)}
-                className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-muted/50 transition-all"
+                className="relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors"
                 title="Expand sidebar"
               >
                 {logoHovered ? (
-                  <PanelLeft className="w-5 h-5 text-foreground transition-colors" />
+                  <PanelLeft className="w-5 h-5 text-accent transition-colors" />
                 ) : (
                   <Image 
                     src="/images/raven-logo.png" 
@@ -265,7 +267,7 @@ export function OrbitSidebar({
           {!collapsed && (
             <button
               onClick={handleToggle}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+              className="p-2 rounded-lg text-muted-foreground hover:text-accent transition-colors"
               title="Collapse sidebar"
             >
               <PanelLeftClose className="w-4 h-4" />
@@ -285,10 +287,10 @@ export function OrbitSidebar({
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
                 className={cn(
-                  "w-full flex items-center justify-center p-3 rounded-lg transition-all",
+                  "w-full flex items-center justify-center p-3 rounded-lg transition-colors",
                   isActive 
-                    ? "bg-accent/10 text-accent" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "text-accent" 
+                    : "text-muted-foreground hover:text-accent"
                 )}
                 title={item.label}
               >
@@ -312,7 +314,7 @@ export function OrbitSidebar({
                 Your Orbit
               </span>
               <ChevronDown className={cn(
-                "w-4 h-4 text-muted-foreground group-hover:text-foreground transition-all",
+                "w-4 h-4 text-muted-foreground group-hover:text-accent transition-all",
                 orbitExpanded && "rotate-180"
               )} />
             </button>
@@ -332,7 +334,7 @@ export function OrbitSidebar({
                 />
               ))}
               
-              <button className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-accent/50 hover:bg-accent/5 transition-all">
+              <button className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-border text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors">
                 <Plus className="w-4 h-4" />
                 <span className="text-sm">Add Location</span>
               </button>
@@ -350,20 +352,24 @@ export function OrbitSidebar({
                   onClick={() => !item.comingSoon && onViewChange(item.id)}
                   disabled={item.comingSoon}
                   className={cn(
-                    "group flex items-center gap-4 w-full text-left py-3 px-2 -mx-2 rounded-lg transition-all",
+                    "group flex items-center gap-4 w-full text-left py-3 transition-all",
                     item.comingSoon 
                       ? "opacity-50 cursor-not-allowed" 
-                      : "cursor-pointer hover:bg-muted/50"
+                      : "cursor-pointer"
                   )}
                 >
                   <Icon className={cn(
                     "w-6 h-6 transition-colors",
-                    isActive ? "text-accent" : "text-muted-foreground group-hover:text-foreground"
+                    isActive 
+                      ? "text-accent" 
+                      : "text-muted-foreground group-hover:text-accent"
                   )} />
                   <span
                     className={cn(
                       "font-[family-name:var(--font-bebas)] text-3xl tracking-tight transition-colors",
-                      isActive ? "text-accent" : "text-foreground"
+                      isActive 
+                        ? "text-accent" 
+                        : "text-foreground group-hover:text-accent"
                     )}
                   >
                     {item.label.toUpperCase()}
@@ -380,13 +386,13 @@ export function OrbitSidebar({
           
           {/* Footer - Settings & Help */}
           <div className="mt-auto px-5 py-4 border-t border-border/40 space-y-1">
-            <button className="flex items-center gap-3 w-full py-2.5 px-2 -mx-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
-              <Settings className="w-5 h-5" />
-              <span className="font-mono text-sm">Settings</span>
+            <button className="group flex items-center gap-3 w-full py-2.5 text-muted-foreground transition-all">
+              <Settings className="w-5 h-5 group-hover:text-accent transition-colors" />
+              <span className="font-mono text-sm group-hover:text-accent transition-colors">Settings</span>
             </button>
-            <button className="flex items-center gap-3 w-full py-2.5 px-2 -mx-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
-              <HelpCircle className="w-5 h-5" />
-              <span className="font-mono text-sm">Help & Feedback</span>
+            <button className="group flex items-center gap-3 w-full py-2.5 text-muted-foreground transition-all">
+              <HelpCircle className="w-5 h-5 group-hover:text-accent transition-colors" />
+              <span className="font-mono text-sm group-hover:text-accent transition-colors">Help & Feedback</span>
             </button>
           </div>
         </div>
