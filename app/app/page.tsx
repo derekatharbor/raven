@@ -5,17 +5,19 @@ import { useState } from "react"
 import { BriefingView } from "@/components/app/briefing-view"
 import { OrbitSidebar } from "@/components/app/orbit-sidebar"
 import { MapPageView } from "@/components/app/map-page-view"
+import { FeedView } from "@/components/app/feed-view"
 import { MOCK_INCIDENTS, type Incident } from "@/lib/mock-data"
 import { ORBIT_LOCATIONS, getScoreColor } from "@/lib/raven-data"
-import { Menu, X, ChevronDown, Bell, User, MapPin, Compass, Clock, Settings, HelpCircle, Plus } from "lucide-react"
+import { Menu, X, ChevronDown, Bell, User, MapPin, Compass, Clock, Settings, HelpCircle, Plus, Newspaper } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
-type ViewType = "brief" | "map"
+type ViewType = "brief" | "map" | "feed"
 
 // Navigation items for mobile menu
 const navItems = [
   { id: "brief", label: "Daily Brief", icon: Compass },
+  { id: "feed", label: "Intel Feed", icon: Newspaper },
   { id: "map", label: "Activity Map", icon: MapPin },
   { id: "alerts", label: "Alerts", icon: Bell, comingSoon: true },
   { id: "history", label: "History", icon: Clock, comingSoon: true },
@@ -177,13 +179,13 @@ export default function AppPage() {
           <nav className="space-y-1 mb-8">
             {navItems.map((item, index) => {
               const Icon = item.icon
-              const isActive = (item.id === "brief" && currentView === "brief") || (item.id === "map" && currentView === "map")
+              const isActive = item.id === currentView
               return (
                 <button
                   key={item.id}
                   onClick={() => {
                     if (!item.comingSoon) {
-                      if (item.id === "brief" || item.id === "map") {
+                      if (item.id === "brief" || item.id === "map" || item.id === "feed") {
                         setCurrentView(item.id as ViewType)
                       }
                       setMobileMenuOpen(false)
@@ -299,6 +301,17 @@ export default function AppPage() {
               Brief
             </button>
             <button
+              onClick={() => setCurrentView("feed")}
+              className={cn(
+                "px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider rounded transition-all duration-200",
+                currentView === "feed" 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Intel
+            </button>
+            <button
               onClick={() => setCurrentView("map")}
               className={cn(
                 "px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider rounded transition-all duration-200",
@@ -331,6 +344,18 @@ export default function AppPage() {
               selectedLocationId={selectedLocationId}
               onNavigateToMap={() => setCurrentView("map")} 
             />
+          </div>
+          <div 
+            className={cn(
+              "absolute inset-0 transition-all duration-300 ease-in-out",
+              currentView === "feed" 
+                ? "opacity-100 translate-x-0 z-10" 
+                : currentView === "brief"
+                ? "opacity-0 translate-x-4 pointer-events-none z-0"
+                : "opacity-0 -translate-x-4 pointer-events-none z-0"
+            )}
+          >
+            <FeedView />
           </div>
           <div 
             className={cn(
