@@ -808,8 +808,14 @@ function IncidentDetailModal({
   onClose: () => void
 }) {
   const [copied, setCopied] = useState(false)
+  
+  // Must be before any early returns (React hooks rules)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-  if (!incident) return null
+  if (!incident || !mounted) return null
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -887,14 +893,6 @@ function IncidentDetailModal({
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
   }
-
-  // Only render on client (for portal)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null
 
   return createPortal(
     <>
