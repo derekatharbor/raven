@@ -316,22 +316,77 @@ function RavenAnalysisCard({ onOpenModal }: { onOpenModal: () => void }) {
 // ACTIVE CONDITIONS
 // ============================================
 function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const conditions = [
-    {
-      icon: Construction,
-      title: "Route 14 Eastbound Closure",
-      detail: "Water main repair • Expect 15-20 min delays",
-      timeline: "Through Friday",
-      severity: "moderate"
-    },
-    {
-      icon: AlertTriangle,
-      title: "Street Light Outage — Walkup Ave",
-      detail: "ComEd dispatched",
-      timeline: "Est. tomorrow",
-      severity: "low"
+  const [conditions, setConditions] = useState<Array<{
+    icon: any
+    title: string
+    detail: string
+    timeline: string
+    severity: string
+  }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchConditions() {
+      try {
+        // Get last 48 hours of traffic/infrastructure/weather incidents
+        const res = await fetch('/api/incidents?days=2&limit=20')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        
+        // Filter for active conditions (traffic, infrastructure, weather)
+        const conditionCategories = ['traffic', 'infrastructure', 'weather', 'development']
+        const activeIncidents = data.items.filter((item: any) => 
+          conditionCategories.includes(item.category)
+        ).slice(0, 3)
+        
+        const getIcon = (category: string) => {
+          switch (category) {
+            case 'traffic': return Car
+            case 'infrastructure': 
+            case 'development': return Construction
+            case 'weather': return AlertTriangle
+            default: return AlertTriangle
+          }
+        }
+        
+        const getTimeline = (date: string) => {
+          const d = new Date(date)
+          const now = new Date()
+          const hoursAgo = Math.floor((now.getTime() - d.getTime()) / 3600000)
+          if (hoursAgo < 1) return 'Just now'
+          if (hoursAgo < 24) return `${hoursAgo}h ago`
+          return d.toLocaleDateString('en-US', { weekday: 'short' })
+        }
+        
+        const transformed = activeIncidents.map((item: any) => ({
+          icon: getIcon(item.category),
+          title: item.title.length > 45 ? item.title.slice(0, 45) + '...' : item.title,
+          detail: item.description?.slice(0, 60) || item.municipality || '',
+          timeline: getTimeline(item.occurred_at || item.created_at),
+          severity: item.severity || 'medium'
+        }))
+        
+        setConditions(transformed.length > 0 ? transformed : [{
+          icon: CheckCircle2,
+          title: "No active disruptions",
+          detail: "All clear in McHenry County",
+          timeline: "Now",
+          severity: "low"
+        }])
+      } catch (err) {
+        setConditions([{
+          icon: AlertTriangle,
+          title: "Unable to load conditions",
+          detail: "Check connection",
+          timeline: "—",
+          severity: "low"
+        }])
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+    fetchConditions()
+  }, [])
 
   return (
     <IntelCard onClick={onOpenModal}>
@@ -340,25 +395,36 @@ function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
         <span className="font-mono text-xs uppercase tracking-[0.2em] text-amber-600 font-semibold">
           Active Conditions
         </span>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {conditions.length} disruption{conditions.length !== 1 ? "s" : ""}
-        </span>
+        {!loading && (
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {conditions.length} item{conditions.length !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
-      <div className="space-y-4">
-        {conditions.map((condition, i) => (
-          <div key={i} className={`flex items-start gap-3 ${i > 0 ? "pt-4 border-t border-border/30" : ""}`}>
-            <condition.icon className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
-                <h4 className="font-mono text-sm font-semibold text-foreground">{condition.title}</h4>
-                <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{condition.timeline}</span>
+      {loading ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {conditions.map((condition, i) => {
+            const IconComponent = condition.icon
+            return (
+              <div key={i} className={`flex items-start gap-3 ${i > 0 ? "pt-4 border-t border-border/30" : ""}`}>
+                <IconComponent className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-mono text-sm font-semibold text-foreground">{condition.title}</h4>
+                    <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{condition.timeline}</span>
+                  </div>
+                  <p className="font-mono text-xs text-muted-foreground mt-0.5 line-clamp-1">{condition.detail}</p>
+                </div>
               </div>
-              <p className="font-mono text-xs text-muted-foreground mt-0.5">{condition.detail}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </IntelCard>
   )
 }
@@ -367,18 +433,49 @@ function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
 // CIVIC SIGNALS
 // ============================================
 function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const signals = [
-    {
-      title: "Commercial Rezoning Approved",
-      impact: "Virginia St corridor may see retail expansion",
-      date: "Feb 15"
-    },
-    {
-      title: "Mixed-Use Development Filed",
-      impact: "150 units + retail proposed downtown",
-      date: "Hearing Mar 5"
+  const [signals, setSignals] = useState<Array<{
+    title: string
+    impact: string
+    date: string
+    url?: string
+  }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchCivicData() {
+      try {
+        const res = await fetch('/api/incidents?days=14&limit=20')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        
+        // Filter for civic/government related
+        const civicCategories = ['civic', 'government', 'services', 'court', 'other']
+        const civicIncidents = data.items.filter((item: any) => 
+          civicCategories.includes(item.category)
+        ).slice(0, 3)
+        
+        const transformed = civicIncidents.map((item: any) => {
+          const date = new Date(item.occurred_at || item.created_at)
+          const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          return {
+            title: item.title.length > 50 ? item.title.slice(0, 50) + '...' : item.title,
+            impact: item.description?.slice(0, 80) || item.municipality || 'McHenry County',
+            date: formatted,
+            url: item.raw_data?.url
+          }
+        })
+        
+        setSignals(transformed.length > 0 ? transformed : [
+          { title: "No recent civic updates", impact: "Check back soon for government news", date: "—" }
+        ])
+      } catch (err) {
+        setSignals([{ title: "Unable to load", impact: "Check connection", date: "—" }])
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+    fetchCivicData()
+  }, [])
 
   return (
     <IntelCard onClick={onOpenModal}>
@@ -389,17 +486,23 @@ function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
         </span>
       </div>
 
-      <div className="space-y-4">
-        {signals.map((signal, i) => (
-          <div key={i} className={i > 0 ? "pt-4 border-t border-border/30" : ""}>
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h4 className="font-mono text-sm font-semibold text-foreground">{signal.title}</h4>
-              <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{signal.date}</span>
+      {loading ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {signals.map((signal, i) => (
+            <div key={i} className={i > 0 ? "pt-4 border-t border-border/30" : ""}>
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <h4 className="font-mono text-sm font-semibold text-foreground">{signal.title}</h4>
+                <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{signal.date}</span>
+              </div>
+              <p className="font-mono text-xs text-foreground/60 line-clamp-2">{signal.impact}</p>
             </div>
-            <p className="font-mono text-xs text-foreground/60">{signal.impact}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </IntelCard>
   )
 }
@@ -408,11 +511,65 @@ function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
 // WHAT'S QUIET
 // ============================================
 function WhatsQuietCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const quietItems = [
-    "Violent crime at historic lows",
-    "Residential areas stable",
-    "School zones clear this week"
-  ]
+  const [quietItems, setQuietItems] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function analyzeQuiet() {
+      try {
+        const res = await fetch('/api/incidents?days=7&limit=100')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        
+        const counts = data.categoryCounts || {}
+        const items: string[] = []
+        
+        // Check for low/no violent crime
+        const violentCount = counts['violent_crime'] || 0
+        if (violentCount === 0) {
+          items.push('No violent crime reported')
+        } else if (violentCount <= 2) {
+          items.push('Violent crime minimal')
+        }
+        
+        // Check for low fire incidents
+        const fireCount = counts['fire'] || 0
+        if (fireCount === 0) {
+          items.push('No fire incidents')
+        }
+        
+        // Check for low missing persons
+        const missingCount = counts['missing'] || 0
+        if (missingCount === 0) {
+          items.push('No missing persons')
+        }
+        
+        // Check property crime
+        const propertyCount = counts['property_crime'] || 0
+        if (propertyCount <= 2) {
+          items.push('Property crime low')
+        }
+        
+        // General stability
+        const totalIncidents = Object.values(counts).reduce((a: number, b: any) => a + (b || 0), 0)
+        if (totalIncidents < 10) {
+          items.push('Overall activity low')
+        }
+        
+        // If everything is quiet
+        if (items.length === 0) {
+          items.push('Normal activity levels')
+        }
+        
+        setQuietItems(items.slice(0, 4))
+      } catch (err) {
+        setQuietItems(['Unable to analyze'])
+      } finally {
+        setLoading(false)
+      }
+    }
+    analyzeQuiet()
+  }, [])
 
   return (
     <IntelCard variant="quiet" onClick={onOpenModal}>
@@ -423,17 +580,23 @@ function WhatsQuietCard({ onOpenModal }: { onOpenModal: () => void }) {
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {quietItems.map((item, i) => (
-          <span 
-            key={i} 
-            className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground/70 bg-emerald-500/10 px-2.5 py-1.5 rounded"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            {item}
-          </span>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {quietItems.map((item, i) => (
+            <span 
+              key={i} 
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground/70 bg-emerald-500/10 px-2.5 py-1.5 rounded"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {item}
+            </span>
+          ))}
+        </div>
+      )}
     </IntelCard>
   )
 }
@@ -442,11 +605,102 @@ function WhatsQuietCard({ onOpenModal }: { onOpenModal: () => void }) {
 // TEMPORAL PATTERNS
 // ============================================
 function TemporalPatternsCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const windows = [
-    { label: "Higher Activity", time: "11PM – 2AM", color: "text-rose-600", note: "Property incidents cluster here" },
-    { label: "Rush Impact", time: "5PM – 7PM", color: "text-amber-600", note: "Route 14 delays" },
-    { label: "Quietest", time: "3AM – 7AM", color: "text-emerald-600", note: "Consistently low" }
-  ]
+  const [windows, setWindows] = useState<Array<{
+    label: string
+    time: string
+    color: string
+    note: string
+  }>>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function analyzePatterns() {
+      try {
+        const res = await fetch('/api/incidents?days=14&limit=100')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        
+        // Analyze by hour
+        const hourCounts: Record<number, number> = {}
+        for (let i = 0; i < 24; i++) hourCounts[i] = 0
+        
+        data.items.forEach((item: any) => {
+          const date = new Date(item.occurred_at || item.created_at)
+          const hour = date.getHours()
+          hourCounts[hour]++
+        })
+        
+        // Find peak hours
+        let maxHour = 0, maxCount = 0
+        let minHour = 0, minCount = Infinity
+        
+        Object.entries(hourCounts).forEach(([hour, count]) => {
+          const h = parseInt(hour)
+          if (count > maxCount) { maxCount = count; maxHour = h }
+          if (count < minCount) { minCount = count; minHour = h }
+        })
+        
+        // Format hour ranges
+        const formatHour = (h: number) => {
+          if (h === 0) return '12AM'
+          if (h === 12) return '12PM'
+          return h > 12 ? `${h - 12}PM` : `${h}AM`
+        }
+        
+        const formatRange = (h: number) => {
+          const next = (h + 2) % 24
+          return `${formatHour(h)} – ${formatHour(next)}`
+        }
+        
+        // Calculate evening activity (6PM-12AM)
+        const eveningActivity = [18, 19, 20, 21, 22, 23].reduce((sum, h) => sum + hourCounts[h], 0)
+        const morningActivity = [6, 7, 8, 9, 10, 11].reduce((sum, h) => sum + hourCounts[h], 0)
+        
+        const patterns = []
+        
+        if (maxCount > 0) {
+          patterns.push({
+            label: "Peak Activity",
+            time: formatRange(maxHour),
+            color: "text-rose-600",
+            note: `${maxCount} incidents`
+          })
+        }
+        
+        if (eveningActivity > morningActivity) {
+          patterns.push({
+            label: "Evening Higher",
+            time: "6PM – 12AM",
+            color: "text-amber-600", 
+            note: `${eveningActivity} incidents`
+          })
+        } else if (morningActivity > 0) {
+          patterns.push({
+            label: "Morning Active",
+            time: "6AM – 12PM",
+            color: "text-amber-600",
+            note: `${morningActivity} incidents`
+          })
+        }
+        
+        patterns.push({
+          label: "Quietest",
+          time: formatRange(minHour),
+          color: "text-emerald-600",
+          note: minCount === 0 ? "No incidents" : `${minCount} incidents`
+        })
+        
+        setWindows(patterns.length > 0 ? patterns : [
+          { label: "Insufficient Data", time: "—", color: "text-muted-foreground", note: "Need more incidents" }
+        ])
+      } catch (err) {
+        setWindows([{ label: "Unable to analyze", time: "—", color: "text-muted-foreground", note: "" }])
+      } finally {
+        setLoading(false)
+      }
+    }
+    analyzePatterns()
+  }, [])
 
   return (
     <IntelCard onClick={onOpenModal}>
@@ -457,17 +711,22 @@ function TemporalPatternsCard({ onOpenModal }: { onOpenModal: () => void }) {
         </span>
       </div>
 
-      {/* Stack on mobile, row on desktop */}
-      <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
-        {windows.map((window, i) => (
-          <div key={i} className="flex sm:flex-col items-center sm:items-center justify-between sm:justify-start sm:text-center py-2 sm:py-0 border-b sm:border-b-0 border-border/30 last:border-b-0">
-            <div className="sm:mb-1">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{window.label}</p>
+      {loading ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
+          {windows.map((window, i) => (
+            <div key={i} className="flex sm:flex-col items-center sm:items-center justify-between sm:justify-start sm:text-center py-2 sm:py-0 border-b sm:border-b-0 border-border/30 last:border-b-0">
+              <div className="sm:mb-1">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{window.label}</p>
+              </div>
+              <p className={`font-mono text-base sm:text-lg font-medium ${window.color}`}>{window.time}</p>
             </div>
-            <p className={`font-mono text-base sm:text-lg font-medium ${window.color}`}>{window.time}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </IntelCard>
   )
 }
