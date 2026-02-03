@@ -203,14 +203,7 @@ async function fetchFeed(feedConfig: typeof RSS_FEEDS[0]): Promise<ParsedNews[]>
 }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // No auth required - this ingests public RSS data
   
   try {
     console.log('[County News] Starting fetch...');

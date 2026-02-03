@@ -691,10 +691,10 @@ export function FeedView() {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-sm text-foreground">Northwest Herald</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                <span className="text-sm text-muted-foreground">Northwest Herald</span>
               </div>
-              <span className="font-mono text-[10px] text-emerald-600">Live</span>
+              <span className="font-mono text-[10px] text-muted-foreground">Soon</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
