@@ -22,8 +22,9 @@ export async function GET(request: Request) {
     let query = supabase
       .from('incidents')
       .select('id, category, severity, title, description, location_text, latitude, longitude, municipality, occurred_at, verification_status, created_at, raw_data', { count: 'exact' })
-      .gte('occurred_at', dateThreshold.toISOString())
-      .order('occurred_at', { ascending: false })
+      .or(`occurred_at.gte.${dateThreshold.toISOString()},and(occurred_at.is.null,created_at.gte.${dateThreshold.toISOString()})`)
+      .order('occurred_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
     
     if (category) {
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
     const { data: categoryData } = await supabase
       .from('incidents')
       .select('category')
-      .gte('occurred_at', dateThreshold.toISOString());
+      .or(`occurred_at.gte.${dateThreshold.toISOString()},and(occurred_at.is.null,created_at.gte.${dateThreshold.toISOString()})`);
     
     const categoryCounts = categoryData?.reduce((acc: Record<string, number>, item) => {
       acc[item.category] = (acc[item.category] || 0) + 1;

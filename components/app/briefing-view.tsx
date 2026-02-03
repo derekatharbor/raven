@@ -1052,10 +1052,8 @@ function RecentIncidentsCard({
   useEffect(() => {
     async function fetchIncidents() {
       try {
-        const params = new URLSearchParams({ days: '7', limit: '5' })
-        if (municipality) {
-          params.set('municipality', municipality)
-        }
+        // Don't filter by municipality - show all McHenry County incidents
+        const params = new URLSearchParams({ days: '7', limit: '10' })
         
         const res = await fetch(`/api/incidents?${params}`)
         if (!res.ok) throw new Error('Failed to fetch')
@@ -1070,7 +1068,7 @@ function RecentIncidentsCard({
           summary: item.description || '',
           location: item.location_text,
           municipality: item.municipality || 'McHenry County',
-          timestamp: item.occurred_at || item.created_at,
+          timestamp: item.occurred_at || item.created_at || new Date().toISOString(),
           urgency: mapSeverity(item.severity),
           source: item.raw_data?.source || 'Lake McHenry Scanner',
           sourceUrl: item.raw_data?.url,
@@ -1175,7 +1173,7 @@ function RecentIncidentsCard({
         {incidents.length > 0 && (
           <div className="mt-4 pt-3 border-t border-border/30">
             <span className="font-mono text-[10px] text-muted-foreground">
-              {incidents.length} incidents this week from Lake McHenry Scanner
+              {incidents.length} incidents this week
             </span>
           </div>
         )}
@@ -1194,6 +1192,11 @@ function RecentIncidentsCard({
 // Helper functions for RecentIncidentsCard
 function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
   switch (category) {
+    // Crime/Safety
+    case 'violent_crime':
+    case 'property_crime':
+    case 'police':
+    case 'court':
     case 'shots_fired':
     case 'robbery':
     case 'assault':
@@ -1202,11 +1205,23 @@ function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 
     case 'vehicle_breakin':
     case 'drugs':
       return 'crime'
-    case 'traffic':
-      return 'infrastructure'
+    // Emergency/Safety  
     case 'fire':
     case 'missing':
+    case 'medical':
+    case 'weather':
       return 'safety'
+    // Infrastructure
+    case 'traffic':
+    case 'infrastructure':
+    case 'development':
+      return 'infrastructure'
+    // Civic/Government
+    case 'civic':
+    case 'government':
+    case 'services':
+    case 'events':
+    case 'other':
     default:
       return 'civic'
   }
