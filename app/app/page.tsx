@@ -305,7 +305,8 @@ export default function AppPage() {
           >
             <BriefingView 
               selectedLocationId={selectedLocationId}
-              onNavigateToMap={() => setCurrentView("map")} 
+              onNavigateToMap={() => setCurrentView("map")}
+              onNavigateToFeed={() => setCurrentView("feed")}
             />
           </div>
           <div 
