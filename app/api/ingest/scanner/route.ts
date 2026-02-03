@@ -30,14 +30,14 @@ const MCHENRY_CITIES = [
 // Incident type patterns
 const INCIDENT_PATTERNS: [RegExp, string, string][] = [
   // Violent crime
-  [/\barmed\s+robbery\b/i, 'armed_robbery', 'robbery'],
-  [/\bshooting\b/i, 'shooting', 'shots_fired'],
-  [/\bstabbing\b/i, 'stabbing', 'assault'],
-  [/\bhomicide\b|\bmurder\b/i, 'homicide', 'assault'],
-  [/\brobbery\b/i, 'robbery', 'robbery'],
-  [/\bassault\b/i, 'assault', 'assault'],
-  [/\bdomestic\b/i, 'domestic', 'assault'],
-  [/\bsexual\s+(?:assault|abuse)/i, 'sexual_assault', 'assault'],
+  [/\barmed\s+robbery\b/i, 'armed_robbery', 'violent_crime'],
+  [/\bshooting\b/i, 'shooting', 'violent_crime'],
+  [/\bstabbing\b/i, 'stabbing', 'violent_crime'],
+  [/\bhomicide\b|\bmurder\b/i, 'homicide', 'violent_crime'],
+  [/\brobbery\b/i, 'robbery', 'violent_crime'],
+  [/\bassault\b/i, 'assault', 'violent_crime'],
+  [/\bdomestic\b/i, 'domestic', 'violent_crime'],
+  [/\bsexual\s+(?:assault|abuse)/i, 'sexual_assault', 'violent_crime'],
   
   // Traffic
   [/\bcrash\b|\baccident\b|\bcollision\b/i, 'crash', 'traffic'],
@@ -51,14 +51,14 @@ const INCIDENT_PATTERNS: [RegExp, string, string][] = [
   [/\bblaze\b/i, 'fire', 'fire'],
   
   // Property crime
-  [/\bburglary\b|\bbreak-in\b/i, 'burglary', 'burglary'],
-  [/\btheft\b|\bstolen\b/i, 'theft', 'theft'],
-  [/\bvandalism\b/i, 'vandalism', 'vandalism'],
+  [/\bburglary\b|\bbreak-in\b/i, 'burglary', 'property_crime'],
+  [/\btheft\b|\bstolen\b/i, 'theft', 'property_crime'],
+  [/\bvandalism\b/i, 'vandalism', 'property_crime'],
   
   // Other
   [/\bmissing\b/i, 'missing_person', 'missing'],
-  [/\boverdose\b/i, 'overdose', 'other'],
-  [/\barrested\b|\bcharged\b/i, 'arrest', 'other'],
+  [/\boverdose\b/i, 'overdose', 'medical'],
+  [/\barrested\b|\bcharged\b/i, 'arrest', 'police'],
 ];
 
 interface ParsedIncident {
@@ -160,16 +160,7 @@ function mapToSeverity(category: string): 'critical' | 'high' | 'medium' | 'low'
 }
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret if set (for security)
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    // Allow manual calls without secret in development
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  // No auth required - this ingests public RSS data
   
   try {
     console.log('[Scanner Ingest] Starting fetch...');

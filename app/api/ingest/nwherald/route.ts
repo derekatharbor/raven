@@ -198,17 +198,15 @@ async function fetchFeed(feedConfig: typeof RSS_FEEDS[0]): Promise<ParsedNews[]>
 }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
-  
-  try {
-    console.log('[NW Herald] Starting fetch...');
+  // NW Herald RSS feeds are no longer available (Shaw Local removed them)
+  // This endpoint is disabled until we find a replacement source
+  return NextResponse.json({
+    success: false,
+    message: 'Northwest Herald RSS feeds no longer available - Shaw Local removed their RSS feeds',
+    fetched: 0,
+    inserted: 0,
+    skipped: 0
+  });
     
     const allNews: ParsedNews[] = [];
     for (const feed of RSS_FEEDS) {
