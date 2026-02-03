@@ -1029,7 +1029,6 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
 function SourcesCard({ onOpenModal }: { onOpenModal: () => void }) {
   const sources = [
     { name: "Lake McHenry Scanner", status: "live", lastUpdate: "Hourly" },
-    { name: "Northwest Herald", status: "coming", lastUpdate: "Soon" },
     { name: "McHenry County Gov", status: "live", lastUpdate: "6 hrs" },
     { name: "IDOT Traffic", status: "coming", lastUpdate: "Soon" },
   ]
