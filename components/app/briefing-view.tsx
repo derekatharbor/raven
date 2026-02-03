@@ -271,6 +271,22 @@ function IntelCard({
 }
 
 // ============================================
+// DISPLAY INCIDENT TYPE (shared)
+// ============================================
+interface DisplayIncident {
+  id: string
+  type: 'crime' | 'civic' | 'infrastructure' | 'safety'
+  title: string
+  summary: string
+  location: string | null
+  municipality: string
+  timestamp: string
+  urgency: number
+  source: string
+  sourceUrl?: string
+}
+
+// ============================================
 // RAVEN ANALYSIS - Primary Card
 // ============================================
 function RavenAnalysisCard({ onOpenModal }: { onOpenModal: () => void }) {
@@ -317,13 +333,18 @@ function RavenAnalysisCard({ onOpenModal }: { onOpenModal: () => void }) {
 // ============================================
 function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
   const [conditions, setConditions] = useState<Array<{
-    icon: any
+    id: string
+    category: string
     title: string
     detail: string
     timeline: string
     severity: string
+    url?: string
+    municipality: string
+    timestamp: string
   }>>([])
   const [loading, setLoading] = useState(true)
+  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null)
 
   useEffect(() => {
     async function fetchConditions() {
@@ -339,16 +360,6 @@ function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
           conditionCategories.includes(item.category)
         ).slice(0, 3)
         
-        const getIcon = (category: string) => {
-          switch (category) {
-            case 'traffic': return Car
-            case 'infrastructure': 
-            case 'development': return Construction
-            case 'weather': return AlertTriangle
-            default: return AlertTriangle
-          }
-        }
-        
         const getTimeline = (date: string) => {
           const d = new Date(date)
           const now = new Date()
@@ -359,28 +370,20 @@ function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
         }
         
         const transformed = activeIncidents.map((item: any) => ({
-          icon: getIcon(item.category),
+          id: item.id,
+          category: item.category,
           title: item.title.length > 45 ? item.title.slice(0, 45) + '...' : item.title,
           detail: item.description?.slice(0, 60) || item.municipality || '',
           timeline: getTimeline(item.occurred_at || item.created_at),
-          severity: item.severity || 'medium'
+          severity: item.severity || 'medium',
+          url: item.raw_data?.url,
+          municipality: item.municipality || 'McHenry County',
+          timestamp: item.occurred_at || item.created_at || new Date().toISOString()
         }))
         
-        setConditions(transformed.length > 0 ? transformed : [{
-          icon: CheckCircle2,
-          title: "No active disruptions",
-          detail: "All clear in McHenry County",
-          timeline: "Now",
-          severity: "low"
-        }])
+        setConditions(transformed)
       } catch (err) {
-        setConditions([{
-          icon: AlertTriangle,
-          title: "Unable to load conditions",
-          detail: "Check connection",
-          timeline: "—",
-          severity: "low"
-        }])
+        setConditions([])
       } finally {
         setLoading(false)
       }
@@ -388,44 +391,98 @@ function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
     fetchConditions()
   }, [])
 
-  return (
-    <IntelCard onClick={onOpenModal}>
-      <div className="flex items-center gap-3 mb-4">
-        <AlertTriangle className="w-4 h-4 text-amber-500" />
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-amber-600 font-semibold">
-          Active Conditions
-        </span>
-        {!loading && (
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {conditions.length} item{conditions.length !== 1 ? "s" : ""}
-          </span>
-        )}
-      </div>
+  const getIcon = (category: string) => {
+    switch (category) {
+      case 'traffic': return Car
+      case 'infrastructure': 
+      case 'development': return Construction
+      case 'weather': return AlertTriangle
+      default: return AlertTriangle
+    }
+  }
 
-      {loading ? (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+  const getIconColor = (category: string) => {
+    switch (category) {
+      case 'traffic': return 'text-sky-500'
+      case 'infrastructure':
+      case 'development': return 'text-amber-500'
+      case 'weather': return 'text-rose-500'
+      default: return 'text-amber-500'
+    }
+  }
+
+  const handleItemClick = (item: typeof conditions[0]) => {
+    setSelectedIncident({
+      id: item.id,
+      type: 'infrastructure',
+      title: item.title,
+      summary: item.detail,
+      location: null,
+      municipality: item.municipality,
+      timestamp: item.timestamp,
+      urgency: 5,
+      source: 'Lake McHenry Scanner',
+      sourceUrl: item.url
+    })
+  }
+
+  return (
+    <>
+      <IntelCard>
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-amber-600 font-semibold">
+            Active Conditions
+          </span>
+          {!loading && (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {conditions.length} item{conditions.length !== 1 ? "s" : ""}
+            </span>
+          )}
         </div>
-      ) : (
-        <div className="space-y-4">
-          {conditions.map((condition, i) => {
-            const IconComponent = condition.icon
-            return (
-              <div key={i} className={`flex items-start gap-3 ${i > 0 ? "pt-4 border-t border-border/30" : ""}`}>
-                <IconComponent className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-mono text-sm font-semibold text-foreground">{condition.title}</h4>
-                    <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{condition.timeline}</span>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : conditions.length === 0 ? (
+          <div className="flex items-center gap-3 py-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span className="font-mono text-sm text-foreground">No active disruptions</span>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {conditions.map((condition, i) => {
+              const IconComponent = getIcon(condition.category)
+              const iconColor = getIconColor(condition.category)
+              return (
+                <button
+                  key={condition.id || i}
+                  onClick={() => handleItemClick(condition)}
+                  className={`flex items-start gap-3 w-full text-left p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors ${i > 0 ? "mt-2 pt-3 border-t border-border/30" : ""}`}
+                >
+                  <IconComponent className={`w-4 h-4 mt-0.5 flex-shrink-0 ${iconColor}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-mono text-sm font-semibold text-foreground">{condition.title}</h4>
+                      <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{condition.timeline}</span>
+                    </div>
+                    <p className="font-mono text-xs text-muted-foreground mt-0.5 line-clamp-1">{condition.detail}</p>
                   </div>
-                  <p className="font-mono text-xs text-muted-foreground mt-0.5 line-clamp-1">{condition.detail}</p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </IntelCard>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </IntelCard>
+
+      <IncidentDetailModal
+        incident={selectedIncident}
+        isOpen={selectedIncident !== null}
+        onClose={() => setSelectedIncident(null)}
+      />
+    </>
   )
 }
 
@@ -434,12 +491,16 @@ function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
 // ============================================
 function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
   const [signals, setSignals] = useState<Array<{
+    id: string
     title: string
     impact: string
     date: string
     url?: string
+    municipality: string
+    timestamp: string
   }>>([])
   const [loading, setLoading] = useState(true)
+  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null)
 
   useEffect(() => {
     async function fetchCivicData() {
@@ -458,18 +519,19 @@ function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
           const date = new Date(item.occurred_at || item.created_at)
           const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
           return {
+            id: item.id,
             title: item.title.length > 50 ? item.title.slice(0, 50) + '...' : item.title,
             impact: item.description?.slice(0, 80) || item.municipality || 'McHenry County',
             date: formatted,
-            url: item.raw_data?.url
+            url: item.raw_data?.url,
+            municipality: item.municipality || 'McHenry County',
+            timestamp: item.occurred_at || item.created_at || new Date().toISOString()
           }
         })
         
-        setSignals(transformed.length > 0 ? transformed : [
-          { title: "No recent civic updates", impact: "Check back soon for government news", date: "—" }
-        ])
+        setSignals(transformed)
       } catch (err) {
-        setSignals([{ title: "Unable to load", impact: "Check connection", date: "—" }])
+        setSignals([])
       } finally {
         setLoading(false)
       }
@@ -477,33 +539,67 @@ function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
     fetchCivicData()
   }, [])
 
-  return (
-    <IntelCard onClick={onOpenModal}>
-      <div className="flex items-center gap-3 mb-4">
-        <Landmark className="w-4 h-4 text-sky-500" />
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-sky-600 font-semibold">
-          Civic Signals
-        </span>
-      </div>
+  const handleItemClick = (item: typeof signals[0]) => {
+    setSelectedIncident({
+      id: item.id,
+      type: 'civic',
+      title: item.title,
+      summary: item.impact,
+      location: null,
+      municipality: item.municipality,
+      timestamp: item.timestamp,
+      urgency: 3,
+      source: 'Lake McHenry Scanner',
+      sourceUrl: item.url
+    })
+  }
 
-      {loading ? (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+  return (
+    <>
+      <IntelCard>
+        <div className="flex items-center gap-3 mb-4">
+          <Landmark className="w-4 h-4 text-sky-500" />
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-sky-600 font-semibold">
+            Civic Signals
+          </span>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {signals.map((signal, i) => (
-            <div key={i} className={i > 0 ? "pt-4 border-t border-border/30" : ""}>
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <h4 className="font-mono text-sm font-semibold text-foreground">{signal.title}</h4>
-                <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{signal.date}</span>
-              </div>
-              <p className="font-mono text-xs text-foreground/60 line-clamp-2">{signal.impact}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </IntelCard>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : signals.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="font-mono text-xs text-muted-foreground">No recent civic updates</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {signals.map((signal, i) => (
+              <button
+                key={signal.id || i}
+                onClick={() => handleItemClick(signal)}
+                className={`w-full text-left p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors ${i > 0 ? "mt-2 pt-3 border-t border-border/30" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h4 className="font-mono text-sm font-semibold text-foreground">{signal.title}</h4>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{signal.date}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </div>
+                <p className="font-mono text-xs text-foreground/60 line-clamp-2">{signal.impact}</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </IntelCard>
+
+      <IncidentDetailModal
+        incident={selectedIncident}
+        isOpen={selectedIncident !== null}
+        onClose={() => setSelectedIncident(null)}
+      />
+    </>
   )
 }
 
@@ -1036,22 +1132,6 @@ function DetailModal({
       </div>
     </>
   )
-}
-
-// ============================================
-// INCIDENT TYPES
-// ============================================
-interface DisplayIncident {
-  id: string
-  type: 'crime' | 'civic' | 'infrastructure' | 'safety'
-  title: string
-  summary: string
-  location: string | null
-  municipality: string
-  timestamp: string
-  urgency: number
-  source: string
-  sourceUrl?: string
 }
 
 // ============================================
