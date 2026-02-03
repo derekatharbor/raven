@@ -504,6 +504,11 @@ function formatSourceName(source: string): string {
 
 function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
   switch (category) {
+    // Crime/Safety - both from scanner and news
+    case 'violent_crime':
+    case 'property_crime':
+    case 'police':
+    case 'court':
     case 'shots_fired':
     case 'robbery':
     case 'assault':
@@ -512,11 +517,23 @@ function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 
     case 'vehicle_breakin':
     case 'drugs':
       return 'crime'
-    case 'traffic':
-      return 'infrastructure'
+    // Emergency/Safety
     case 'fire':
     case 'missing':
+    case 'medical':
+    case 'weather':
       return 'safety'
+    // Infrastructure/Traffic
+    case 'traffic':
+    case 'infrastructure':
+    case 'development':
+      return 'infrastructure'
+    // Civic/Government
+    case 'civic':
+    case 'government':
+    case 'services':
+    case 'events':
+    case 'other':
     default:
       return 'civic'
   }
@@ -674,15 +691,22 @@ export function FeedView() {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                <span className="text-sm text-muted-foreground">IDOT Traffic</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-sm text-foreground">Northwest Herald</span>
               </div>
-              <span className="font-mono text-[10px] text-muted-foreground">Soon</span>
+              <span className="font-mono text-[10px] text-emerald-600">Live</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-sm text-foreground">McHenry County Gov</span>
+              </div>
+              <span className="font-mono text-[10px] text-emerald-600">Live</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                <span className="text-sm text-muted-foreground">County Permits</span>
+                <span className="text-sm text-muted-foreground">IDOT Traffic</span>
               </div>
               <span className="font-mono text-[10px] text-muted-foreground">Soon</span>
             </div>

@@ -129,16 +129,29 @@ const filterOptions = [
 
 function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
   switch (category) {
+    // Safety/Crime
     case 'violent_crime':
     case 'property_crime':
     case 'police':
+    case 'court':
       return 'crime'
+    // Emergency/Safety
     case 'fire':
     case 'medical':
     case 'missing':
+    case 'weather':
       return 'safety'
+    // Infrastructure
     case 'traffic':
+    case 'infrastructure':
+    case 'development':
       return 'infrastructure'
+    // Civic/Government
+    case 'civic':
+    case 'government':
+    case 'services':
+    case 'events':
+    case 'other':
     default:
       return 'civic'
   }
