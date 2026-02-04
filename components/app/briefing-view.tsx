@@ -31,9 +31,13 @@ const formatTimeAgo = (ts: string) => {
   if (days < 7) return `${days}d ago`
   return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+// DB categories: vehicle_breakin, theft, burglary, robbery, assault, shots_fired, fire, traffic, drugs, fraud, vandalism, missing, suspicious, other
 const getIncidentCategory = (c: string): 'safety' | 'civic' | 'infrastructure' => {
-  if (['violent_crime', 'property_crime', 'police', 'fire', 'medical'].includes(c)) return 'safety'
-  if (['civic', 'government', 'services', 'court', 'elections'].includes(c)) return 'civic'
+  // Safety: crimes, fire, drugs, missing persons
+  if (['assault', 'shots_fired', 'robbery', 'burglary', 'theft', 'vehicle_breakin', 'fire', 'drugs', 'vandalism', 'missing', 'suspicious', 'fraud'].includes(c)) return 'safety'
+  // Civic: government, court (not currently ingested)
+  if (['civic', 'government', 'court', 'elections'].includes(c)) return 'civic'
+  // Infrastructure: traffic, other
   return 'infrastructure'
 }
 

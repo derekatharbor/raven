@@ -504,11 +504,7 @@ function formatSourceName(source: string): string {
 
 function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
   switch (category) {
-    // Crime/Safety - both from scanner and news
-    case 'violent_crime':
-    case 'property_crime':
-    case 'police':
-    case 'court':
+    // Crime - all criminal activity
     case 'shots_fired':
     case 'robbery':
     case 'assault':
@@ -516,24 +512,23 @@ function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 
     case 'theft':
     case 'vehicle_breakin':
     case 'drugs':
+    case 'vandalism':
+    case 'fraud':
+    case 'suspicious':
       return 'crime'
-    // Emergency/Safety
+    // Safety - fire, missing, emergencies
     case 'fire':
     case 'missing':
-    case 'medical':
-    case 'weather':
       return 'safety'
-    // Infrastructure/Traffic
+    // Infrastructure - traffic, development
     case 'traffic':
-    case 'infrastructure':
-    case 'development':
+    case 'other':
       return 'infrastructure'
-    // Civic/Government
+    // Civic - government, services
     case 'civic':
     case 'government':
-    case 'services':
+    case 'court':
     case 'events':
-    case 'other':
     default:
       return 'civic'
   }

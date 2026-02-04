@@ -129,29 +129,31 @@ const filterOptions = [
 
 function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
   switch (category) {
-    // Safety/Crime
-    case 'violent_crime':
-    case 'property_crime':
-    case 'police':
-    case 'court':
+    // Crime - all criminal activity
+    case 'shots_fired':
+    case 'robbery':
+    case 'assault':
+    case 'burglary':
+    case 'theft':
+    case 'vehicle_breakin':
+    case 'drugs':
+    case 'vandalism':
+    case 'fraud':
+    case 'suspicious':
       return 'crime'
-    // Emergency/Safety
+    // Safety - fire, missing, emergencies
     case 'fire':
-    case 'medical':
     case 'missing':
-    case 'weather':
       return 'safety'
-    // Infrastructure
+    // Infrastructure - traffic, development
     case 'traffic':
-    case 'infrastructure':
-    case 'development':
+    case 'other':
       return 'infrastructure'
-    // Civic/Government
+    // Civic - government, services
     case 'civic':
     case 'government':
-    case 'services':
+    case 'court':
     case 'events':
-    case 'other':
     default:
       return 'civic'
   }
