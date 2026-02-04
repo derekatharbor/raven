@@ -2,7 +2,6 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { 
   CURRENT_LOCATION, 
@@ -11,37 +10,81 @@ import {
 } from "@/lib/raven-data"
 import { 
   TrendingUp, 
-  TrendingDown, 
-  Minus,
+  TrendingDown,
   AlertTriangle,
-  Construction,
-  Landmark,
-  Clock,
   Shield,
+  Landmark,
+  Construction,
   CheckCircle2,
   ChevronRight,
-  ExternalLink,
   Zap,
-  Map,
-  X,
   Loader2,
   Flame,
   Car,
   AlertCircle,
-  Share2,
-  Copy,
-  Check,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  Calendar,
+  Users,
+  FileText
 } from "lucide-react"
 
 // ============================================
-// GET TIME-BASED GREETING
+// TYPES
+// ============================================
+interface Incident {
+  id: string
+  category: string
+  severity: string
+  title: string
+  description: string
+  municipality: string
+  occurred_at: string
+  created_at: string
+  raw_data?: { url?: string; source?: string }
+}
+
+interface EmergingPattern {
+  type: 'safety_cluster' | 'trend_spike' | 'stability_drop'
+  title: string
+  description: string
+  severity: 'high' | 'medium'
+  incidents: Incident[]
+}
+
+interface GroupedIncident {
+  key: string
+  title: string
+  count: number
+  category: string
+  source: string
+  incidents: Incident[]
+  timestamp: string
+}
+
+// ============================================
+// HELPERS
 // ============================================
 function getGreeting(): string {
   const hour = new Date().getHours()
   if (hour < 12) return "Good morning"
   if (hour < 17) return "Good afternoon"
   return "Good evening"
+}
+
+function formatTimeAgo(timestamp: string): string {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 // ============================================
@@ -97,799 +140,663 @@ function usePullToRefresh(onRefresh: () => Promise<void>) {
 }
 
 // ============================================
-// SCORE HERO - Prominent, not hidden
+// CATEGORY TOGGLE HOOK (localStorage + 48hr reset)
 // ============================================
-interface StabilityData {
-  overall: number
-  confidence: 'high' | 'medium' | 'low'
-  categories: {
-    safety: {
-      score: number
-      trend: 'improving' | 'stable' | 'declining'
-      trendPercent: number
-      incidents: number
-      dataAvailable: boolean
+function useCategoryToggle() {
+  const [category, setCategory] = useState<'safety' | 'civic' | 'infrastructure'>('safety')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('raven_trend_category')
+    const lastVisit = localStorage.getItem('raven_last_visit')
+    
+    // Reset to safety if >48 hours since last visit
+    if (lastVisit) {
+      const hoursSince = (Date.now() - parseInt(lastVisit)) / 3600000
+      if (hoursSince > 48) {
+        setCategory('safety')
+      } else if (stored && ['safety', 'civic', 'infrastructure'].includes(stored)) {
+        setCategory(stored as 'safety' | 'civic' | 'infrastructure')
+      }
     }
-    infrastructure: { score: number; dataAvailable: boolean }
-    civic: { score: number; dataAvailable: boolean }
+    
+    localStorage.setItem('raven_last_visit', Date.now().toString())
+    setMounted(true)
+  }, [])
+
+  const updateCategory = (newCategory: 'safety' | 'civic' | 'infrastructure') => {
+    setCategory(newCategory)
+    localStorage.setItem('raven_trend_category', newCategory)
   }
-  metadata: {
-    sourcesActive: number
-    sourcesTotal: number
-  }
+
+  return { category, setCategory: updateCategory, mounted }
 }
 
-function ScoreHero({ location }: { location: LocationData }) {
-  const [stabilityData, setStabilityData] = useState<StabilityData | null>(null)
+// ============================================
+// SECTION 1: STABILITY INDEX + NARRATIVE
+// ============================================
+function StabilityHero({ location }: { location: LocationData }) {
+  const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchStability() {
+    async function fetchData() {
       try {
         const res = await fetch(`/api/stability-score?municipality=${encodeURIComponent(location.name)}`)
         if (res.ok) {
-          const data = await res.json()
-          setStabilityData(data)
+          setData(await res.json())
         }
       } catch (err) {
-        console.error('Failed to fetch stability score:', err)
+        console.error(err)
       } finally {
         setLoading(false)
       }
     }
-    fetchStability()
+    fetchData()
   }, [location.name])
 
-  // Use real data if available, fallback to location data
-  const score = stabilityData?.overall ?? location.stabilityScore
-  const trend = stabilityData?.categories.safety.trend ?? location.trend
-  const trendPercent = stabilityData?.categories.safety.trendPercent ?? location.trendPercent
-  const confidence = stabilityData?.confidence ?? 'low'
-  const incidentCount = stabilityData?.categories.safety.incidents ?? 0
+  const score = data?.overall ?? location.stabilityScore
+  const trend = data?.categories?.safety?.trend ?? 'stable'
+  const trendPercent = data?.categories?.safety?.trendPercent ?? 0
+  const incidentCount = data?.categories?.safety?.incidents ?? 0
 
-  const TrendIcon = trend === "improving" 
-    ? TrendingUp 
-    : trend === "declining"
-    ? TrendingDown
-    : Minus
-    
-  const trendColor = trend === "improving" 
-    ? "text-emerald-600"
-    : trend === "declining"
-    ? "text-rose-600"
-    : "text-muted-foreground"
-
-  const greeting = getGreeting()
-  const userName = "Derek"
-
-  // Generate narrative from real data
-  const narrative = generateNarrative(location.name, trend, incidentCount, stabilityData)
+  // Generate narrative based on delta
+  let narrative = "Analyzing local conditions..."
+  if (!loading) {
+    if (incidentCount === 0) {
+      narrative = "No significant activity this week. Your area is quiet."
+    } else if (trend === 'declining') {
+      narrative = `Activity up ${trendPercent}% from last week with ${incidentCount} incidents tracked.`
+    } else if (trend === 'improving') {
+      narrative = `Activity down ${trendPercent}% — ${location.name} is quieter than usual.`
+    } else {
+      narrative = `Normal activity levels with ${incidentCount} incidents this week.`
+    }
+  }
 
   return (
-    <div className="mb-6 md:mb-8">
-      {/* Greeting */}
-      <h1 className="font-[family-name:var(--font-bebas)] text-2xl md:text-4xl tracking-tight text-foreground mb-1">
-        {greeting}, {userName}
-      </h1>
+    <header className="mb-6">
+      <p className="font-mono text-sm text-muted-foreground mb-2">{getGreeting()}</p>
       
-      {/* Location and date */}
-      <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
-          Raven Brief
-        </span>
-        <span className="text-border">—</span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          {location.name}
-        </span>
-        <span className="text-border hidden sm:inline">—</span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground hidden sm:inline">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-        </span>
-      </div>
-
-      {/* Score and narrative - stacked on mobile, side by side on desktop */}
-      <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8">
-        {/* Score - prominent with gradient */}
-        <div className="flex-shrink-0 flex md:block items-center gap-4">
-          <div className="flex items-baseline gap-1">
-            {loading ? (
-              <span className="text-5xl md:text-7xl font-light tracking-tight text-muted-foreground/30">
-                --
-              </span>
-            ) : (
-              <span className="text-5xl md:text-7xl font-light tracking-tight bg-gradient-to-br from-accent via-orange-500 to-amber-500 bg-clip-text text-transparent">
-                {score}
-              </span>
-            )}
-          </div>
-          <div className="md:mt-1">
-            {!loading && (
-              <div className={`flex items-center gap-1.5 ${trendColor}`}>
-                <TrendIcon className="w-4 h-4" />
-                <span className="font-mono text-xs">
-                  {trendPercent > 0 ? "+" : ""}{trendPercent}% vs last week
+      <div className="flex items-start gap-4">
+        {/* Score */}
+        <div className="flex-shrink-0">
+          {loading ? (
+            <div className="w-20 h-20 rounded-xl bg-muted/50 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-accent/20 to-orange-500/10 border border-accent/30 flex items-center justify-center">
+                <span className="text-4xl font-light tracking-tight bg-gradient-to-br from-accent via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                  {score}
                 </span>
               </div>
-            )}
-            <div className="flex items-center gap-2 mt-1 md:mt-2">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                Stability Index
-              </p>
-              {!loading && confidence !== 'high' && (
-                <span className={cn(
-                  "font-mono text-[9px] uppercase px-1.5 py-0.5 rounded",
-                  confidence === 'medium' 
-                    ? "bg-amber-500/10 text-amber-600" 
-                    : "bg-slate-500/10 text-slate-500"
+              {trend !== 'stable' && (
+                <div className={cn(
+                  "absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded text-[10px] font-mono flex items-center gap-0.5",
+                  trend === 'improving' ? "bg-emerald-500/20 text-emerald-600" : "bg-rose-500/20 text-rose-600"
                 )}>
-                  {confidence === 'medium' ? 'Partial Data' : 'Limited Data'}
-                </span>
+                  {trend === 'improving' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {trendPercent}%
+                </div>
               )}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Narrative */}
-        <div className="flex-1">
-          <p className="font-mono text-sm md:text-base text-foreground/80 leading-relaxed">
+        {/* Location + Narrative */}
+        <div className="flex-1 min-w-0">
+          <h1 className="font-bebas text-3xl md:text-4xl text-foreground tracking-wide">
+            {location.name}
+          </h1>
+          <p className="font-mono text-sm text-muted-foreground mt-1 leading-relaxed">
             {narrative}
           </p>
-          {!loading && stabilityData && (
-            <p className="font-mono text-[10px] text-muted-foreground mt-2">
-              Based on {incidentCount} incidents this week • {stabilityData.metadata.sourcesActive} of {stabilityData.metadata.sourcesTotal} data sources active
+        </div>
+      </div>
+    </header>
+  )
+}
+
+// ============================================
+// SECTION 1B: EMERGING PATTERN (Exclusive Alert)
+// Thresholds:
+// - Safety: 3+ similar in 72hrs in same area
+// - Civic/Infra: >25% week-over-week change
+// - Stability drop: >10 points in 24hrs
+// ============================================
+function EmergingPatternCard({ incidents }: { incidents: Incident[] }) {
+  const [pattern, setPattern] = useState<EmergingPattern | null>(null)
+
+  useEffect(() => {
+    const now = new Date()
+    const last72h = incidents.filter(i => {
+      const t = new Date(i.occurred_at || i.created_at)
+      return (now.getTime() - t.getTime()) < 72 * 3600000
+    })
+
+    // Safety cluster detection: 3+ similar in same municipality
+    const safetyIncidents = last72h.filter(i => 
+      ['violent_crime', 'property_crime', 'police'].includes(i.category)
+    )
+    
+    const byMunicipality: Record<string, Record<string, Incident[]>> = {}
+    safetyIncidents.forEach(i => {
+      const area = i.municipality || 'McHenry County'
+      const type = i.category
+      if (!byMunicipality[area]) byMunicipality[area] = {}
+      if (!byMunicipality[area][type]) byMunicipality[area][type] = []
+      byMunicipality[area][type].push(i)
+    })
+
+    // Check for clusters
+    for (const [area, types] of Object.entries(byMunicipality)) {
+      for (const [type, typeIncidents] of Object.entries(types)) {
+        if (typeIncidents.length >= 3) {
+          const labels: Record<string, string> = {
+            'property_crime': 'property incidents',
+            'violent_crime': 'safety alerts',
+            'police': 'police activity reports'
+          }
+          setPattern({
+            type: 'safety_cluster',
+            title: `${typeIncidents.length} ${labels[type] || 'incidents'} in ${area}`,
+            description: `Cluster detected over 72 hours. Most recent: "${typeIncidents[0].title.slice(0, 60)}..."`,
+            severity: type === 'violent_crime' ? 'high' : 'medium',
+            incidents: typeIncidents
+          })
+          return
+        }
+      }
+    }
+
+    setPattern(null)
+  }, [incidents])
+
+  // No pattern = Neighborhood Health card
+  if (!pattern) {
+    return (
+      <div className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-xl p-4 md:p-5">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-emerald-500/20 flex-shrink-0">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-emerald-600">
+              Neighborhood Health
+            </span>
+            <h3 className="font-bebas text-xl text-foreground mt-1 tracking-wide">
+              No emerging patterns detected
+            </h3>
+            <p className="font-mono text-sm text-muted-foreground mt-1">
+              Activity levels are normal. We'll alert you if anything changes.
             </p>
-          )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn(
+      "border rounded-xl p-4 md:p-5",
+      pattern.severity === 'high' 
+        ? "bg-gradient-to-br from-rose-500/10 to-transparent border-rose-500/30"
+        : "bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/30"
+    )}>
+      <div className="flex items-start gap-3">
+        <div className={cn(
+          "p-2 rounded-lg flex-shrink-0",
+          pattern.severity === 'high' ? "bg-rose-500/20" : "bg-amber-500/20"
+        )}>
+          <AlertTriangle className={cn(
+            "w-5 h-5",
+            pattern.severity === 'high' ? "text-rose-600" : "text-amber-600"
+          )} />
+        </div>
+        <div className="flex-1">
+          <span className={cn(
+            "font-mono text-[10px] uppercase tracking-widest",
+            pattern.severity === 'high' ? "text-rose-600" : "text-amber-600"
+          )}>
+            Emerging Pattern
+          </span>
+          <h3 className="font-bebas text-xl text-foreground mt-1 tracking-wide">
+            {pattern.title}
+          </h3>
+          <p className="font-mono text-sm text-muted-foreground mt-1">
+            {pattern.description}
+          </p>
         </div>
       </div>
     </div>
   )
 }
 
-// Generate a simple narrative from the data
-function generateNarrative(
-  locationName: string, 
-  trend: string, 
-  incidentCount: number,
-  data: StabilityData | null
-): string {
-  const trendWord = trend === 'improving' ? 'improving' : trend === 'declining' ? 'elevated' : 'typical'
-  
-  if (!data || incidentCount === 0) {
-    return `Activity in ${locationName} appears ${trendWord} this week. Limited incident data available — check back as more sources come online.`
-  }
-  
-  const safetyScore = data.categories.safety.score
-  let safetyDesc = 'moderate'
-  if (safetyScore >= 90) safetyDesc = 'very low'
-  else if (safetyScore >= 75) safetyDesc = 'low'
-  else if (safetyScore < 50) safetyDesc = 'elevated'
-  
-  return `Activity in ${locationName} is ${trendWord} this week with ${incidentCount} reported incidents. Safety concerns are ${safetyDesc}. Infrastructure and civic data sources coming soon.`
-}
-
 // ============================================
-// CARD WRAPPER - Reusable hover effect
+// SECTION 2: CATEGORY TRENDS (Toggle + Persistence)
 // ============================================
-function IntelCard({ 
-  children, 
-  variant = "default",
-  onClick
-}: { 
-  children: React.ReactNode
-  variant?: "default" | "primary" | "quiet"
-  onClick?: () => void
-}) {
-  const [isHovered, setIsHovered] = useState(false)
+function CategoryTrends({ incidents }: { incidents: Incident[] }) {
+  const { category, setCategory, mounted } = useCategoryToggle()
 
-  const baseStyles = `relative border transition-all duration-300 overflow-hidden ${onClick ? "cursor-pointer" : ""}`
+  // Calculate hourly distribution for safety
+  const hourCounts = new Array(24).fill(0)
+  incidents
+    .filter(i => ['violent_crime', 'property_crime', 'police', 'traffic', 'fire'].includes(i.category))
+    .forEach(i => {
+      const hour = new Date(i.occurred_at || i.created_at).getHours()
+      hourCounts[hour]++
+    })
   
-  const variantStyles = {
-    default: `border-border/40 ${isHovered ? "border-accent/50" : ""}`,
-    primary: "border-accent/30",
-    quiet: `border-border/30 bg-muted/30 ${isHovered ? "border-emerald-500/50" : ""}`
+  const maxCount = Math.max(...hourCounts, 1)
+  
+  // Find peak window
+  let peakStart = 0, peakSum = 0
+  for (let i = 0; i < 24; i++) {
+    const windowSum = hourCounts[i] + hourCounts[(i+1)%24] + hourCounts[(i+2)%24]
+    if (windowSum > peakSum) {
+      peakSum = windowSum
+      peakStart = i
+    }
   }
+
+  const formatHour = (h: number) => {
+    if (h === 0) return '12 AM'
+    if (h === 12) return '12 PM'
+    return h > 12 ? `${h - 12} PM` : `${h} AM`
+  }
+
+  // Civic items
+  const civicItems = incidents
+    .filter(i => ['civic', 'government', 'services'].includes(i.category))
+    .slice(0, 4)
+
+  // Infrastructure items
+  const infraItems = incidents
+    .filter(i => ['traffic', 'infrastructure', 'development'].includes(i.category))
+    .slice(0, 4)
+
+  if (!mounted) return null
 
   return (
-    <article
-      className={`${baseStyles} ${variantStyles[variant]} p-5 md:p-6`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={onClick}
-    >
-      {/* Top accent for primary variant */}
-      {variant === "primary" && (
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-accent via-accent/50 to-transparent" />
-      )}
-
-      {/* Hover background */}
-      <div 
-        className={`absolute inset-0 bg-accent/5 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`} 
-      />
-
-      {/* Corner decoration on hover */}
-      <div className={`absolute top-0 right-0 w-10 h-10 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}>
-        <div className="absolute top-0 right-0 w-full h-[2px] bg-accent" />
-        <div className="absolute top-0 right-0 w-[2px] h-full bg-accent" />
+    <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+      {/* Category Toggle */}
+      <div className="flex border-b border-border/50">
+        {(['safety', 'civic', 'infrastructure'] as const).map((cat) => {
+          const icons = { safety: Shield, civic: Landmark, infrastructure: Construction }
+          const Icon = icons[cat]
+          const isActive = category === cat
+          
+          return (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-3 px-2 font-mono text-xs uppercase tracking-wider transition-colors",
+                isActive 
+                  ? "bg-accent/10 text-accent border-b-2 border-accent -mb-[1px]" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{cat}</span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
-        {children}
-      </div>
+      <div className="p-4 md:p-5">
+        {category === 'safety' && (
+          <div>
+            <h4 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+              Activity by Time of Day
+            </h4>
+            
+            {peakSum === 0 ? (
+              <p className="font-mono text-sm text-muted-foreground">
+                Not enough data to show patterns yet.
+              </p>
+            ) : (
+              <>
+                {/* Heatmap */}
+                <div className="flex gap-0.5 mb-2">
+                  {hourCounts.map((count, hour) => (
+                    <div
+                      key={hour}
+                      className="flex-1 h-8 rounded-sm"
+                      style={{
+                        backgroundColor: count === 0 
+                          ? 'hsl(var(--muted) / 0.3)' 
+                          : `hsl(var(--accent) / ${0.15 + (count / maxCount) * 0.85})`
+                      }}
+                      title={`${formatHour(hour)}: ${count}`}
+                    />
+                  ))}
+                </div>
+                
+                <div className="flex justify-between text-[10px] font-mono text-muted-foreground mb-4">
+                  <span>12 AM</span>
+                  <span>12 PM</span>
+                  <span>11 PM</span>
+                </div>
 
-      {/* Click indicator */}
-      <ChevronRight className={`absolute bottom-4 right-4 w-4 h-4 transition-all duration-300 ${isHovered ? "text-accent translate-x-0 opacity-100" : "text-transparent -translate-x-2 opacity-0"}`} />
-    </article>
+                <p className="font-mono text-sm text-foreground">
+                  <Clock className="w-4 h-4 inline mr-2 text-accent" />
+                  Peak: <span className="font-medium">{formatHour(peakStart)} – {formatHour((peakStart + 3) % 24)}</span>
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {category === 'civic' && (
+          <div>
+            <h4 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+              Decision Days
+            </h4>
+            
+            {civicItems.length === 0 ? (
+              <p className="font-mono text-sm text-muted-foreground">
+                No upcoming civic events tracked.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {civicItems.map((item, i) => (
+                  <div key={item.id} className={cn("flex items-start gap-3", i > 0 && "pt-3 border-t border-border/30")}>
+                    <Calendar className="w-4 h-4 text-violet-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-sm text-foreground line-clamp-2">{item.title}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                        {item.municipality} • {formatTimeAgo(item.occurred_at || item.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {category === 'infrastructure' && (
+          <div>
+            <h4 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+              Infrastructure Updates
+            </h4>
+            
+            {infraItems.length === 0 ? (
+              <p className="font-mono text-sm text-muted-foreground">
+                No infrastructure updates tracked.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {infraItems.map((item, i) => (
+                  <div key={item.id} className={cn("flex items-start gap-3", i > 0 && "pt-3 border-t border-border/30")}>
+                    <Construction className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono text-sm text-foreground line-clamp-2">{item.title}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                        {item.municipality} • {formatTimeAgo(item.occurred_at || item.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
 // ============================================
-// DISPLAY INCIDENT TYPE (shared)
+// SECTION 3: NEED TO KNOW (Grouped Incidents)
+// Grouping: Similarity first, then Category
+// Rule of 3: Nest related events
 // ============================================
-interface DisplayIncident {
-  id: string
-  type: 'crime' | 'civic' | 'infrastructure' | 'safety'
-  title: string
-  summary: string
-  location: string | null
-  municipality: string
-  timestamp: string
-  urgency: number
-  source: string
-  sourceUrl?: string
-}
-
-// ============================================
-// RAVEN ANALYSIS - Primary Card
-// ============================================
-function RavenAnalysisCard({ onOpenModal }: { onOpenModal: () => void }) {
-  return (
-    <IntelCard variant="primary" onClick={onOpenModal}>
-      <div className="flex items-start gap-4">
-        <div className="p-2 rounded-lg bg-accent/10">
-          <Zap className="w-5 h-5 text-accent" />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-accent font-semibold">
-              Emerging Pattern
-            </span>
-            <span className="font-mono text-[10px] text-muted-foreground">
-              Raven Analysis
-            </span>
-          </div>
-
-          <h3 className="font-[family-name:var(--font-bebas)] text-2xl md:text-4xl tracking-tight text-foreground mb-3">
-            Vehicle Break-ins — Downtown Corridor
-          </h3>
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
-            <div className="flex items-center gap-1.5 text-rose-600">
-              <TrendingUp className="w-4 h-4" />
-              <span className="font-mono text-xs font-medium">↑ 23% over 3 weeks</span>
-            </div>
-            <span className="font-mono text-xs text-muted-foreground">11pm – 3am window</span>
-            <span className="font-mono text-xs text-muted-foreground">Main St area</span>
-          </div>
-
-          <p className="font-mono text-sm text-foreground/70 leading-relaxed">
-            <span className="text-foreground font-medium">What this means for you:</span> Avoid leaving valuables visible in vehicles parked overnight near downtown. Police have increased patrols.
-          </p>
-        </div>
-      </div>
-    </IntelCard>
-  )
-}
-
-// ============================================
-// ACTIVE CONDITIONS
-// ============================================
-function ActiveConditionsCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const [conditions, setConditions] = useState<Array<{
-    id: string
-    category: string
-    title: string
-    detail: string
-    timeline: string
-    severity: string
-    url?: string
-    municipality: string
-    timestamp: string
-  }>>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null)
+function NeedToKnow({ incidents, onViewFeed }: { incidents: Incident[]; onViewFeed: () => void }) {
+  const [grouped, setGrouped] = useState<GroupedIncident[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchConditions() {
-      try {
-        // Get last 48 hours of traffic/infrastructure/weather incidents
-        const res = await fetch('/api/incidents?days=2&limit=20')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        
-        // Filter for active conditions (traffic, infrastructure, weather)
-        const conditionCategories = ['traffic', 'infrastructure', 'weather', 'development']
-        const activeIncidents = data.items.filter((item: any) => 
-          conditionCategories.includes(item.category)
-        ).slice(0, 3)
-        
-        const getTimeline = (date: string) => {
-          const d = new Date(date)
-          const now = new Date()
-          const hoursAgo = Math.floor((now.getTime() - d.getTime()) / 3600000)
-          if (hoursAgo < 1) return 'Just now'
-          if (hoursAgo < 24) return `${hoursAgo}h ago`
-          return d.toLocaleDateString('en-US', { weekday: 'short' })
-        }
-        
-        const transformed = activeIncidents.map((item: any) => ({
-          id: item.id,
-          category: item.category,
-          title: item.title.length > 45 ? item.title.slice(0, 45) + '...' : item.title,
-          detail: item.description?.slice(0, 60) || item.municipality || '',
-          timeline: getTimeline(item.occurred_at || item.created_at),
-          severity: item.severity || 'medium',
-          url: item.raw_data?.url,
-          municipality: item.municipality || 'McHenry County',
-          timestamp: item.occurred_at || item.created_at || new Date().toISOString()
-        }))
-        
-        setConditions(transformed)
-      } catch (err) {
-        setConditions([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchConditions()
-  }, [])
+    // Today's incidents only
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const todayIncidents = incidents.filter(i => {
+      const d = new Date(i.occurred_at || i.created_at)
+      d.setHours(0, 0, 0, 0)
+      return d.getTime() === today.getTime()
+    })
 
-  const getIcon = (category: string) => {
+    // Group by category + municipality (similarity)
+    const groups: Record<string, GroupedIncident> = {}
+
+    todayIncidents.forEach(incident => {
+      const key = `${incident.category}-${incident.municipality || 'county'}`
+      
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          title: '',
+          count: 0,
+          category: incident.category,
+          source: incident.raw_data?.source || 'Lake McHenry Scanner',
+          incidents: [],
+          timestamp: incident.occurred_at || incident.created_at
+        }
+      }
+      
+      groups[key].count++
+      groups[key].incidents.push(incident)
+      
+      // Update timestamp to most recent
+      if (new Date(incident.occurred_at || incident.created_at) > new Date(groups[key].timestamp)) {
+        groups[key].timestamp = incident.occurred_at || incident.created_at
+      }
+    })
+
+    // Generate titles
+    Object.values(groups).forEach(g => {
+      const labels: Record<string, string> = {
+        'traffic': 'Traffic Incident',
+        'violent_crime': 'Safety Alert',
+        'property_crime': 'Property Incident',
+        'police': 'Police Activity',
+        'fire': 'Fire/Rescue',
+        'civic': 'Civic Update',
+        'government': 'Government Update',
+        'infrastructure': 'Infrastructure'
+      }
+      
+      if (g.count === 1) {
+        g.title = g.incidents[0].title
+      } else {
+        g.title = `${g.count} ${labels[g.category] || 'Incident'}${g.count > 1 ? 's' : ''} in ${g.incidents[0]?.municipality || 'McHenry County'}`
+      }
+    })
+
+    const sorted = Object.values(groups)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 5)
+
+    setGrouped(sorted)
+  }, [incidents])
+
+  const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'traffic': return Car
-      case 'infrastructure': 
-      case 'development': return Construction
-      case 'weather': return AlertTriangle
-      default: return AlertTriangle
+      case 'violent_crime':
+      case 'property_crime':
+      case 'police': return Shield
+      case 'fire': return Flame
+      case 'civic':
+      case 'government': return Landmark
+      default: return AlertCircle
     }
   }
 
-  const getIconColor = (category: string) => {
+  const getCategoryColor = (category: string) => {
     switch (category) {
+      case 'violent_crime':
+      case 'property_crime':
+      case 'police': return 'text-rose-500'
+      case 'fire': return 'text-orange-500'
       case 'traffic': return 'text-sky-500'
-      case 'infrastructure':
-      case 'development': return 'text-amber-500'
-      case 'weather': return 'text-rose-500'
-      default: return 'text-amber-500'
+      case 'civic':
+      case 'government': return 'text-violet-500'
+      default: return 'text-muted-foreground'
     }
   }
 
-  const handleItemClick = (item: typeof conditions[0]) => {
-    setSelectedIncident({
-      id: item.id,
-      type: 'infrastructure',
-      title: item.title,
-      summary: item.detail,
-      location: null,
-      municipality: item.municipality,
-      timestamp: item.timestamp,
-      urgency: 5,
-      source: 'Lake McHenry Scanner',
-      sourceUrl: item.url
-    })
-  }
-
   return (
-    <>
-      <IntelCard>
-        <div className="flex items-center gap-3 mb-4">
-          <AlertTriangle className="w-4 h-4 text-amber-500" />
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-amber-600 font-semibold">
-            Active Conditions
+    <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-accent" />
+          <span className="font-mono text-xs uppercase tracking-widest text-accent">
+            Need to Know
           </span>
-          {!loading && (
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {conditions.length} item{conditions.length !== 1 ? "s" : ""}
-            </span>
-          )}
         </div>
+        <button 
+          onClick={onViewFeed}
+          className="font-mono text-xs text-muted-foreground hover:text-accent transition-colors"
+        >
+          View all →
+        </button>
+      </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          </div>
-        ) : conditions.length === 0 ? (
-          <div className="flex items-center gap-3 py-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span className="font-mono text-sm text-foreground">No active disruptions</span>
+      <div className="divide-y divide-border/30">
+        {grouped.length === 0 ? (
+          <div className="p-4 text-center">
+            <p className="font-mono text-sm text-muted-foreground">
+              No significant activity today.
+            </p>
           </div>
         ) : (
-          <div className="space-y-1">
-            {conditions.map((condition, i) => {
-              const IconComponent = getIcon(condition.category)
-              const iconColor = getIconColor(condition.category)
-              return (
+          grouped.map((group) => {
+            const Icon = getCategoryIcon(group.category)
+            const color = getCategoryColor(group.category)
+            const isExpanded = expanded === group.key && group.count > 1
+            
+            return (
+              <div key={group.key}>
                 <button
-                  key={condition.id || i}
-                  onClick={() => handleItemClick(condition)}
-                  className={`flex items-start gap-3 w-full text-left p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors ${i > 0 ? "mt-2 pt-3 border-t border-border/30" : ""}`}
+                  onClick={() => group.count > 1 ? setExpanded(isExpanded ? null : group.key) : null}
+                  className={cn(
+                    "w-full px-4 py-3 flex items-start gap-3 text-left transition-colors",
+                    group.count > 1 && "hover:bg-muted/30"
+                  )}
                 >
-                  <IconComponent className={`w-4 h-4 mt-0.5 flex-shrink-0 ${iconColor}`} />
+                  <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", color)} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-mono text-sm font-semibold text-foreground">{condition.title}</h4>
-                      <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{condition.timeline}</span>
-                    </div>
-                    <p className="font-mono text-xs text-muted-foreground mt-0.5 line-clamp-1">{condition.detail}</p>
+                    <p className="font-mono text-sm text-foreground line-clamp-2">
+                      {group.title}
+                    </p>
+                    <p className="font-mono text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      Source: {group.source} • {formatTimeAgo(group.timestamp)}
+                    </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  {group.count > 1 && (
+                    <ChevronRight className={cn(
+                      "w-4 h-4 text-muted-foreground transition-transform flex-shrink-0 mt-0.5",
+                      isExpanded && "rotate-90"
+                    )} />
+                  )}
                 </button>
-              )
-            })}
-          </div>
-        )}
-      </IntelCard>
-
-      <IncidentDetailModal
-        incident={selectedIncident}
-        isOpen={selectedIncident !== null}
-        onClose={() => setSelectedIncident(null)}
-      />
-    </>
-  )
-}
-
-// ============================================
-// CIVIC SIGNALS
-// ============================================
-function CivicSignalsCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const [signals, setSignals] = useState<Array<{
-    id: string
-    title: string
-    impact: string
-    date: string
-    url?: string
-    municipality: string
-    timestamp: string
-  }>>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null)
-
-  useEffect(() => {
-    async function fetchCivicData() {
-      try {
-        const res = await fetch('/api/incidents?days=14&limit=20')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        
-        // Filter for civic/government related
-        const civicCategories = ['civic', 'government', 'services', 'court', 'other']
-        const civicIncidents = data.items.filter((item: any) => 
-          civicCategories.includes(item.category)
-        ).slice(0, 3)
-        
-        const transformed = civicIncidents.map((item: any) => {
-          const date = new Date(item.occurred_at || item.created_at)
-          const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          return {
-            id: item.id,
-            title: item.title.length > 50 ? item.title.slice(0, 50) + '...' : item.title,
-            impact: item.description?.slice(0, 80) || item.municipality || 'McHenry County',
-            date: formatted,
-            url: item.raw_data?.url,
-            municipality: item.municipality || 'McHenry County',
-            timestamp: item.occurred_at || item.created_at || new Date().toISOString()
-          }
-        })
-        
-        setSignals(transformed)
-      } catch (err) {
-        setSignals([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchCivicData()
-  }, [])
-
-  const handleItemClick = (item: typeof signals[0]) => {
-    setSelectedIncident({
-      id: item.id,
-      type: 'civic',
-      title: item.title,
-      summary: item.impact,
-      location: null,
-      municipality: item.municipality,
-      timestamp: item.timestamp,
-      urgency: 3,
-      source: 'Lake McHenry Scanner',
-      sourceUrl: item.url
-    })
-  }
-
-  return (
-    <>
-      <IntelCard>
-        <div className="flex items-center gap-3 mb-4">
-          <Landmark className="w-4 h-4 text-sky-500" />
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-sky-600 font-semibold">
-            Civic Signals
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          </div>
-        ) : signals.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="font-mono text-xs text-muted-foreground">No recent civic updates</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {signals.map((signal, i) => (
-              <button
-                key={signal.id || i}
-                onClick={() => handleItemClick(signal)}
-                className={`w-full text-left p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors ${i > 0 ? "mt-2 pt-3 border-t border-border/30" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h4 className="font-mono text-sm font-semibold text-foreground">{signal.title}</h4>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">{signal.date}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                
+                {/* Expanded nested items (Rule of 3) */}
+                {isExpanded && (
+                  <div className="bg-muted/20 px-4 py-2 space-y-2">
+                    {group.incidents.slice(0, 5).map((item) => (
+                      <div key={item.id} className="pl-7 py-1">
+                        <p className="font-mono text-xs text-foreground/80 line-clamp-1">
+                          {item.title}
+                        </p>
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          {formatTimeAgo(item.occurred_at || item.created_at)}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <p className="font-mono text-xs text-foreground/60 line-clamp-2">{signal.impact}</p>
-              </button>
-            ))}
-          </div>
-        )}
-      </IntelCard>
-
-      <IncidentDetailModal
-        incident={selectedIncident}
-        isOpen={selectedIncident !== null}
-        onClose={() => setSelectedIncident(null)}
-      />
-    </>
-  )
-}
-
-// ============================================
-// WHAT'S QUIET
-// ============================================
-function WhatsQuietCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const [quietItems, setQuietItems] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function analyzeQuiet() {
-      try {
-        const res = await fetch('/api/incidents?days=7&limit=100')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        
-        const counts = data.categoryCounts || {}
-        const items: string[] = []
-        
-        // Check for low/no violent crime
-        const violentCount = counts['violent_crime'] || 0
-        if (violentCount === 0) {
-          items.push('No violent crime reported')
-        } else if (violentCount <= 2) {
-          items.push('Violent crime minimal')
-        }
-        
-        // Check for low fire incidents
-        const fireCount = counts['fire'] || 0
-        if (fireCount === 0) {
-          items.push('No fire incidents')
-        }
-        
-        // Check for low missing persons
-        const missingCount = counts['missing'] || 0
-        if (missingCount === 0) {
-          items.push('No missing persons')
-        }
-        
-        // Check property crime
-        const propertyCount = counts['property_crime'] || 0
-        if (propertyCount <= 2) {
-          items.push('Property crime low')
-        }
-        
-        // General stability
-        const totalIncidents = Object.values(counts).reduce((a: number, b: any) => a + (b || 0), 0)
-        if (totalIncidents < 10) {
-          items.push('Overall activity low')
-        }
-        
-        // If everything is quiet
-        if (items.length === 0) {
-          items.push('Normal activity levels')
-        }
-        
-        setQuietItems(items.slice(0, 4))
-      } catch (err) {
-        setQuietItems(['Unable to analyze'])
-      } finally {
-        setLoading(false)
-      }
-    }
-    analyzeQuiet()
-  }, [])
-
-  return (
-    <IntelCard variant="quiet" onClick={onOpenModal}>
-      <div className="flex items-center gap-3 mb-4">
-        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-600 font-semibold">
-          What's Quiet
-        </span>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {quietItems.map((item, i) => (
-            <span 
-              key={i} 
-              className="inline-flex items-center gap-1.5 font-mono text-xs text-foreground/70 bg-emerald-500/10 px-2.5 py-1.5 rounded"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {item}
-            </span>
-          ))}
-        </div>
-      )}
-    </IntelCard>
-  )
-}
-
-// ============================================
-// TEMPORAL PATTERNS
-// ============================================
-function TemporalPatternsCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const [windows, setWindows] = useState<Array<{
-    label: string
-    time: string
-    color: string
-    note: string
-  }>>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function analyzePatterns() {
-      try {
-        const res = await fetch('/api/incidents?days=14&limit=100')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        
-        // Analyze by hour
-        const hourCounts: Record<number, number> = {}
-        for (let i = 0; i < 24; i++) hourCounts[i] = 0
-        
-        data.items.forEach((item: any) => {
-          const date = new Date(item.occurred_at || item.created_at)
-          const hour = date.getHours()
-          hourCounts[hour]++
-        })
-        
-        // Find peak hours
-        let maxHour = 0, maxCount = 0
-        let minHour = 0, minCount = Infinity
-        
-        Object.entries(hourCounts).forEach(([hour, count]) => {
-          const h = parseInt(hour)
-          if (count > maxCount) { maxCount = count; maxHour = h }
-          if (count < minCount) { minCount = count; minHour = h }
-        })
-        
-        // Format hour ranges
-        const formatHour = (h: number) => {
-          if (h === 0) return '12AM'
-          if (h === 12) return '12PM'
-          return h > 12 ? `${h - 12}PM` : `${h}AM`
-        }
-        
-        const formatRange = (h: number) => {
-          const next = (h + 2) % 24
-          return `${formatHour(h)} – ${formatHour(next)}`
-        }
-        
-        // Calculate evening activity (6PM-12AM)
-        const eveningActivity = [18, 19, 20, 21, 22, 23].reduce((sum, h) => sum + hourCounts[h], 0)
-        const morningActivity = [6, 7, 8, 9, 10, 11].reduce((sum, h) => sum + hourCounts[h], 0)
-        
-        const patterns = []
-        
-        if (maxCount > 0) {
-          patterns.push({
-            label: "Peak Activity",
-            time: formatRange(maxHour),
-            color: "text-rose-600",
-            note: `${maxCount} incidents`
-          })
-        }
-        
-        if (eveningActivity > morningActivity) {
-          patterns.push({
-            label: "Evening Higher",
-            time: "6PM – 12AM",
-            color: "text-amber-600", 
-            note: `${eveningActivity} incidents`
-          })
-        } else if (morningActivity > 0) {
-          patterns.push({
-            label: "Morning Active",
-            time: "6AM – 12PM",
-            color: "text-amber-600",
-            note: `${morningActivity} incidents`
-          })
-        }
-        
-        patterns.push({
-          label: "Quietest",
-          time: formatRange(minHour),
-          color: "text-emerald-600",
-          note: minCount === 0 ? "No incidents" : `${minCount} incidents`
-        })
-        
-        setWindows(patterns.length > 0 ? patterns : [
-          { label: "Insufficient Data", time: "—", color: "text-muted-foreground", note: "Need more incidents" }
-        ])
-      } catch (err) {
-        setWindows([{ label: "Unable to analyze", time: "—", color: "text-muted-foreground", note: "" }])
-      } finally {
-        setLoading(false)
-      }
-    }
-    analyzePatterns()
-  }, [])
-
-  return (
-    <IntelCard onClick={onOpenModal}>
-      <div className="flex items-center gap-3 mb-4">
-        <Clock className="w-4 h-4 text-muted-foreground" />
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
-          When Things Happen
-        </span>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4">
-          {windows.map((window, i) => (
-            <div key={i} className="flex sm:flex-col items-center sm:items-center justify-between sm:justify-start sm:text-center py-2 sm:py-0 border-b sm:border-b-0 border-border/30 last:border-b-0">
-              <div className="sm:mb-1">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{window.label}</p>
+                )}
               </div>
-              <p className={`font-mono text-base sm:text-lg font-medium ${window.color}`}>{window.time}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </IntelCard>
+            )
+          })
+        )}
+      </div>
+    </div>
   )
 }
 
 // ============================================
-// MAP PREVIEW CARD (Real Leaflet mini-map)
+// SECTION 4: DATA HEALTH (County Capability)
 // ============================================
-function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
+function DataHealth() {
+  const sources = [
+    { name: 'Lake McHenry Scanner', status: 'live', type: 'Safety' },
+    { name: 'County Government', status: 'live', type: 'Civic' },
+    { name: 'CAD/Dispatch', status: 'unavailable', type: 'Real-time' },
+  ]
+  
+  const petitionCount = 247 // Would be fetched from API
+
+  return (
+    <div className="bg-card border border-border/50 rounded-xl p-4">
+      <h4 className="font-mono text-xs uppercase tracking-wider text-muted-foreground mb-3">
+        Data Health
+      </h4>
+      
+      <div className="space-y-2 mb-4">
+        {sources.map((source) => (
+          <div key={source.name} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                source.status === 'live' ? "bg-emerald-500" : "bg-slate-400"
+              )} />
+              <span className={cn(
+                "font-mono text-xs",
+                source.status === 'live' ? "text-foreground" : "text-muted-foreground"
+              )}>
+                {source.name}
+              </span>
+            </div>
+            <span className={cn(
+              "font-mono text-[10px]",
+              source.status === 'live' ? "text-emerald-600" : "text-muted-foreground"
+            )}>
+              {source.status === 'live' ? 'Live' : 'Unavailable'}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Petition CTA */}
+      <div className="pt-3 border-t border-border/30">
+        <p className="font-mono text-xs text-muted-foreground mb-2">
+          <Users className="w-3 h-3 inline mr-1" />
+          {petitionCount} residents requesting live CAD access for McHenry County
+        </p>
+        <button className="w-full py-2 px-3 bg-accent/10 hover:bg-accent/20 text-accent font-mono text-xs rounded-lg transition-colors">
+          Add your name →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// MAP PREVIEW
+// ============================================
+function MapPreview({ incidents, onNavigateToMap }: { incidents: Incident[]; onNavigateToMap: () => void }) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
-  const [incidents, setIncidents] = useState<any[]>([])
   const [mapReady, setMapReady] = useState(false)
 
-  // City coordinates for McHenry County
   const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
     'crystal lake': { lat: 42.2411, lng: -88.3162 },
     'mchenry': { lat: 42.3334, lng: -88.2667 },
@@ -898,62 +805,23 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
     'algonquin': { lat: 42.1656, lng: -88.2945 },
     'lake in the hills': { lat: 42.1817, lng: -88.3306 },
     'huntley': { lat: 42.1681, lng: -88.4281 },
-    'harvard': { lat: 42.4225, lng: -88.6145 },
-    'marengo': { lat: 42.2495, lng: -88.6081 },
-    'fox river grove': { lat: 42.2009, lng: -88.2145 },
-    'island lake': { lat: 42.2767, lng: -88.1920 },
-    'johnsburg': { lat: 42.3800, lng: -88.2412 },
+    'grayslake': { lat: 42.3447, lng: -88.0417 },
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'violent_crime':
-      case 'property_crime':
-      case 'police':
-        return '#be123c'
-      case 'fire':
-      case 'medical':
-        return '#d97706'
-      case 'traffic':
-        return '#0284c7'
-      default:
-        return '#64748b'
-    }
-  }
-
-  // Fetch incidents
   useEffect(() => {
-    async function fetchIncidents() {
-      try {
-        const res = await fetch('/api/incidents?days=7&limit=50')
-        if (res.ok) {
-          const data = await res.json()
-          setIncidents(data.items || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch incidents for mini-map:', err)
-      }
-    }
-    fetchIncidents()
-  }, [])
-
-  // Initialize map
-  useEffect(() => {
-    if (typeof window === 'undefined' || !mapRef.current || mapInstanceRef.current) return
+    if (typeof window === 'undefined' || mapInstanceRef.current) return
 
     const initMap = async () => {
-      // @ts-ignore
-      const L = await import('leaflet')
-
+      const L = (await import('leaflet')).default
+      
       if (!document.querySelector('link[href*="leaflet.css"]')) {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        const link = document.createElement("link")
+        link.rel = "stylesheet"
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         document.head.appendChild(link)
-        await new Promise(resolve => setTimeout(resolve, 100))
       }
 
-      if (!mapRef.current) return
+      if (!mapRef.current || mapInstanceRef.current) return
 
       const map = L.map(mapRef.current, {
         zoomControl: false,
@@ -962,7 +830,7 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
         scrollWheelZoom: false,
         doubleClickZoom: false,
         touchZoom: false,
-      }).setView([42.28, -88.32], 10)
+      }).setView([42.2830, -88.3500], 10)
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
@@ -982,663 +850,57 @@ function MapPreviewCard({ onNavigateToMap }: { onNavigateToMap: () => void }) {
     }
   }, [])
 
-  // Add markers when map and incidents are ready
   useEffect(() => {
     if (!mapReady || !mapInstanceRef.current || incidents.length === 0) return
 
-    const addMarkers = async () => {
-      // @ts-ignore
-      const L = await import('leaflet')
-      const map = mapInstanceRef.current
+    const L = require('leaflet')
+    const map = mapInstanceRef.current
 
-      incidents.forEach((incident) => {
-        let coords = incident.latitude && incident.longitude
-          ? { lat: incident.latitude, lng: incident.longitude }
-          : incident.municipality 
-            ? CITY_COORDS[incident.municipality.toLowerCase()]
-            : null
+    map.eachLayer((layer: any) => {
+      if (layer instanceof L.CircleMarker) {
+        map.removeLayer(layer)
+      }
+    })
 
-        if (!coords) return
-
-        // Add small offset so pins don't stack
-        coords = {
-          lat: coords.lat + (Math.random() - 0.5) * 0.015,
-          lng: coords.lng + (Math.random() - 0.5) * 0.015,
-        }
-
-        const color = getCategoryColor(incident.category)
-
-        const icon = L.divIcon({
-          className: 'mini-map-marker',
-          html: `<div style="
-            width: 8px;
-            height: 8px;
-            background: ${color};
-            border: 1px solid white;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-          "></div>`,
-          iconSize: [8, 8],
-          iconAnchor: [4, 4],
-        })
-
-        L.marker([coords.lat, coords.lng], { icon, interactive: false }).addTo(map)
-      })
-    }
-
-    addMarkers()
+    incidents.forEach((incident) => {
+      const cityKey = incident.municipality?.toLowerCase()
+      const coords = cityKey && CITY_COORDS[cityKey]
+      
+      if (coords) {
+        const lat = coords.lat + (Math.random() - 0.5) * 0.02
+        const lng = coords.lng + (Math.random() - 0.5) * 0.02
+        
+        L.circleMarker([lat, lng], {
+          radius: 4,
+          fillColor: '#f97316',
+          color: '#fff',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8,
+        }).addTo(map)
+      }
+    })
   }, [mapReady, incidents])
 
-  // Count by category
-  const categoryCounts = incidents.reduce((acc, inc) => {
-    const cat = inc.category
-    if (['violent_crime', 'property_crime', 'police'].includes(cat)) {
-      acc.safety = (acc.safety || 0) + 1
-    } else if (['fire', 'medical', 'missing'].includes(cat)) {
-      acc.emergency = (acc.emergency || 0) + 1
-    } else if (cat === 'traffic') {
-      acc.traffic = (acc.traffic || 0) + 1
-    } else {
-      acc.other = (acc.other || 0) + 1
-    }
-    return acc
-  }, {} as Record<string, number>)
-
-  const activeCategories = Object.keys(categoryCounts).length
-
   return (
-    <IntelCard onClick={onNavigateToMap}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <Map className="w-4 h-4 text-muted-foreground" />
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
-            Activity Map
+    <button 
+      onClick={onNavigateToMap}
+      className="w-full h-full bg-card border border-border/50 rounded-xl overflow-hidden hover:border-accent/50 transition-colors text-left"
+    >
+      <div className="relative h-full min-h-[160px]">
+        <div ref={mapRef} className="absolute inset-0 z-0" />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex items-center justify-between">
+          <span className="font-mono text-xs text-muted-foreground">
+            {incidents.length} incidents this week
+          </span>
+          <span className="font-mono text-xs text-accent flex items-center gap-1">
+            Open Map <ChevronRight className="w-3 h-3" />
           </span>
         </div>
-        <span className="font-mono text-[10px] text-accent flex items-center gap-1">
-          Open full map <ExternalLink className="w-3 h-3" />
-        </span>
       </div>
-
-      {/* Real mini map */}
-      <div className="relative aspect-[4/3] sm:aspect-[16/9] lg:aspect-[2/1] min-h-[200px] bg-muted/30 rounded overflow-hidden">
-        <div ref={mapRef} className="absolute inset-0" />
-        
-        {/* Overlay stats */}
-        <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur-sm rounded px-3 py-1.5 font-mono text-[10px] text-muted-foreground">
-          {activeCategories} active categories • {incidents.length} incidents this week
-        </div>
-
-        {/* Click overlay */}
-        <div className="absolute inset-0 cursor-pointer" />
-      </div>
-    </IntelCard>
+    </button>
   )
-}
-
-// ============================================
-// SOURCES CARD
-// ============================================
-function SourcesCard({ onOpenModal }: { onOpenModal: () => void }) {
-  const sources = [
-    { name: "Lake McHenry Scanner", status: "live", lastUpdate: "Hourly" },
-    { name: "Northwest Herald", status: "coming", lastUpdate: "Soon" },
-    { name: "McHenry County Gov", status: "live", lastUpdate: "6 hrs" },
-    { name: "IDOT Traffic", status: "coming", lastUpdate: "Soon" },
-  ]
-
-  return (
-    <IntelCard onClick={onOpenModal}>
-      <div className="flex items-center gap-3 mb-4">
-        <ExternalLink className="w-4 h-4 text-muted-foreground" />
-        <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
-          Data Sources
-        </span>
-      </div>
-
-      <div className="space-y-2">
-        {sources.map((source, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-b-0">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-1.5 h-1.5 rounded-full",
-                source.status === "live" ? "bg-emerald-500" : 
-                source.status === "coming" ? "bg-slate-400" : "bg-amber-500"
-              )} />
-              <span className={cn(
-                "font-mono text-sm",
-                source.status === "coming" ? "text-muted-foreground" : "text-foreground"
-              )}>{source.name}</span>
-            </div>
-            <span className="font-mono text-[10px] text-muted-foreground">{source.lastUpdate}</span>
-          </div>
-        ))}
-      </div>
-    </IntelCard>
-  )
-}
-
-// ============================================
-// DETAIL MODAL (Bottom sheet on mobile)
-// ============================================
-function DetailModal({ 
-  isOpen, 
-  onClose, 
-  title 
-}: { 
-  isOpen: boolean
-  onClose: () => void
-  title: string
-}) {
-  return (
-    <>
-      {/* Backdrop - higher z-index to cover sidebar */}
-      <div 
-        className={cn(
-          "fixed inset-0 z-[200] bg-black/50 transition-opacity duration-300",
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        onClick={onClose}
-      />
-      
-      {/* Modal - centered on desktop, bottom sheet on mobile */}
-      <div 
-        className={cn(
-          "fixed z-[201] transition-all duration-300 ease-out",
-          // Mobile: bottom sheet
-          "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
-          // Desktop: centered
-          "sm:-translate-x-1/2 sm:-translate-y-1/2",
-          isOpen 
-            ? "translate-y-0 opacity-100 sm:scale-100" 
-            : "translate-y-full opacity-0 sm:translate-y-0 sm:scale-95 pointer-events-none"
-        )}
-        style={{ 
-          paddingBottom: 'env(safe-area-inset-bottom)'
-        }}
-      >
-        <div className="bg-background border border-border sm:rounded-none rounded-t-2xl max-h-[80vh] sm:max-h-[70vh] w-full sm:w-[90vw] sm:max-w-2xl overflow-hidden flex flex-col">
-          {/* Handle - mobile only */}
-          <div className="sm:hidden flex justify-center py-3">
-            <div className="w-10 h-1 bg-border rounded-full" />
-          </div>
-          
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-            <h2 className="font-[family-name:var(--font-bebas)] text-xl sm:text-2xl">{title}</h2>
-            <button 
-              onClick={onClose} 
-              className="p-2 -mr-2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-5">
-            <p className="font-mono text-sm text-muted-foreground">
-              Full details and source information would appear here. This modal will contain 
-              the complete incident report, source links, and any additional context available.
-            </p>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
-
-// ============================================
-// INCIDENT DETAIL MODAL
-// ============================================
-function IncidentDetailModal({
-  incident,
-  isOpen,
-  onClose
-}: {
-  incident: DisplayIncident | null
-  isOpen: boolean
-  onClose: () => void
-}) {
-  const [copied, setCopied] = useState(false)
-  
-  // Must be before any early returns (React hooks rules)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!incident || !mounted) return null
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'crime': return Shield
-      case 'safety': return Flame
-      case 'infrastructure': return Car
-      default: return AlertCircle
-    }
-  }
-
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case 'crime': return 'text-rose-500 bg-rose-500/10'
-      case 'safety': return 'text-amber-500 bg-amber-500/10'
-      case 'infrastructure': return 'text-sky-500 bg-sky-500/10'
-      default: return 'text-muted-foreground bg-muted'
-    }
-  }
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'crime': return 'Public Safety'
-      case 'safety': return 'Safety'
-      case 'infrastructure': return 'Infrastructure'
-      default: return 'Civic'
-    }
-  }
-
-  const Icon = getIcon(incident.type)
-  const iconColor = getIconColor(incident.type)
-  const typeLabel = getTypeLabel(incident.type)
-  
-  const formattedDate = new Date(incident.timestamp).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  })
-  
-  const formattedTime = new Date(incident.timestamp).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
-
-  const handleCopyLink = async () => {
-    const url = incident.sourceUrl || window.location.href
-    await navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: incident.title,
-          text: incident.summary || incident.title,
-          url: incident.sourceUrl || window.location.href
-        })
-      } catch (err) {
-        // User cancelled or share failed, fall back to copy
-        handleCopyLink()
-      }
-    } else {
-      handleCopyLink()
-    }
-  }
-
-  // Format source name nicely
-  const formatSourceName = (source: string) => {
-    // Convert snake_case to Title Case
-    return source
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-  }
-
-  return createPortal(
-    <>
-      {/* Backdrop - high z-index with blur */}
-      <div 
-        className={cn(
-          "fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm transition-opacity duration-300",
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        onClick={onClose}
-      />
-      
-      {/* Modal - bottom sheet on mobile, centered on desktop */}
-      <div 
-        className={cn(
-          "fixed z-[9999] transition-all duration-300 ease-out",
-          "inset-x-0 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2",
-          "sm:-translate-x-1/2 sm:-translate-y-1/2",
-          isOpen 
-            ? "translate-y-0 opacity-100 sm:scale-100" 
-            : "translate-y-full opacity-0 sm:translate-y-0 sm:scale-95 pointer-events-none"
-        )}
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="bg-background border border-border sm:rounded-lg rounded-t-2xl max-h-[85vh] sm:max-h-[70vh] w-full sm:w-[90vw] sm:max-w-lg overflow-hidden flex flex-col">
-          {/* Handle - mobile only */}
-          <div className="sm:hidden flex justify-center py-3">
-            <div className="w-10 h-1 bg-border rounded-full" />
-          </div>
-          
-          {/* Header */}
-          <div className="flex items-start justify-between px-5 pb-4 sm:pt-5">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div className={cn("p-2 rounded-lg flex-shrink-0", iconColor)}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {typeLabel}
-                </span>
-                <h2 className="font-semibold text-foreground text-lg leading-tight mt-1">
-                  {incident.title}
-                </h2>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          {/* Content - hide scrollbar */}
-          <div className="flex-1 overflow-y-auto px-5 pb-5 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {/* Meta info - only show location if different from municipality */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mb-4">
-              <span>{incident.municipality}</span>
-              {incident.location && incident.location.toLowerCase() !== incident.municipality.toLowerCase() && (
-                <>
-                  <span className="text-border">•</span>
-                  <span>{incident.location}</span>
-                </>
-              )}
-              <span className="text-border">•</span>
-              <span>{formattedDate}</span>
-              <span className="text-border">•</span>
-              <span>{formattedTime}</span>
-            </div>
-            
-            {/* Summary */}
-            {incident.summary && (
-              <div className="mb-6">
-                <p className="text-foreground/80 leading-relaxed">
-                  {incident.summary.replace(/\[\.\.\.\]$/, '...').replace(/\[…\]$/, '...')}
-                </p>
-                {(incident.summary.includes('[...]') || incident.summary.includes('[…]') || incident.summary.endsWith('...')) && (
-                  <p className="text-xs text-muted-foreground mt-2 italic">
-                    This is a preview. View source for the full article.
-                  </p>
-                )}
-              </div>
-            )}
-            
-            {/* Source attribution - formatted nicely */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-              <span>Source:</span>
-              <span className="font-medium text-foreground">{formatSourceName(incident.source)}</span>
-            </div>
-            
-            {/* Actions - no text wrap */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleShare}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors whitespace-nowrap"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    <span className="font-mono text-sm text-emerald-600">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-mono text-sm">Share</span>
-                  </>
-                )}
-              </button>
-              
-              <button
-                disabled
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-muted/30 rounded-lg opacity-50 cursor-not-allowed whitespace-nowrap"
-              >
-                <Zap className="w-4 h-4 flex-shrink-0" />
-                <span className="font-mono text-sm">View in Feed</span>
-                <span className="font-mono text-[9px] uppercase bg-muted px-1.5 py-0.5 rounded flex-shrink-0">Soon</span>
-              </button>
-              
-              {incident.sourceUrl && (
-                <a
-                  href={incident.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border border-border hover:bg-muted/50 rounded-lg transition-colors whitespace-nowrap"
-                >
-                  <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                  <span className="font-mono text-sm">View Source</span>
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </>,
-    document.body
-  )
-}
-
-// ============================================
-// RECENT INCIDENTS (LIVE DATA)
-// ============================================
-
-function RecentIncidentsCard({ 
-  onOpenModal,
-  municipality 
-}: { 
-  onOpenModal: () => void
-  municipality?: string
-}) {
-  const [incidents, setIncidents] = useState<DisplayIncident[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedIncident, setSelectedIncident] = useState<DisplayIncident | null>(null)
-
-  useEffect(() => {
-    async function fetchIncidents() {
-      try {
-        // Don't filter by municipality - show all McHenry County incidents
-        const params = new URLSearchParams({ days: '7', limit: '10' })
-        
-        const res = await fetch(`/api/incidents?${params}`)
-        if (!res.ok) throw new Error('Failed to fetch')
-        
-        const data = await res.json()
-        
-        // Transform to display format
-        const transformed: DisplayIncident[] = data.items.map((item: any) => ({
-          id: item.id,
-          type: mapCategory(item.category),
-          title: item.title,
-          summary: item.description || '',
-          location: item.location_text,
-          municipality: item.municipality || 'McHenry County',
-          timestamp: item.occurred_at || item.created_at || new Date().toISOString(),
-          urgency: mapSeverity(item.severity),
-          source: item.raw_data?.source || 'Lake McHenry Scanner',
-          sourceUrl: item.raw_data?.url,
-        }))
-        
-        setIncidents(transformed)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load')
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    fetchIncidents()
-  }, [municipality])
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'crime': return Shield
-      case 'safety': return Flame
-      case 'infrastructure': return Car
-      default: return AlertCircle
-    }
-  }
-
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case 'crime': return 'text-rose-500'
-      case 'safety': return 'text-amber-500'
-      case 'infrastructure': return 'text-sky-500'
-      default: return 'text-muted-foreground'
-    }
-  }
-
-  return (
-    <>
-      <IntelCard>
-        <div className="flex items-center gap-3 mb-4">
-          <Zap className="w-4 h-4 text-accent" />
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-accent font-semibold">
-            Recent Activity
-          </span>
-          <span className="ml-auto flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-[10px] text-emerald-600">Live</span>
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-8">
-            <p className="font-mono text-xs text-muted-foreground">{error}</p>
-          </div>
-        ) : incidents.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="font-mono text-xs text-muted-foreground">No recent incidents</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {incidents.slice(0, 4).map((incident, i) => {
-              const Icon = getIcon(incident.type)
-              const iconColor = getIconColor(incident.type)
-              const timeAgo = formatTimeAgo(incident.timestamp)
-              
-              return (
-                <button 
-                  key={incident.id}
-                  onClick={() => setSelectedIncident(incident)}
-                  className={cn(
-                    "flex items-start gap-3 p-2 -mx-2 rounded-lg transition-colors w-full text-left",
-                    "hover:bg-muted/50 cursor-pointer",
-                    i > 0 && "mt-2 pt-3 border-t border-border/30"
-                  )}
-                >
-                  <Icon className={cn("w-4 h-4 mt-0.5 flex-shrink-0", iconColor)} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-mono text-sm font-medium text-foreground line-clamp-2 text-left">
-                        {incident.title}
-                      </h4>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        {incident.municipality}
-                      </span>
-                      <span className="text-border">•</span>
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        {timeAgo}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
-        
-        {incidents.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-border/30">
-            <span className="font-mono text-[10px] text-muted-foreground">
-              {incidents.length} incidents this week
-            </span>
-          </div>
-        )}
-      </IntelCard>
-
-      {/* Incident Detail Modal */}
-      <IncidentDetailModal
-        incident={selectedIncident}
-        isOpen={selectedIncident !== null}
-        onClose={() => setSelectedIncident(null)}
-      />
-    </>
-  )
-}
-
-// Helper functions for RecentIncidentsCard
-function mapCategory(category: string): 'crime' | 'safety' | 'infrastructure' | 'civic' {
-  switch (category) {
-    // Crime/Safety
-    case 'violent_crime':
-    case 'property_crime':
-    case 'police':
-    case 'court':
-    case 'shots_fired':
-    case 'robbery':
-    case 'assault':
-    case 'burglary':
-    case 'theft':
-    case 'vehicle_breakin':
-    case 'drugs':
-      return 'crime'
-    // Emergency/Safety  
-    case 'fire':
-    case 'missing':
-    case 'medical':
-    case 'weather':
-      return 'safety'
-    // Infrastructure
-    case 'traffic':
-    case 'infrastructure':
-    case 'development':
-      return 'infrastructure'
-    // Civic/Government
-    case 'civic':
-    case 'government':
-    case 'services':
-    case 'events':
-    case 'other':
-    default:
-      return 'civic'
-  }
-}
-
-function mapSeverity(severity: string | null): number {
-  switch (severity) {
-    case 'critical': return 9
-    case 'high': return 7
-    case 'medium': return 5
-    default: return 3
-  }
-}
-
-function formatTimeAgo(timestamp: string): string {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-  
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 // ============================================
@@ -1651,21 +913,34 @@ export function BriefingView({
   selectedLocationId: string
   onNavigateToMap: () => void 
 }) {
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalTitle, setModalTitle] = useState("")
+  const [incidents, setIncidents] = useState<Incident[]>([])
+  const [loading, setLoading] = useState(true)
   const [lastRefresh, setLastRefresh] = useState(new Date())
-
+  
   const selectedLocation = ORBIT_LOCATIONS.find(l => l.id === selectedLocationId) || CURRENT_LOCATION
 
-  const openModal = (title: string) => {
-    setModalTitle(title)
-    setModalOpen(true)
-  }
+  const fetchIncidents = useCallback(async () => {
+    try {
+      const res = await fetch('/api/incidents?days=7&limit=100')
+      if (res.ok) {
+        const data = await res.json()
+        setIncidents(data.items || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchIncidents()
+  }, [fetchIncidents])
 
   const handleRefresh = useCallback(async () => {
     setLastRefresh(new Date())
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }, [])
+    await fetchIncidents()
+  }, [fetchIncidents])
 
   const { containerRef, isRefreshing, pullProgress } = usePullToRefresh(handleRefresh)
 
@@ -1693,51 +968,48 @@ export function BriefingView({
         className="p-4 md:p-8 lg:p-12"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 2rem)' }}
       >
-        {/* Score and narrative */}
-        <ScoreHero key={lastRefresh.getTime()} location={selectedLocation} />
+        {/* 1. High-Level Intelligence */}
+        <StabilityHero key={`hero-${lastRefresh.getTime()}`} location={selectedLocation} />
+        
+        <div className="space-y-4 md:space-y-6">
+          {/* Emerging Pattern OR Neighborhood Health */}
+          <EmergingPatternCard key={`pattern-${lastRefresh.getTime()}`} incidents={incidents} />
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
-          {/* Primary analysis - Emerging Pattern */}
-          <div className="lg:col-span-2">
-            <RavenAnalysisCard key={`raven-${lastRefresh.getTime()}`} onOpenModal={() => openModal("Vehicle Break-ins Pattern")} />
+          {/* 2. Category Trends */}
+          <CategoryTrends key={`trends-${lastRefresh.getTime()}`} incidents={incidents} />
+
+          {/* 3. Need to Know (Grouped) */}
+          <NeedToKnow 
+            key={`needtoknow-${lastRefresh.getTime()}`} 
+            incidents={incidents} 
+            onViewFeed={() => {}} 
+          />
+
+          {/* 4. Map + Data Health */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <MapPreview 
+                key={`map-${lastRefresh.getTime()}`} 
+                incidents={incidents} 
+                onNavigateToMap={onNavigateToMap} 
+              />
+            </div>
+            <DataHealth />
           </div>
-
-          {/* Recent Activity - LIVE DATA - full width */}
-          <div className="lg:col-span-2">
-            <RecentIncidentsCard 
-              key={`recent-${lastRefresh.getTime()}`}
-              onOpenModal={() => openModal("Recent Activity")} 
-              municipality={selectedLocation.name}
-            />
-          </div>
-
-          {/* Two column layout */}
-          <ActiveConditionsCard key={`conditions-${lastRefresh.getTime()}`} onOpenModal={() => openModal("Active Conditions")} />
-          <CivicSignalsCard key={`civic-${lastRefresh.getTime()}`} onOpenModal={() => openModal("Civic Signals")} />
-          
-          {/* What's quiet and Map */}
-          <WhatsQuietCard key={`quiet-${lastRefresh.getTime()}`} onOpenModal={() => openModal("What's Quiet")} />
-          <MapPreviewCard key={`map-${lastRefresh.getTime()}`} onNavigateToMap={onNavigateToMap} />
         </div>
 
         {/* Footer */}
-        <footer className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="font-mono text-[10px] text-muted-foreground">
-            Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-          </span>
-          <span className="font-mono text-[10px] text-muted-foreground">
-            Pull down to refresh
-          </span>
+        <footer className="mt-6 pt-4 border-t border-border/40">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] text-muted-foreground">
+              Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground">
+              Pull down to refresh
+            </span>
+          </div>
         </footer>
       </div>
-
-      {/* Modal */}
-      <DetailModal 
-        isOpen={modalOpen} 
-        onClose={() => setModalOpen(false)} 
-        title={modalTitle}
-      />
     </div>
   )
 }
