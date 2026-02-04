@@ -16,12 +16,18 @@ import { createServerClient } from '@/lib/supabase';
 import Parser from 'rss-parser';
 import crypto from 'crypto';
 
-// Multiple RSS feeds from McHenry County
+// Multiple RSS feeds from McHenry County - try different URLs
 const RSS_FEEDS = [
   {
-    url: 'https://www.mchenrycountyil.gov/county-government/rss.aspx',
+    url: 'https://www.mchenrycountyil.gov/Home/Components/RSSFeed/RSSFeed.aspx?CID=1',
     source: 'mchenry_county_government',
     name: 'McHenry County Government',
+  },
+  // Fallback URL
+  {
+    url: 'https://www.mchenrycountyil.gov/county-government/rss.aspx',
+    source: 'mchenry_county_government_alt',
+    name: 'McHenry County Government (Alt)',
   },
 ];
 
@@ -164,10 +170,37 @@ function mapToSeverity(category: string, type: string): 'critical' | 'high' | 'm
 }
 
 async function fetchFeed(feedConfig: typeof RSS_FEEDS[0]): Promise<ParsedNews[]> {
-  const parser = new Parser();
+  const parser = new Parser({
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; RavenBot/1.0; +https://tryraven.io)',
+      'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+    },
+    timeout: 10000,
+  });
   
   try {
-    const feed = await parser.parseURL(feedConfig.url);
+    // First try with the parser's built-in fetch
+    let feed;
+    try {
+      feed = await parser.parseURL(feedConfig.url);
+    } catch (parseError) {
+      // If that fails, try manual fetch with headers
+      console.log(`[County News] Parser failed, trying manual fetch for ${feedConfig.name}`);
+      const response = await fetch(feedConfig.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const xml = await response.text();
+      feed = await parser.parseString(xml);
+    }
+    
     const items: ParsedNews[] = [];
     
     for (const item of feed.items) {
