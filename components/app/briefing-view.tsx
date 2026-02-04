@@ -132,7 +132,7 @@ function ScoreDetailPanel({ score, isOpen, onClose }: { score: number; isOpen: b
 // Score Card
 function ScoreCard({ score, loading, onClick }: { score: number; loading: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative h-36 rounded-xl overflow-hidden bg-gradient-to-br from-accent via-orange-500 to-amber-600 p-4 text-left hover:shadow-lg transition-shadow group">
+    <button onClick={onClick} className="relative h-52 rounded-xl overflow-hidden bg-gradient-to-br from-accent via-orange-500 to-amber-600 p-4 text-left hover:shadow-lg transition-shadow group">
       <div className="absolute inset-0 opacity-15">
         <svg className="w-full h-full" viewBox="0 0 200 150" preserveAspectRatio="xMaxYMid slice">
           {[...Array(6)].map((_, i) => <circle key={i} cx="200" cy="75" r={20 + i * 20} fill="none" stroke="white" strokeWidth="1" />)}
@@ -142,70 +142,83 @@ function ScoreCard({ score, loading, onClick }: { score: number; loading: boolea
         <div className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono text-white">Raven</div>
         <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center"><Home className="w-3.5 h-3.5 text-white" /></div>
       </div>
-      <div className="relative mt-4">
-        {loading ? <Loader2 className="w-6 h-6 animate-spin text-white/60" /> : <p className="text-4xl font-light text-white">{score}</p>}
+      <div className="relative mt-8">
+        {loading ? <Loader2 className="w-8 h-8 animate-spin text-white/60" /> : <p className="text-6xl font-light text-white">{score}</p>}
       </div>
-      <p className="relative font-mono text-xs text-white/80 mt-2">Stability Index</p>
+      <p className="relative font-mono text-sm text-white/80 mt-3">Stability Index</p>
       <ChevronRight className="absolute bottom-3 right-3 w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
     </button>
   )
 }
 
-// 30-Day Heatmap - EXPLICIT SIZING
+// 30-Day Heatmap - WORKING VERSION
 function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
+  // Build 5 weeks of data (35 days)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
-  const cells: { count: number; isToday: boolean }[] = []
-  for (let i = 34; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const count = incidents.filter(inc => {
-      const incDate = new Date(inc.occurred_at || inc.created_at)
-      incDate.setHours(0, 0, 0, 0)
-      return incDate.getTime() === d.getTime()
-    }).length
-    cells.push({ count, isToday: i === 0 })
+  const weeks: { count: number; isToday: boolean }[][] = []
+  for (let week = 0; week < 5; week++) {
+    const weekData: { count: number; isToday: boolean }[] = []
+    for (let day = 0; day < 7; day++) {
+      const daysAgo = (4 - week) * 7 + (6 - day)
+      const d = new Date(today)
+      d.setDate(d.getDate() - daysAgo)
+      
+      const count = incidents.filter(inc => {
+        const incDate = new Date(inc.occurred_at || inc.created_at)
+        incDate.setHours(0, 0, 0, 0)
+        return incDate.getTime() === d.getTime()
+      }).length
+      
+      weekData.push({ count, isToday: daysAgo === 0 })
+    }
+    weeks.push(weekData)
   }
   
-  const maxCount = Math.max(...cells.map(c => c.count), 1)
+  const allCounts = weeks.flat().map(c => c.count)
+  const maxCount = Math.max(...allCounts, 1)
 
   return (
-    <div className="h-36 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
+    <div className="h-52 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Activity</span>
-        <span className="font-mono text-[10px] text-muted-foreground">30 Days</span>
+        <span className="font-mono text-[10px] text-muted-foreground">35 Days</span>
       </div>
-      <div className="flex items-baseline gap-1 mb-3">
-        <span className="text-2xl font-light text-foreground">{incidents.length}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">incidents</span>
+      <div className="flex items-baseline gap-2 mb-4">
+        <span className="text-3xl font-light text-foreground">{incidents.length}</span>
+        <span className="font-mono text-xs text-muted-foreground">incidents</span>
       </div>
       
-      {/* Day headers - EXPLICIT WIDTH */}
-      <div className="flex gap-1 mb-1">
+      {/* Day headers */}
+      <div className="grid grid-cols-7 gap-1.5 mb-1.5">
         {['M','T','W','T','F','S','S'].map((d, i) => (
-          <div key={i} className="w-6 h-4 flex items-center justify-center">
-            <span className="font-mono text-[8px] text-muted-foreground">{d}</span>
+          <div key={i} className="text-center">
+            <span className="font-mono text-[9px] text-muted-foreground">{d}</span>
           </div>
         ))}
       </div>
       
-      {/* Grid - EXPLICIT SIZING */}
-      <div className="flex flex-wrap gap-1">
-        {cells.map((cell, i) => (
-          <div
-            key={i}
-            className={cn(
-              "w-6 h-6 rounded flex items-center justify-center",
-              cell.isToday && "ring-1 ring-accent"
-            )}
-            style={{ 
-              backgroundColor: cell.count === 0 
-                ? 'hsl(var(--muted) / 0.3)' 
-                : `hsl(var(--accent) / ${0.25 + (cell.count / maxCount) * 0.65})` 
-            }}
-          >
-            {cell.count > 0 && <span className="font-mono text-[8px] text-white">{cell.count}</span>}
+      {/* Week rows */}
+      <div className="flex-1 flex flex-col gap-1.5">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 gap-1.5 flex-1">
+            {week.map((cell, di) => (
+              <div
+                key={di}
+                className={cn(
+                  "rounded flex items-center justify-center min-h-[24px]",
+                  cell.isToday && "ring-2 ring-accent ring-offset-1 ring-offset-background"
+                )}
+                style={{ 
+                  backgroundColor: cell.count === 0 
+                    ? 'hsl(var(--muted) / 0.3)' 
+                    : `hsl(var(--accent) / ${0.2 + (cell.count / maxCount) * 0.7})` 
+                }}
+              >
+                {cell.count > 0 && <span className="font-mono text-[9px] text-white">{cell.count}</span>}
+              </div>
+            ))}
           </div>
         ))}
       </div>
@@ -240,7 +253,7 @@ function OrbitLocationsCard({ onNavigateToMap }: { onNavigateToMap: () => void }
   }, [locations])
 
   return (
-    <button onClick={onNavigateToMap} className="h-28 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-accent/50 transition-colors text-left flex flex-col">
+    <button onClick={onNavigateToMap} className="h-40 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-accent/50 transition-colors text-left flex flex-col">
       <div className="flex items-center justify-between px-3 py-2">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Your Orbit</span>
         <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
@@ -256,19 +269,28 @@ function OrbitLocationsCard({ onNavigateToMap }: { onNavigateToMap: () => void }
 // Data Health
 function DataHealth() {
   return (
-    <div className="h-28 bg-card border border-border/50 rounded-xl p-3 flex flex-col justify-between">
-      <div className="flex items-center gap-4">
-        {['Scanner', 'County Gov'].map(s => (
-          <div key={s} className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="font-mono text-[10px] text-foreground">{s}</span>
+    <div className="h-40 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
+      <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-3">Data Sources</span>
+      
+      <div className="flex flex-col gap-2 mb-auto">
+        {['Lake McHenry Scanner', 'County Government'].map(s => (
+          <div key={s} className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="font-mono text-xs text-foreground">{s}</span>
+            <span className="font-mono text-[9px] text-emerald-600 ml-auto">Live</span>
           </div>
         ))}
+        <div className="flex items-center gap-2 opacity-50">
+          <div className="w-2 h-2 rounded-full bg-muted" />
+          <span className="font-mono text-xs text-muted-foreground">CAD/Dispatch</span>
+          <span className="font-mono text-[9px] text-muted-foreground ml-auto">Unavailable</span>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      
+      <div className="flex items-center gap-2 pt-3 border-t border-border/50">
         <Users className="w-4 h-4 text-accent flex-shrink-0" />
-        <span className="font-mono text-[10px] text-muted-foreground flex-1">247 requesting CAD</span>
-        <button className="px-2.5 py-1 bg-accent text-white font-mono text-[10px] rounded hover:bg-accent/90 transition-colors">Join</button>
+        <span className="font-mono text-[10px] text-muted-foreground flex-1">247 requesting CAD access</span>
+        <button className="px-3 py-1.5 bg-accent text-white font-mono text-[10px] rounded-lg hover:bg-accent/90 transition-colors">Join</button>
       </div>
     </div>
   )
@@ -312,7 +334,7 @@ function CategoryTrends({ incidents, onSelect }: { incidents: Incident[]; onSele
           )
         })}
       </div>
-      <div className="p-3 max-h-44 overflow-y-auto">
+      <div className="p-4 max-h-64 overflow-y-auto">
         {current.length === 0 ? (
           <p className="font-mono text-xs text-muted-foreground text-center py-4">No {category} updates this week</p>
         ) : (
@@ -389,21 +411,21 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 pb-20">
+      <div className="p-5 md:p-6 pb-24">
         {/* Header */}
-        <div className="mb-4">
-          <p className="font-mono text-[10px] text-muted-foreground">{getGreeting()}</p>
-          <h1 className="font-bebas text-2xl text-foreground">{location.name}</h1>
+        <div className="mb-5">
+          <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
+          <h1 className="font-bebas text-3xl text-foreground">{location.name}</h1>
         </div>
 
         {/* Row 1: Score + Heatmap */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
           <ThirtyDayHeatmap incidents={incidents} />
         </div>
 
         {/* Row 2: Orbit + Data */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
           <DataHealth />
         </div>
