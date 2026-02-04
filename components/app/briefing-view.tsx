@@ -173,30 +173,29 @@ function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
   const maxCount = Math.max(...cells.map(c => c.count), 1)
 
   return (
-    <div className="h-72 bg-card border border-border/50 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-2">
+    <div className="h-72 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
+      <div className="flex items-center justify-between mb-1">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Activity</span>
         <span className="font-mono text-[10px] text-muted-foreground">35 Days</span>
       </div>
-      <div className="flex items-baseline gap-2 mb-4">
-        <span className="text-3xl font-light text-foreground">{incidents.length}</span>
-        <span className="font-mono text-xs text-muted-foreground">incidents</span>
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="text-2xl font-light text-foreground">{incidents.length}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">incidents</span>
       </div>
       
       {/* Day headers */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {['M','T','W','T','F','S','S'].map((d, i) => (
-          <div key={i} className="h-4 flex items-center justify-center">
+          <div key={i} className="text-center">
             <span className="font-mono text-[9px] text-muted-foreground">{d}</span>
           </div>
         ))}
       </div>
       
-      {/* Grid - 5 rows of 7 */}
-      <div className="grid grid-cols-7 gap-2">
+      {/* Grid - 5 rows of 7, flex-1 to fill remaining space */}
+      <div className="flex-1 grid grid-cols-7 grid-rows-5 gap-1">
         {cells.map((cell, i) => {
           const intensity = cell.count / maxCount
-          // Use inline styles so Tailwind doesn't purge
           const bgColor = cell.count === 0 
             ? 'rgba(128,128,128,0.15)' 
             : `rgba(249, 115, 22, ${0.3 + intensity * 0.6})`
@@ -205,13 +204,13 @@ function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
             <div
               key={i}
               className={cn(
-                "h-9 rounded flex items-center justify-center",
+                "rounded flex items-center justify-center",
                 cell.isToday && "ring-2 ring-orange-500 ring-offset-1 ring-offset-background"
               )}
               style={{ backgroundColor: bgColor }}
             >
               {cell.count > 0 && (
-                <span className="font-mono text-[8px] text-white font-medium">{cell.count}</span>
+                <span className="font-mono text-[9px] text-white font-medium">{cell.count}</span>
               )}
             </div>
           )
@@ -329,7 +328,7 @@ function CategoryTrends({ incidents, onSelect }: { incidents: Incident[]; onSele
           )
         })}
       </div>
-      <div className="p-4 max-h-64 overflow-y-auto">
+      <div className="trends-scroll p-4 max-h-64 overflow-y-auto">
         {current.length === 0 ? (
           <p className="font-mono text-xs text-muted-foreground text-center py-4">No {category} updates this week</p>
         ) : (
@@ -405,8 +404,8 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
   const handleRefresh = async () => { setLastRefresh(new Date()); await Promise.all([fetchIncidents(), fetchScore()]) }
 
   return (
-    <div className="absolute inset-0 overflow-y-auto scrollbar-hide">
-      <div className="p-5 md:p-6 min-h-full">
+    <div className="briefing-container absolute inset-0 overflow-y-auto">
+      <div className="p-5 md:p-6">
         {/* Header */}
         <div className="mb-5">
           <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
