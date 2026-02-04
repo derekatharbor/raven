@@ -132,7 +132,7 @@ function ScoreDetailPanel({ score, isOpen, onClose }: { score: number; isOpen: b
 // Score Card
 function ScoreCard({ score, loading, onClick }: { score: number; loading: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative h-52 rounded-xl overflow-hidden bg-gradient-to-br from-accent via-orange-500 to-amber-600 p-4 text-left hover:shadow-lg transition-shadow group">
+    <button onClick={onClick} className="relative h-72 rounded-xl overflow-hidden bg-gradient-to-br from-accent via-orange-500 to-amber-600 p-4 text-left hover:shadow-lg transition-shadow group">
       <div className="absolute inset-0 opacity-15">
         <svg className="w-full h-full" viewBox="0 0 200 150" preserveAspectRatio="xMaxYMid slice">
           {[...Array(6)].map((_, i) => <circle key={i} cx="200" cy="75" r={20 + i * 20} fill="none" stroke="white" strokeWidth="1" />)}
@@ -142,10 +142,10 @@ function ScoreCard({ score, loading, onClick }: { score: number; loading: boolea
         <div className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono text-white">Raven</div>
         <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center"><Home className="w-3.5 h-3.5 text-white" /></div>
       </div>
-      <div className="relative mt-8">
-        {loading ? <Loader2 className="w-8 h-8 animate-spin text-white/60" /> : <p className="text-6xl font-light text-white">{score}</p>}
+      <div className="relative mt-16">
+        {loading ? <Loader2 className="w-10 h-10 animate-spin text-white/60" /> : <p className="text-8xl font-light text-white">{score}</p>}
       </div>
-      <p className="relative font-mono text-sm text-white/80 mt-3">Stability Index</p>
+      <p className="relative font-mono text-base text-white/80 mt-4">Stability Index</p>
       <ChevronRight className="absolute bottom-3 right-3 w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
     </button>
   )
@@ -173,18 +173,18 @@ function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
   const maxCount = Math.max(...cells.map(c => c.count), 1)
 
   return (
-    <div className="h-52 bg-card border border-border/50 rounded-xl p-4">
+    <div className="h-72 bg-card border border-border/50 rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Activity</span>
         <span className="font-mono text-[10px] text-muted-foreground">35 Days</span>
       </div>
-      <div className="flex items-baseline gap-2 mb-3">
+      <div className="flex items-baseline gap-2 mb-4">
         <span className="text-3xl font-light text-foreground">{incidents.length}</span>
         <span className="font-mono text-xs text-muted-foreground">incidents</span>
       </div>
       
       {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-7 gap-2 mb-2">
         {['M','T','W','T','F','S','S'].map((d, i) => (
           <div key={i} className="h-4 flex items-center justify-center">
             <span className="font-mono text-[9px] text-muted-foreground">{d}</span>
@@ -193,7 +193,7 @@ function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
       </div>
       
       {/* Grid - 5 rows of 7 */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-2">
         {cells.map((cell, i) => {
           const intensity = cell.count / maxCount
           // Use inline styles so Tailwind doesn't purge
@@ -205,7 +205,7 @@ function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
             <div
               key={i}
               className={cn(
-                "h-6 rounded flex items-center justify-center",
+                "h-9 rounded flex items-center justify-center",
                 cell.isToday && "ring-2 ring-orange-500 ring-offset-1 ring-offset-background"
               )}
               style={{ backgroundColor: bgColor }}
