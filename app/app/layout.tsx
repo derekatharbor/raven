@@ -10,7 +10,7 @@ export default function AppLayout({
     <>
       {/* Background layer that extends into safe areas */}
       <div className="fixed inset-0 bg-[#fafafa]" style={{ zIndex: -1 }} />
-      <div className="app-light-mode fixed inset-0 overflow-hidden">
+      <div className="app-light-mode fixed inset-0">
         {children}
       </div>
     </>

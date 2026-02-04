@@ -254,7 +254,7 @@ export default function AppPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Header - mobile only shows logo + hamburger, desktop just shows date */}
         <header 
           className="flex-shrink-0 border-b border-border/40 px-4 lg:px-6 flex items-center bg-background"
@@ -294,13 +294,13 @@ export default function AppPage() {
         </header>
 
         {/* Content with view transitions */}
-        <div className="flex-1 min-h-0 relative overflow-hidden">
+        <div className="flex-1 min-h-0 relative">
           <div 
             className={cn(
-              "absolute inset-0 transition-all duration-300 ease-in-out",
+              "absolute inset-0",
               currentView === "brief" 
-                ? "opacity-100 translate-x-0 z-10" 
-                : "opacity-0 -translate-x-4 pointer-events-none z-0"
+                ? "opacity-100 z-10" 
+                : "opacity-0 pointer-events-none z-0"
             )}
           >
             <BriefingView 
@@ -310,22 +310,20 @@ export default function AppPage() {
           </div>
           <div 
             className={cn(
-              "absolute inset-0 transition-all duration-300 ease-in-out",
+              "absolute inset-0",
               currentView === "feed" 
-                ? "opacity-100 translate-x-0 z-10" 
-                : currentView === "brief"
-                ? "opacity-0 translate-x-4 pointer-events-none z-0"
-                : "opacity-0 -translate-x-4 pointer-events-none z-0"
+                ? "opacity-100 z-10" 
+                : "opacity-0 pointer-events-none z-0"
             )}
           >
             <FeedView />
           </div>
           <div 
             className={cn(
-              "absolute inset-0 transition-all duration-300 ease-in-out",
+              "absolute inset-0",
               currentView === "map" 
-                ? "opacity-100 translate-x-0 z-10" 
-                : "opacity-0 translate-x-4 pointer-events-none z-0"
+                ? "opacity-100 z-10" 
+                : "opacity-0 pointer-events-none z-0"
             )}
           >
             <MapPageView />

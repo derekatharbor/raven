@@ -132,7 +132,7 @@ function ScoreDetailPanel({ score, isOpen, onClose }: { score: number; isOpen: b
 // Score Card
 function ScoreCard({ score, loading, onClick }: { score: number; loading: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="relative h-72 rounded-xl overflow-hidden bg-gradient-to-br from-accent via-orange-500 to-amber-600 p-4 text-left hover:shadow-lg transition-shadow group">
+    <button onClick={onClick} className="relative h-48 lg:h-72 rounded-xl overflow-hidden bg-gradient-to-br from-accent via-orange-500 to-amber-600 p-4 text-left hover:shadow-lg transition-shadow group">
       <div className="absolute inset-0 opacity-15">
         <svg className="w-full h-full" viewBox="0 0 200 150" preserveAspectRatio="xMaxYMid slice">
           {[...Array(6)].map((_, i) => <circle key={i} cx="200" cy="75" r={20 + i * 20} fill="none" stroke="white" strokeWidth="1" />)}
@@ -142,10 +142,10 @@ function ScoreCard({ score, loading, onClick }: { score: number; loading: boolea
         <div className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono text-white">Raven</div>
         <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center"><Home className="w-3.5 h-3.5 text-white" /></div>
       </div>
-      <div className="relative mt-16">
-        {loading ? <Loader2 className="w-10 h-10 animate-spin text-white/60" /> : <p className="text-8xl font-light text-white">{score}</p>}
+      <div className="relative mt-6 lg:mt-16">
+        {loading ? <Loader2 className="w-8 h-8 animate-spin text-white/60" /> : <p className="text-5xl lg:text-8xl font-light text-white">{score}</p>}
       </div>
-      <p className="relative font-mono text-base text-white/80 mt-4">Stability Index</p>
+      <p className="relative font-mono text-sm text-white/80 mt-2 lg:mt-4">Stability Index</p>
       <ChevronRight className="absolute bottom-3 right-3 w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
     </button>
   )
@@ -173,7 +173,7 @@ function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
   const maxCount = Math.max(...cells.map(c => c.count), 1)
 
   return (
-    <div className="h-72 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
+    <div className="h-48 lg:h-72 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
       <div className="flex items-center justify-between mb-1">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Activity</span>
         <span className="font-mono text-[10px] text-muted-foreground">35 Days</span>
@@ -247,7 +247,7 @@ function OrbitLocationsCard({ onNavigateToMap }: { onNavigateToMap: () => void }
   }, [locations])
 
   return (
-    <button onClick={onNavigateToMap} className="h-40 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-accent/50 transition-colors text-left flex flex-col">
+    <button onClick={onNavigateToMap} className="h-40 lg:h-40 bg-card border border-border/50 rounded-xl overflow-hidden hover:border-accent/50 transition-colors text-left flex flex-col">
       <div className="flex items-center justify-between px-3 py-2">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Your Orbit</span>
         <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
@@ -404,52 +404,42 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
   const handleRefresh = async () => { setLastRefresh(new Date()); await Promise.all([fetchIncidents(), fetchScore()]) }
 
   return (
-    <>
-      <style>{`
-        .briefing-scroll::-webkit-scrollbar { display: none; }
-      `}</style>
-      <div 
-        className="briefing-scroll h-full overflow-y-auto" 
-        style={{ 
-          scrollbarWidth: 'none', 
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
-        }}
-      >
-        <div className="p-5 md:p-6 pb-24">
-          {/* Header */}
-          <div className="mb-5">
-            <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
-            <h1 className="font-bebas text-3xl text-foreground">{location.name}</h1>
-          </div>
+    <div 
+      className="absolute inset-0 overflow-y-scroll"
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
+      <div className="p-4 md:p-6">
+        {/* Header */}
+        <div className="mb-4">
+          <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
+          <h1 className="font-bebas text-2xl md:text-3xl text-foreground">{location.name}</h1>
+        </div>
 
-          {/* Row 1: Score + Heatmap */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
-            <ThirtyDayHeatmap incidents={incidents} />
-          </div>
-
-          {/* Row 2: Orbit + Data */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
-            <DataHealth />
-          </div>
-
-          {/* Row 3: Trends */}
-          <CategoryTrends incidents={incidents} onSelect={setSelectedIncident} />
-
-          {/* Footer */}
-          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-            <span className="font-mono text-[9px] text-muted-foreground">Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-            <button onClick={handleRefresh} className="font-mono text-[9px] text-muted-foreground hover:text-accent flex items-center gap-1">
-              <RefreshCw className="w-3 h-3" /> Refresh
-            </button>
+        {/* Cards - single column on mobile, 2 cols on desktop */}
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4">
+          <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
+          <ThirtyDayHeatmap incidents={incidents} />
+          <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
+          <DataHealth />
+          <div className="lg:col-span-2">
+            <CategoryTrends incidents={incidents} onSelect={setSelectedIncident} />
           </div>
         </div>
+
+        {/* Footer */}
+        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+          <span className="font-mono text-[9px] text-muted-foreground">Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+          <button onClick={handleRefresh} className="font-mono text-[9px] text-muted-foreground hover:text-accent flex items-center gap-1">
+            <RefreshCw className="w-3 h-3" /> Refresh
+          </button>
+        </div>
+        
+        {/* Safe area padding */}
+        <div className="h-24" />
       </div>
 
       <ScoreDetailPanel score={score} isOpen={showScore} onClose={() => setShowScore(false)} />
       <IncidentModal incident={selectedIncident} onClose={() => setSelectedIncident(null)} />
-    </>
+    </div>
   )
 }

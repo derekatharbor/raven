@@ -71,6 +71,18 @@
   height: 0 !important;
 }
 
+/* Hide ALL scrollbars inside app-light-mode */
+.app-light-mode * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.app-light-mode *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Hide scrollbar on mobile for cleaner look */
 @media (max-width: 768px) {
   .app-light-mode ::-webkit-scrollbar {
