@@ -294,14 +294,13 @@ export default function AppPage() {
         </header>
 
         {/* Content with view transitions */}
-        <div className="flex-1 min-h-0 relative">
+        <div style={{ flex: 1, position: 'relative' }}>
           <div 
-            className={cn(
-              "absolute inset-0",
-              currentView === "brief" 
-                ? "opacity-100 z-10" 
-                : "opacity-0 pointer-events-none z-0"
-            )}
+            style={{ 
+              position: 'absolute', 
+              top: 0, left: 0, right: 0, bottom: 0,
+              display: currentView === "brief" ? 'block' : 'none'
+            }}
           >
             <BriefingView 
               selectedLocationId={selectedLocationId}
@@ -309,22 +308,20 @@ export default function AppPage() {
             />
           </div>
           <div 
-            className={cn(
-              "absolute inset-0",
-              currentView === "feed" 
-                ? "opacity-100 z-10" 
-                : "opacity-0 pointer-events-none z-0"
-            )}
+            style={{ 
+              position: 'absolute', 
+              top: 0, left: 0, right: 0, bottom: 0,
+              display: currentView === "feed" ? 'block' : 'none'
+            }}
           >
             <FeedView />
           </div>
           <div 
-            className={cn(
-              "absolute inset-0",
-              currentView === "map" 
-                ? "opacity-100 z-10" 
-                : "opacity-0 pointer-events-none z-0"
-            )}
+            style={{ 
+              position: 'absolute', 
+              top: 0, left: 0, right: 0, bottom: 0,
+              display: currentView === "map" ? 'block' : 'none'
+            }}
           >
             <MapPageView />
           </div>

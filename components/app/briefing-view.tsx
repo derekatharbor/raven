@@ -404,38 +404,38 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
   const handleRefresh = async () => { setLastRefresh(new Date()); await Promise.all([fetchIncidents(), fetchScore()]) }
 
   return (
-    <div 
-      className="absolute inset-0 overflow-y-scroll"
-      style={{ WebkitOverflowScrolling: 'touch' }}
-    >
-      <div className="p-4 md:p-6">
-        {/* Header */}
-        <div className="mb-4">
-          <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
-          <h1 className="font-bebas text-2xl md:text-3xl text-foreground">{location.name}</h1>
-        </div>
-
-        {/* Cards - single column on mobile, 2 cols on desktop */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4">
-          <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
-          <ThirtyDayHeatmap incidents={incidents} />
-          <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
-          <DataHealth />
-          <div className="lg:col-span-2">
-            <CategoryTrends incidents={incidents} onSelect={setSelectedIncident} />
+    <div className="h-full flex flex-col">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide" data-lenis-prevent>
+        <div className="p-4 md:p-6">
+          {/* Header */}
+          <div className="mb-4">
+            <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
+            <h1 className="font-bebas text-2xl md:text-3xl text-foreground">{location.name}</h1>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-          <span className="font-mono text-[9px] text-muted-foreground">Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-          <button onClick={handleRefresh} className="font-mono text-[9px] text-muted-foreground hover:text-accent flex items-center gap-1">
-            <RefreshCw className="w-3 h-3" /> Refresh
-          </button>
+          {/* Cards - single column on mobile, 2 cols on desktop */}
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4">
+            <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
+            <ThirtyDayHeatmap incidents={incidents} />
+            <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
+            <DataHealth />
+            <div className="lg:col-span-2">
+              <CategoryTrends incidents={incidents} onSelect={setSelectedIncident} />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+            <span className="font-mono text-[9px] text-muted-foreground">Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+            <button onClick={handleRefresh} className="font-mono text-[9px] text-muted-foreground hover:text-accent flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </button>
+          </div>
+          
+          {/* Bottom padding */}
+          <div className="h-20" />
         </div>
-        
-        {/* Safe area padding */}
-        <div className="h-24" />
       </div>
 
       <ScoreDetailPanel score={score} isOpen={showScore} onClose={() => setShowScore(false)} />
