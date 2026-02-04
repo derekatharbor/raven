@@ -151,76 +151,71 @@ function ScoreCard({ score, loading, onClick }: { score: number; loading: boolea
   )
 }
 
-// 30-Day Heatmap - WORKING VERSION
+// 30-Day Heatmap - SIMPLE VERSION
 function ThirtyDayHeatmap({ incidents }: { incidents: Incident[] }) {
-  // Build 5 weeks of data (35 days)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
-  const weeks: { count: number; isToday: boolean }[][] = []
-  for (let week = 0; week < 5; week++) {
-    const weekData: { count: number; isToday: boolean }[] = []
-    for (let day = 0; day < 7; day++) {
-      const daysAgo = (4 - week) * 7 + (6 - day)
-      const d = new Date(today)
-      d.setDate(d.getDate() - daysAgo)
-      
-      const count = incidents.filter(inc => {
-        const incDate = new Date(inc.occurred_at || inc.created_at)
-        incDate.setHours(0, 0, 0, 0)
-        return incDate.getTime() === d.getTime()
-      }).length
-      
-      weekData.push({ count, isToday: daysAgo === 0 })
-    }
-    weeks.push(weekData)
+  // Create flat array of 35 days
+  const cells = []
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    
+    const count = incidents.filter(inc => {
+      const incDate = new Date(inc.occurred_at || inc.created_at)
+      return incDate.toDateString() === d.toDateString()
+    }).length
+    
+    cells.push({ count, isToday: i === 0 })
   }
   
-  const allCounts = weeks.flat().map(c => c.count)
-  const maxCount = Math.max(...allCounts, 1)
+  const maxCount = Math.max(...cells.map(c => c.count), 1)
 
   return (
-    <div className="h-52 bg-card border border-border/50 rounded-xl p-4 flex flex-col">
+    <div className="h-52 bg-card border border-border/50 rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Activity</span>
         <span className="font-mono text-[10px] text-muted-foreground">35 Days</span>
       </div>
-      <div className="flex items-baseline gap-2 mb-4">
+      <div className="flex items-baseline gap-2 mb-3">
         <span className="text-3xl font-light text-foreground">{incidents.length}</span>
         <span className="font-mono text-xs text-muted-foreground">incidents</span>
       </div>
       
       {/* Day headers */}
-      <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {['M','T','W','T','F','S','S'].map((d, i) => (
-          <div key={i} className="text-center">
+          <div key={i} className="h-4 flex items-center justify-center">
             <span className="font-mono text-[9px] text-muted-foreground">{d}</span>
           </div>
         ))}
       </div>
       
-      {/* Week rows */}
-      <div className="flex-1 flex flex-col gap-1.5">
-        {weeks.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 gap-1.5 flex-1">
-            {week.map((cell, di) => (
-              <div
-                key={di}
-                className={cn(
-                  "rounded flex items-center justify-center min-h-[24px]",
-                  cell.isToday && "ring-2 ring-accent ring-offset-1 ring-offset-background"
-                )}
-                style={{ 
-                  backgroundColor: cell.count === 0 
-                    ? 'hsl(var(--muted) / 0.3)' 
-                    : `hsl(var(--accent) / ${0.2 + (cell.count / maxCount) * 0.7})` 
-                }}
-              >
-                {cell.count > 0 && <span className="font-mono text-[9px] text-white">{cell.count}</span>}
-              </div>
-            ))}
-          </div>
-        ))}
+      {/* Grid - 5 rows of 7 */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((cell, i) => {
+          const intensity = cell.count / maxCount
+          // Use inline styles so Tailwind doesn't purge
+          const bgColor = cell.count === 0 
+            ? 'rgba(128,128,128,0.15)' 
+            : `rgba(249, 115, 22, ${0.3 + intensity * 0.6})`
+          
+          return (
+            <div
+              key={i}
+              className={cn(
+                "h-6 rounded flex items-center justify-center",
+                cell.isToday && "ring-2 ring-orange-500 ring-offset-1 ring-offset-background"
+              )}
+              style={{ backgroundColor: bgColor }}
+            >
+              {cell.count > 0 && (
+                <span className="font-mono text-[8px] text-white font-medium">{cell.count}</span>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -410,8 +405,8 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
   const handleRefresh = async () => { setLastRefresh(new Date()); await Promise.all([fetchIncidents(), fetchScore()]) }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-5 md:p-6 pb-24">
+    <div className="absolute inset-0 overflow-y-auto scrollbar-hide">
+      <div className="p-5 md:p-6 min-h-full">
         {/* Header */}
         <div className="mb-5">
           <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
@@ -440,6 +435,9 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
             <RefreshCw className="w-3 h-3" /> Refresh
           </button>
         </div>
+        
+        {/* Bottom spacing for safe area */}
+        <div className="h-20" />
       </div>
 
       <ScoreDetailPanel score={score} isOpen={showScore} onClose={() => setShowScore(false)} />
