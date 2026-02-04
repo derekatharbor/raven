@@ -1,5 +1,5 @@
 /**
- * Scanner Ingestion API Route - Debug Version
+ * Scanner Ingestion API Route
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,28 +17,48 @@ const MCHENRY_CITIES = [
   'oakwood hills', 'round lake', 'grayslake'
 ];
 
+// Valid DB categories: vehicle_breakin, theft, burglary, robbery, assault, 
+// shots_fired, fire, traffic, drugs, fraud, vandalism, missing, suspicious, other
 const INCIDENT_PATTERNS: [RegExp, string, string][] = [
-  [/\barmed\s+robbery\b/i, 'armed_robbery', 'violent_crime'],
-  [/\bshooting\b/i, 'shooting', 'violent_crime'],
-  [/\bstabbing\b/i, 'stabbing', 'violent_crime'],
-  [/\bhomicide\b|\bmurder\b/i, 'homicide', 'violent_crime'],
-  [/\brobbery\b/i, 'robbery', 'violent_crime'],
-  [/\bassault\b/i, 'assault', 'violent_crime'],
-  [/\bdomestic\b/i, 'domestic', 'violent_crime'],
-  [/\bsexual\s+(?:assault|abuse)/i, 'sexual_assault', 'violent_crime'],
+  // Violent crime
+  [/\bshooting\b|\bshots\s+fired\b/i, 'shooting', 'shots_fired'],
+  [/\bstabbing\b/i, 'stabbing', 'assault'],
+  [/\bhomicide\b|\bmurder\b/i, 'homicide', 'assault'],
+  [/\barmed\s+robbery\b/i, 'armed_robbery', 'robbery'],
+  [/\brobbery\b/i, 'robbery', 'robbery'],
+  [/\bassault\b|\battack\b/i, 'assault', 'assault'],
+  [/\bdomestic\b/i, 'domestic', 'assault'],
+  [/\bsexual\s+(?:assault|abuse)/i, 'sexual_assault', 'assault'],
+  
+  // Property crime
+  [/\bburglary\b|\bbreak-in\b|\bbroke\s+into\b/i, 'burglary', 'burglary'],
+  [/\btheft\b|\bstolen\b|\bshoplift/i, 'theft', 'theft'],
+  [/\bvehicle\s+(?:breakin|break-in)\b|\bcar\s+(?:breakin|break-in)\b/i, 'vehicle_breakin', 'vehicle_breakin'],
+  [/\bvandalism\b|\bgraffiti\b/i, 'vandalism', 'vandalism'],
+  [/\bfraud\b|\bscam\b/i, 'fraud', 'fraud'],
+  
+  // Traffic
   [/\bcrash\b|\baccident\b|\bcollision\b/i, 'crash', 'traffic'],
   [/\bhit.and.run\b/i, 'hit_and_run', 'traffic'],
   [/\bpedestrian\b|\bstruck\s+by\b|\bhit\s+by\b/i, 'pedestrian_struck', 'traffic'],
   [/\bdui\b|\bdrunk\s+driv/i, 'dui', 'traffic'],
   [/\brollover\b/i, 'rollover', 'traffic'],
-  [/\bstructure\s+fire\b|\bhouse\s+fire\b|\bbuilding\s+fire\b/i, 'structure_fire', 'fire'],
-  [/\bblaze\b/i, 'fire', 'fire'],
-  [/\bburglary\b|\bbreak-in\b/i, 'burglary', 'property_crime'],
-  [/\btheft\b|\bstolen\b/i, 'theft', 'property_crime'],
-  [/\bvandalism\b/i, 'vandalism', 'property_crime'],
+  
+  // Fire
+  [/\bfire\b|\bblaze\b/i, 'fire', 'fire'],
+  
+  // Drugs
+  [/\boverdose\b/i, 'overdose', 'drugs'],
+  [/\bdrug\b|\bnarcotics\b|\bcocaine\b|\bheroin\b|\bfentanyl\b/i, 'drugs', 'drugs'],
+  
+  // Missing
   [/\bmissing\b/i, 'missing_person', 'missing'],
-  [/\boverdose\b/i, 'overdose', 'medical'],
-  [/\barrested\b|\bcharged\b/i, 'arrest', 'police'],
+  
+  // Suspicious
+  [/\bsuspicious\b/i, 'suspicious', 'suspicious'],
+  
+  // Court/arrest -> other (news about legal proceedings)
+  [/\barrested\b|\bcharged\b|\bguilty\b|\bsentenced\b|\bconvicted\b/i, 'arrest', 'other'],
 ];
 
 function extractCity(text: string): string | null {
@@ -84,38 +104,30 @@ function generateHash(title: string, description: string): string {
 
 function mapToSeverity(category: string): 'critical' | 'high' | 'medium' | 'low' {
   switch (category) {
-    case 'violent_crime': return 'critical';
-    case 'fire': return 'high';
-    case 'traffic': return 'medium';
-    case 'property_crime': return 'medium';
-    default: return 'low';
+    case 'shots_fired':
+    case 'robbery':
+    case 'assault':
+      return 'critical';
+    case 'burglary':
+    case 'fire':
+      return 'high';
+    case 'traffic':
+    case 'theft':
+    case 'vehicle_breakin':
+    case 'drugs':
+      return 'medium';
+    default:
+      return 'low';
   }
 }
 
 export async function GET(request: NextRequest) {
-  const debug: string[] = [];
-  
   try {
-    debug.push('Starting...');
-    
-    // Step 1: Fetch RSS
-    debug.push('Fetching RSS...');
+    // Fetch RSS
     const parser = new Parser();
-    let feed;
-    try {
-      feed = await parser.parseURL(RSS_URL);
-      debug.push(`RSS fetched: ${feed.items?.length || 0} items`);
-    } catch (rssError: any) {
-      return NextResponse.json({
-        success: false,
-        error: 'RSS fetch failed',
-        rssError: rssError?.message || String(rssError),
-        debug
-      }, { status: 500 });
-    }
+    const feed = await parser.parseURL(RSS_URL);
     
-    // Step 2: Parse incidents
-    debug.push('Parsing incidents...');
+    // Parse incidents
     const incidents = [];
     for (const item of feed.items || []) {
       const title = item.title || '';
@@ -139,60 +151,27 @@ export async function GET(request: NextRequest) {
         contentHash: generateHash(title, description),
       });
     }
-    debug.push(`Parsed ${incidents.length} McHenry County incidents`);
     
     if (incidents.length === 0) {
-      return NextResponse.json({ success: true, message: 'No McHenry incidents found', debug });
+      return NextResponse.json({ success: true, message: 'No McHenry incidents found', fetched: 0, inserted: 0 });
     }
     
-    // Step 3: Create Supabase client
-    debug.push('Creating Supabase client...');
-    let supabase;
-    try {
-      supabase = createServerClient();
-      debug.push('Supabase client created');
-    } catch (sbError: any) {
-      return NextResponse.json({
-        success: false,
-        error: 'Supabase client failed',
-        sbError: sbError?.message || String(sbError),
-        debug
-      }, { status: 500 });
-    }
-    
-    // Step 4: Check existing
-    debug.push('Checking existing incidents...');
+    // Check existing
+    const supabase = createServerClient();
     const hashes = incidents.map(i => i.contentHash);
-    const { data: existing, error: selectError } = await supabase
+    const { data: existing } = await supabase
       .from('incidents')
       .select('external_id')
       .in('external_id', hashes);
     
-    if (selectError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Select query failed',
-        selectError,
-        debug
-      }, { status: 500 });
-    }
-    
     const existingHashes = new Set(existing?.map(e => e.external_id) || []);
     const newIncidents = incidents.filter(i => !existingHashes.has(i.contentHash));
-    debug.push(`Found ${existingHashes.size} existing, ${newIncidents.length} new`);
     
     if (newIncidents.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No new incidents',
-        fetched: incidents.length,
-        inserted: 0,
-        debug
-      });
+      return NextResponse.json({ success: true, message: 'No new incidents', fetched: incidents.length, inserted: 0 });
     }
     
-    // Step 5: Insert new incidents
-    debug.push('Inserting new incidents...');
+    // Insert
     const dbIncidents = newIncidents.map(inc => ({
       external_id: inc.contentHash,
       category: inc.category,
@@ -212,37 +191,21 @@ export async function GET(request: NextRequest) {
       },
     }));
     
-    const { data, error: insertError } = await supabase
-      .from('incidents')
-      .insert(dbIncidents)
-      .select();
+    const { data, error } = await supabase.from('incidents').insert(dbIncidents).select();
     
-    if (insertError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Insert failed',
-        insertError,
-        debug,
-        sampleData: dbIncidents[0]
-      }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message, details: error }, { status: 500 });
     }
-    
-    debug.push(`Inserted ${data?.length || 0} incidents`);
     
     return NextResponse.json({
       success: true,
       fetched: incidents.length,
       inserted: data?.length || 0,
-      debug
+      sample: newIncidents.slice(0, 3).map(i => ({ title: i.title.slice(0, 50), city: i.city, category: i.category }))
     });
     
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error?.message || 'Unknown error',
-      stack: error?.stack,
-      debug
-    }, { status: 500 });
+    return NextResponse.json({ success: false, error: error?.message || 'Unknown error' }, { status: 500 });
   }
 }
 
