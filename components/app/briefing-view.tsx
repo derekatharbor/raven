@@ -404,43 +404,52 @@ export function BriefingView({ selectedLocationId, onNavigateToMap }: { selected
   const handleRefresh = async () => { setLastRefresh(new Date()); await Promise.all([fetchIncidents(), fetchScore()]) }
 
   return (
-    <div className="briefing-container absolute inset-0 overflow-y-auto">
-      <div className="p-5 md:p-6">
-        {/* Header */}
-        <div className="mb-5">
-          <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
-          <h1 className="font-bebas text-3xl text-foreground">{location.name}</h1>
-        </div>
+    <>
+      <style>{`
+        .briefing-scroll::-webkit-scrollbar { display: none; }
+      `}</style>
+      <div 
+        className="briefing-scroll h-full overflow-y-auto" 
+        style={{ 
+          scrollbarWidth: 'none', 
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
+        <div className="p-5 md:p-6 pb-24">
+          {/* Header */}
+          <div className="mb-5">
+            <p className="font-mono text-xs text-muted-foreground">{getGreeting()}</p>
+            <h1 className="font-bebas text-3xl text-foreground">{location.name}</h1>
+          </div>
 
-        {/* Row 1: Score + Heatmap */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
-          <ThirtyDayHeatmap incidents={incidents} />
-        </div>
+          {/* Row 1: Score + Heatmap */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <ScoreCard score={score} loading={loading} onClick={() => setShowScore(true)} />
+            <ThirtyDayHeatmap incidents={incidents} />
+          </div>
 
-        {/* Row 2: Orbit + Data */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
-          <DataHealth />
-        </div>
+          {/* Row 2: Orbit + Data */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <OrbitLocationsCard onNavigateToMap={onNavigateToMap} />
+            <DataHealth />
+          </div>
 
-        {/* Row 3: Trends */}
-        <CategoryTrends incidents={incidents} onSelect={setSelectedIncident} />
+          {/* Row 3: Trends */}
+          <CategoryTrends incidents={incidents} onSelect={setSelectedIncident} />
 
-        {/* Footer */}
-        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
-          <span className="font-mono text-[9px] text-muted-foreground">Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-          <button onClick={handleRefresh} className="font-mono text-[9px] text-muted-foreground hover:text-accent flex items-center gap-1">
-            <RefreshCw className="w-3 h-3" /> Refresh
-          </button>
+          {/* Footer */}
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+            <span className="font-mono text-[9px] text-muted-foreground">Updated {lastRefresh.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+            <button onClick={handleRefresh} className="font-mono text-[9px] text-muted-foreground hover:text-accent flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </button>
+          </div>
         </div>
-        
-        {/* Bottom spacing for safe area */}
-        <div className="h-20" />
       </div>
 
       <ScoreDetailPanel score={score} isOpen={showScore} onClose={() => setShowScore(false)} />
       <IncidentModal incident={selectedIncident} onClose={() => setSelectedIncident(null)} />
-    </div>
+    </>
   )
 }

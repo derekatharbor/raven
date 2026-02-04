@@ -254,7 +254,7 @@ export default function AppPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {/* Header - mobile only shows logo + hamburger, desktop just shows date */}
         <header 
           className="flex-shrink-0 border-b border-border/40 px-4 lg:px-6 flex items-center bg-background"
@@ -294,7 +294,7 @@ export default function AppPage() {
         </header>
 
         {/* Content with view transitions */}
-        <div className="flex-1 min-h-0 relative">
+        <div className="flex-1 min-h-0 relative overflow-hidden">
           <div 
             className={cn(
               "absolute inset-0 transition-all duration-300 ease-in-out",
