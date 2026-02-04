@@ -183,7 +183,7 @@ function formatTimeAgo(timestamp: string): string {
   return `${diffDays}d ago`
 }
 
-export function MapPageView() {
+export function MapPageView({ isVisible = true }: { isVisible?: boolean }) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
@@ -260,24 +260,42 @@ export function MapPageView() {
       // @ts-ignore
       const L = await import("leaflet")
       
+      // Load CSS if not already loaded
       if (!document.querySelector('link[href*="leaflet.css"]')) {
         const link = document.createElement("link")
         link.rel = "stylesheet"
         link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         document.head.appendChild(link)
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Wait for CSS to load
+        await new Promise(resolve => {
+          link.onload = resolve
+          setTimeout(resolve, 500) // Fallback timeout
+        })
       }
 
       if (!mapRef.current || mapInstanceRef.current) return
+      
+      // Wait for container to have dimensions
+      const container = mapRef.current
+      if (container.clientWidth === 0 || container.clientHeight === 0) {
+        // Retry after a delay
+        setTimeout(() => loadMap(), 200)
+        return
+      }
 
-      const map = L.map(mapRef.current, {
+      const map = L.map(container, {
         zoomControl: false,
       }).setView([42.2411, -88.3162], 11)
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      const tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
         maxZoom: 19,
       }).addTo(map)
+      
+      // Force redraw when tiles load
+      tileLayer.on('load', () => {
+        map.invalidateSize()
+      })
 
       L.control.zoom({ position: "bottomright" }).addTo(map)
 
@@ -288,6 +306,9 @@ export function MapPageView() {
 
       mapInstanceRef.current = map
       setMapLoaded(true)
+      
+      // Force invalidate after a short delay
+      setTimeout(() => map.invalidateSize(), 100)
     }
 
     loadMap()
@@ -299,6 +320,52 @@ export function MapPageView() {
       }
     }
   }, [])
+
+  // Invalidate map size when container becomes visible or resizes
+  useEffect(() => {
+    if (!mapLoaded || !mapInstanceRef.current || !mapRef.current) return
+    
+    const map = mapInstanceRef.current
+    const container = mapRef.current
+    
+    // Invalidate size immediately and after a short delay (for tab switches)
+    const invalidate = () => {
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        map.invalidateSize()
+      }
+    }
+    
+    invalidate()
+    const timer1 = setTimeout(invalidate, 100)
+    const timer2 = setTimeout(invalidate, 300)
+    const timer3 = setTimeout(invalidate, 500)
+    
+    // Also watch for resize
+    const resizeObserver = new ResizeObserver(() => {
+      invalidate()
+    })
+    resizeObserver.observe(container)
+    
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+      resizeObserver.disconnect()
+    }
+  }, [mapLoaded])
+
+  // Invalidate map size when visibility changes
+  useEffect(() => {
+    if (!mapLoaded || !mapInstanceRef.current || !isVisible) return
+    
+    const map = mapInstanceRef.current
+    // Delay to let DOM update
+    const timer = setTimeout(() => {
+      map.invalidateSize()
+    }, 50)
+    
+    return () => clearTimeout(timer)
+  }, [mapLoaded, isVisible])
 
   // Add markers
   useEffect(() => {
@@ -417,6 +484,9 @@ export function MapPageView() {
             opacity: 1,
           })
           .on("click", (e: any) => {
+            // Stop propagation to prevent map from moving
+            L.DomEvent.stopPropagation(e)
+            
             // Get screen position of marker
             const point = map.latLngToContainerPoint(e.latlng)
             setPopupPosition({ x: point.x, y: point.y })
@@ -436,15 +506,16 @@ export function MapPageView() {
     loadMarkers()
   }, [mapLoaded, filteredIncidents, selectedIncident])
 
-  // Pan to selected
-  useEffect(() => {
-    if (!mapLoaded || !mapInstanceRef.current || !selectedIncident) return
-    
-    mapInstanceRef.current.panTo([
-      selectedIncident.coordinates.lat,
-      selectedIncident.coordinates.lng
-    ], { animate: true })
-  }, [mapLoaded, selectedIncident])
+  // Pan to selected - only when selected from sidebar, not from marker click
+  // Disabled to prevent jolting when clicking markers
+  // useEffect(() => {
+  //   if (!mapLoaded || !mapInstanceRef.current || !selectedIncident) return
+  //   
+  //   mapInstanceRef.current.panTo([
+  //     selectedIncident.coordinates.lat,
+  //     selectedIncident.coordinates.lng
+  //   ], { animate: true })
+  // }, [mapLoaded, selectedIncident])
 
   return (
     <div className="h-full flex flex-col lg:flex-row relative">

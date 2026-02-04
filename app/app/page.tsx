@@ -323,7 +323,7 @@ export default function AppPage() {
               display: currentView === "map" ? 'block' : 'none'
             }}
           >
-            <MapPageView />
+            <MapPageView isVisible={currentView === "map"} />
           </div>
         </div>
       </div>
