@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     // Check existing
     const supabase = createServerClient();
     const hashes = mchenryEvents.map(e => 
-      generateHash(e.id || e.Id, e.description || e.Description)
+      generateHash(e.id || e.Id || '', e.description || e.Description || '')
     );
     
     const { data: existing } = await supabase
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     const existingHashes = new Set(existing?.map(e => e.external_id) || []);
     const newEvents = mchenryEvents.filter(e => 
-      !existingHashes.has(generateHash(e.id || e.Id, e.description || e.Description))
+      !existingHashes.has(generateHash(e.id || e.Id || '', e.description || e.Description || ''))
     );
 
     if (newEvents.length === 0) {
