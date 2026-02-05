@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
       const lng = e.longitude || e.Longitude;
       
       return {
-        external_id: generateHash(e.id || e.Id, desc),
+        external_id: generateHash(e.id || e.Id || '', desc),
         category: 'traffic',
         severity: eventType.toLowerCase().includes('closure') ? 'high' : 'medium' as const,
         title: `${road}: ${eventType}`,
