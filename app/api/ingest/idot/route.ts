@@ -22,18 +22,30 @@ const MCHENRY_BOUNDS = {
 const IDOT_API = 'https://www.gettingaroundillinois.com/api/v1.0/events';
 
 interface IDOTEvent {
-  id: string;
-  eventType: string;
-  description: string;
-  primaryRoad: string;
-  direction: string;
-  startLocation: string;
-  endLocation: string;
-  latitude: number;
-  longitude: number;
-  startTime: string;
-  endTime: string | null;
-  lastUpdated: string;
+  id?: string;
+  Id?: string;
+  eventType?: string;
+  EventType?: string;
+  description?: string;
+  Description?: string;
+  primaryRoad?: string;
+  PrimaryRoad?: string;
+  direction?: string;
+  Direction?: string;
+  startLocation?: string;
+  StartLocation?: string;
+  endLocation?: string;
+  EndLocation?: string;
+  latitude?: number;
+  Latitude?: number;
+  longitude?: number;
+  Longitude?: number;
+  startTime?: string;
+  StartTime?: string;
+  endTime?: string | null;
+  EndTime?: string | null;
+  lastUpdated?: string;
+  LastUpdated?: string;
 }
 
 function isInMcHenryCounty(lat: number, lng: number): boolean {
